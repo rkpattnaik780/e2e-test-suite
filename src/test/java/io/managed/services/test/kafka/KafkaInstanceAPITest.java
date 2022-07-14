@@ -1,13 +1,16 @@
 package io.managed.services.test.kafka;
 
+import com.openshift.cloud.api.kas.auth.models.ConfigEntry;
 import com.openshift.cloud.api.kas.auth.models.NewTopicInput;
 import com.openshift.cloud.api.kas.auth.models.TopicSettings;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
+import io.fabric8.kubernetes.api.model.Quantity;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.exception.ApiConflictException;
+import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiLockedException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.exception.ApiUnauthorizedException;
@@ -27,9 +30,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.time.Duration;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.bwait;
@@ -163,6 +170,145 @@ public class KafkaInstanceAPITest extends TestBase {
             .settings(new TopicSettings().numPartitions(1));
         assertThrows(ApiConflictException.class,
             () -> kafkaInstanceApi.createTopic(payload));
+    }
+
+    private static ConfigEntry newCE() {
+        return new ConfigEntry();
+    }
+
+    @DataProvider(name = "policyData")
+    public Object[][] policyData() {
+        final int tenMi = Quantity.getAmountInBytes(Quantity.parse("10Mi")).intValue();
+        final int fiftyMi = Quantity.getAmountInBytes(Quantity.parse("50Mi")).intValue();
+
+        int messageSizeLimit, desiredBrokerCount;
+        try {
+            messageSizeLimit = KafkaMgmtApiUtils.getMessageSizeLimit(kafkaMgmtApi, kafka);
+            desiredBrokerCount = KafkaMgmtApiUtils.getDesiredBrokerCount(kafkaMgmtApi, kafka);
+        } catch (Exception e) {
+            // Fallback for kas-installer installed environments, see: https://github.com/bf2fc6cc711aee1a0c2a/kas-installer/issues/202
+            LOGGER.warn("Failed to read metrics, falling back to constants instead");
+            messageSizeLimit = 1048588;
+            desiredBrokerCount = 3;
+        }
+
+        return new Object[][] {
+                {true, newCE().key("compression.type").value("producer")}, // default permitted
+                {false, newCE().key("compression.type").value("gzip")},
+
+                {true, newCE().key("file.delete.delay.ms").value("60000")}, // default permitted
+                {false, newCE().key("file.delete.delay.ms").value("1")},
+
+                {true, newCE().key("flush.messages").value(Long.toString(Long.MAX_VALUE))}, // default permitted
+                {false, newCE().key("flush.messages").value("1")},
+
+                {true, newCE().key("flush.ms").value(Long.toString(Long.MAX_VALUE))}, // default permitted
+                {false, newCE().key("flush.ms").value("1")},
+
+                {false, newCE().key("follower.replication.throttled.replicas").value("*")},
+                {false, newCE().key("follower.replication.throttled.replicas").value("1:1")},
+
+                {true, newCE().key("index.interval.bytes").value("4096")}, // default permitted
+                {false, newCE().key("index.interval.bytes").value("1")},
+
+                {false, newCE().key("leader.replication.throttled.replicas").value("*")},
+                {false, newCE().key("leader.replication.throttled.replicas").value("1:1")},
+
+                {true, newCE().key("max.message.bytes").value(Integer.toString(messageSizeLimit))},
+                {true, newCE().key("max.message.bytes").value("1")},
+                {true, newCE().key("max.message.bytes").value(Integer.toString(messageSizeLimit - 1))},
+                {false, newCE().key("max.message.bytes").value(Integer.toString(messageSizeLimit) + 1)},
+
+                {false, newCE().key("message.format.version").value("3.0")},
+                {false, newCE().key("message.format.version").value("2.8")},
+                {false, newCE().key("message.format.version").value("2.1")},
+
+                {true, newCE().key("min.cleanable.dirty.ratio").value("0.5")},
+                {false, newCE().key("min.cleanable.dirty.ratio").value("0")},
+                {false, newCE().key("min.cleanable.dirty.ratio").value("1")},
+
+                //{true, newCE().key("min.insync.replicas").value(desiredBrokerCount > 2 ? "2" : "1")}, // TODO the specification says we should permit 2 for standard and 1 for developer
+                {desiredBrokerCount < 3, newCE().key("min.insync.replicas").value("1")},
+
+                {true, newCE().key("segment.bytes").value(Integer.toString(fiftyMi))},
+                {true, newCE().key("segment.bytes").value(Integer.toString(fiftyMi + 1))},
+                {false, newCE().key("segment.bytes").value(Integer.toString(fiftyMi - 1))},
+                {false, newCE().key("segment.bytes").value(Integer.toString(1))},
+
+                {true, newCE().key("segment.index.bytes").value(Integer.toString(tenMi))},
+                {false, newCE().key("segment.index.bytes").value("1")},
+
+                //{false, newCE().key("segment.jitter.ms").value("0")},  // TODO - the specification says "We should prevent users from setting it", but the code does enforce that.
+                {false, newCE().key("segment.jitter.ms").value("1")},
+
+                {true, newCE().key("segment.ms").value(Long.toString(Duration.ofDays(7).toMillis()))}, // default permitted
+                {true, newCE().key("segment.ms").value(Long.toString(Duration.ofMinutes(10).toMillis()))},
+                {false, newCE().key("segment.ms").value(Long.toString(Duration.ofMinutes(10).toMillis() - 1))},
+
+                {true, newCE().key("unclean.leader.election.enable").value("false")},
+                {false, newCE().key("unclean.leader.election.enable").value("true")},
+
+        };
+    }
+
+    @Test(dataProvider = "policyData")
+    @SneakyThrows
+    public void testCreateTopicEnforcesPolicy(boolean desired, ConfigEntry configEntry) {
+        String testTopicName = UUID.randomUUID().toString();
+        var createSettings = new TopicSettings().addConfigItem(configEntry);
+        var payload = new NewTopicInput()
+            .name(testTopicName)
+            .settings(createSettings);
+        AtomicBoolean actual = new AtomicBoolean(!desired);
+        try {
+            if (desired) {
+                kafkaInstanceApi.createTopic(payload);
+                actual.set(true);
+            } else {
+                assertThrows(ApiGenericException.class,
+                        () -> {
+                            kafkaInstanceApi.createTopic(payload);
+                            actual.set(false);
+                        });
+            }
+        } finally {
+            try {
+                kafkaInstanceApi.deleteTopic(testTopicName);
+            } catch (ApiGenericException ignored) {
+               // ignore
+            }
+        }
+    }
+
+    @Test(dataProvider = "policyData")
+    @SneakyThrows
+    public void testAlterTopicEnforcesPolicy(boolean desired, ConfigEntry configEntry) {
+        var testTopicName = UUID.randomUUID().toString();
+        var updateSettings = new TopicSettings().addConfigItem(configEntry);
+
+        AtomicBoolean actual = new AtomicBoolean(!desired);
+        try {
+            kafkaInstanceApi.createTopic(new NewTopicInput().name(testTopicName).settings(new TopicSettings()));
+            var first = kafkaInstanceApi.getTopics().getItems().stream().filter(topic -> testTopicName.equals(topic.getName())).findFirst();
+            assertTrue(first.isPresent());
+
+            if (desired) {
+                kafkaInstanceApi.updateTopic(testTopicName, updateSettings);
+                actual.set(true);
+            } else {
+                assertThrows(ApiGenericException.class,
+                        () -> {
+                            kafkaInstanceApi.updateTopic(testTopicName, updateSettings);
+                            actual.set(false);
+                        });
+            }
+        } finally {
+            try {
+                kafkaInstanceApi.deleteTopic(testTopicName);
+            } catch (ApiGenericException ignored) {
+               // ignore
+            }
+        }
     }
 
     @Test(dependsOnMethods = "testCreateTopic")

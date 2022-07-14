@@ -428,20 +428,46 @@ public class KafkaMgmtApiUtils {
     }
 
     /**
-     * Get total partition limit of per given kafka instance.
+     * Get total partition limit of given kafka instance.
      *
      * @param api  KafkaMgmtApi
      */
     public static int getPartitionLimitMax(KafkaMgmtApi api, KafkaRequest kafka) throws Exception {
+        return getMetric(api, kafka, "^kafka_instance_partition_limit.*\\s(\\d+)$");
+    }
+
+    /**
+     * Get message size limit of given kafka instance.
+     *
+     * @param api  KafkaMgmtApi
+     */
+    public static int getMessageSizeLimit(KafkaMgmtApi api, KafkaRequest kafka) throws Exception {
+        return getMetric(api, kafka, "^kafka_instance_max_message_size_limit.*\\s(\\d+)$");
+    }
+
+    /**
+     * Get message size limit of given kafka instance.
+     *
+     * @param api  KafkaMgmtApi
+     */
+    public static int getDesiredBrokerCount(KafkaMgmtApi api, KafkaRequest kafka) throws Exception {
+        return getMetric(api, kafka, "^kafka_instance_spec_brokers_desired_count.*\\s(\\d+)$");
+    }
+
+    /**
+     * Get total partition limit of per given kafka instance.
+     *
+     * @param regex
+     * @param api  KafkaMgmtApi
+     */
+    private static int getMetric(KafkaMgmtApi api, KafkaRequest kafka, String regex) throws Exception {
         var metrics = api.federateMetrics(kafka.getId());
-        // partition limit regex
-        final String regex = "^kafka_instance_partition_limit.*\\s(\\d+)$";
         final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
         final Matcher matcher = pattern.matcher(metrics);
         if (matcher.find()) {
             return Integer.parseInt(matcher.group(1));
         }
         // if not found
-        throw new Exception("Unable to parse kafka instance partition limit");
+        throw new Exception(String.format("Unable to find metric matching %s", regex));
     }
 }
