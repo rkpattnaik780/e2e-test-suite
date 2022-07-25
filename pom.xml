@@ -73,12 +73,12 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
-            <version>4.2.7</version>
+            <version>4.3.2</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web-client</artifactId>
-            <version>4.2.7</version>
+            <version>4.3.2.1</version>
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
@@ -103,7 +103,7 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-kafka-client</artifactId>
-            <version>4.2.7</version>
+            <version>4.3.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
