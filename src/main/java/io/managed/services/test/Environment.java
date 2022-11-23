@@ -97,6 +97,9 @@ public class Environment {
     private static final String PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN_ENV = "PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN";
     private static final String PROMETHEUS_WEB_CLIENT_ROUTE_ENV = "PROMETHEUS_WEB_CLIENT_ROUTE";
 
+    private static final String STAGE_DATA_PLANE_ADMIN_CLIENT_ID_ENV = "STAGE_DATA_PLANE_ADMIN_CLIENT_ID";
+    private static final String STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET_ENV = "STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET";
+
     /*
      * Setup constants from env variables or set default
      */
@@ -190,6 +193,10 @@ public class Environment {
     public static final String PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN = getOrDefault(PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN_ENV, null);
     public static final String PROMETHEUS_WEB_CLIENT_ROUTE = getOrDefault(PROMETHEUS_WEB_CLIENT_ROUTE_ENV, "https://obs-prometheus-managed-application-services-observability.apps.mk-stage-0622.bd59.p1.openshiftapps.com");
 
+
+    // admin endpoint credentials (vault-key: clientid, secret) https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/jenkins/managed-services/secrets.yaml#L228-235
+    public static final String STAGE_DATA_PLANE_ADMIN_CLIENT_ID = getOrDefault(STAGE_DATA_PLANE_ADMIN_CLIENT_ID_ENV, null);
+    public static final String STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET = getOrDefault(STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET_ENV, null);
 
     private Environment() {
     }
