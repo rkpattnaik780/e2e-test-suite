@@ -127,7 +127,7 @@ public class CLI {
     }
 
     public KafkaRequest createKafka(String name) throws CliGenericException {
-        return retryKafkaCreation(() -> exec("kafka", "create", "--bypass-checks", "--name", name, "--region", Environment.DEFAULT_KAFKA_REGION))
+        return retryKafkaCreation(() -> exec("kafka", "create", "--bypass-checks", "--name", name, "--provider", Environment.CLOUD_PROVIDER, "--region", Environment.DEFAULT_KAFKA_REGION))
             .asJson(KafkaRequest.class);
     }
 
