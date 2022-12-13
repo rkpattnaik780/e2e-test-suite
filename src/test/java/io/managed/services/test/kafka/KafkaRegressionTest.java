@@ -51,7 +51,7 @@ public class KafkaRegressionTest {
         // Create Kafka Instance
         var payload = new KafkaRequestPayload()
             .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider("aws")
+            .cloudProvider(Environment.CLOUD_PROVIDER)
             .region(Environment.DEFAULT_KAFKA_REGION);
 
         log.info("create kafka instance '{}'", KAFKA_INSTANCE_NAME);
