@@ -5,6 +5,7 @@ import com.redhat.rhoas.v1alpha1.CloudServiceAccountRequest;
 import com.redhat.rhoas.v1alpha1.CloudServiceAccountRequestSpec;
 import com.redhat.rhoas.v1alpha1.CloudServicesRequest;
 import com.redhat.rhoas.v1alpha1.CloudServicesRequestSpec;
+import com.redhat.rhoas.v1alpha1.ServiceRegistryConnection;
 import com.redhat.rhoas.v1alpha1.ServiceRegistryConnectionBuilder;
 import com.redhat.rhoas.v1alpha1.serviceregistryconnectionspec.CredentialsBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -146,7 +147,7 @@ public class ServiceRegistryOperatorTest extends TestBase {
     }
 
     private void cleanServiceRegistryConnection() {
-        var c = OperatorUtils.serviceRegistryConnection(oc).withName(SERVICE_REGISTRY_CONNECTION_NAME).get();
+        ServiceRegistryConnection c = OperatorUtils.serviceRegistryConnection(oc).withName(SERVICE_REGISTRY_CONNECTION_NAME).get();
         if (c != null) {
             LOGGER.info("clean ServiceRegistryConnection: {}", c.getMetadata().getName());
             OperatorUtils.serviceRegistryConnection(oc).delete(c);
