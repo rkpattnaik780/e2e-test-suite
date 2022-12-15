@@ -100,7 +100,7 @@ public class Environment {
     /*
      * Setup constants from env variables or set default
      */
-    public static final String CLOUD_PROVIDER = getOrDefault(CLOUD_PROVIDER_ENV, Environment.CLOUD_PROVIDER);
+    public static final String CLOUD_PROVIDER = getOrDefault(CLOUD_PROVIDER_ENV, "aws");
     
     public static final String SUITE_ROOT = System.getProperty("user.dir");
     public static final Path LOG_DIR = getOrDefault(LOG_DIR_ENV, Paths::get, Paths.get(SUITE_ROOT, "target", "logs")).resolve("test-run-" + DATE_FORMAT.format(LocalDateTime.now()));
