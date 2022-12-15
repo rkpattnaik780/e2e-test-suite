@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -102,7 +103,7 @@ public class KafkaMgmtApiUtils {
             kafka = createKafkaInstance(api, payload);
         }
 
-        if (List.of("accepted", "preparing", "provisioning", "failed").contains(kafka.getStatus())) {
+        if (List.of("accepted", "preparing", "provisioning", "failed", "suspended", "resuming", "suspending").contains(kafka.getStatus())) {
             return waitUntilKafkaIsReady(api, kafka.getId());
         }
         if ("ready".equals(kafka.getStatus())) {
@@ -228,6 +229,57 @@ public class KafkaMgmtApiUtils {
         return kafka;
     }
 
+    public static String waitUntilKafkaIsSuspended(KafkaMgmtApi api, String kafkaID) throws InterruptedException, ApiGenericException {
+        LOGGER.info("waiting for kafka instance to be suspended");
+        return waitUntilKafkaIsInState(api, kafkaID, "suspended", ofSeconds(5), ofMinutes(1));
+    }
+
+    public static String waitUntilKafkaIsResumed(KafkaMgmtApi api, String kafkaID) throws InterruptedException, ApiGenericException {
+        LOGGER.info("waiting for kafka instance to be resumed");
+        return waitUntilKafkaIsInState(api, kafkaID, "ready", ofSeconds(10), ofMinutes(5));
+    }
+
+    // TODO refactor waitUntilKafkaIsInState to catch also exceptional cases (e.g. failed to provision kafka instance), and return Enum representing State
+    /**
+     * Returns KafkaRequest only if status is equal to desiredStatus argument
+     *
+     * @param api     KafkaMgmtApi
+     * @param kafkaID String
+     * @param desiredState State in which kafka instance is supposed to end eventually
+     * @param getKafkaStatusRequestPeriod Period of time between to request to obtain current kafka status
+     * @param timeout Period of time between to request to obtain current kafka status
+     * @return KafkaRequest
+     */
+    private static String waitUntilKafkaIsInState(
+        KafkaMgmtApi api,
+        String kafkaID,
+        String desiredState,
+        Duration getKafkaStatusRequestPeriod,
+        Duration timeout) throws ApiGenericException, InterruptedException {
+
+        var kafkaAtom = new AtomicReference<KafkaRequest>();
+
+        // take a look if kafka is in list of allowed states,
+        ThrowingFunction<Boolean, Boolean, ApiGenericException> ready = last -> {
+            var kafka = api.getKafkaById(kafkaID);
+            kafkaAtom.set(kafka);
+
+            LOGGER.debug(kafka);
+            return desiredState.equals(kafka.getStatus());
+        };
+
+        try {
+            waitFor(String.format("kafka instance to be '%s'", desiredState), getKafkaStatusRequestPeriod, timeout, ready);
+        } catch (TimeoutException e) {
+            // throw a more accurate error
+            return kafkaAtom.get().getStatus();
+        }
+
+        var kafka = kafkaAtom.get();
+        LOGGER.info("kafka instance '{}' is {}", kafka.getStatus(), kafka.getName());
+        LOGGER.debug(kafka);
+        return kafka.getStatus();
+    }
 
     /**
      * Returns KafkaRequest only if status is in ready
