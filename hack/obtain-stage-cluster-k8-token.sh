@@ -8,7 +8,7 @@
 oc apply -f prometheus-rbac-resources.yaml
 
 # obtain secret
-SECRET_NAME=$(oc get sa prom-query-sa --namespace prom-query-ns -o json | jq '.secrets[] | select(.name | contains("token")) | .name') 
+SECRET_NAME=$(oc get sa e2e-query-sa --namespace e2e-querry-ns -o json | jq '.secrets[] | select(.name | contains("token")) | .name')
 SECRET_NAME=$(sed -e 's/^"//' -e 's/"$//' <<< ${SECRET_NAME})
 echo
 echo "obtained SECRET_NAME:"
