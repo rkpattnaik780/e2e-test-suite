@@ -1,4 +1,4 @@
-package io.managed.services.test.k8.operator;
+package io.managed.services.test.k8.managedkafka;
 
 import java.util.Set;
 

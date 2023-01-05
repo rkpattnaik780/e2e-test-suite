@@ -1,4 +1,4 @@
-package io.managed.services.test.k8.operator.resources.v1alpha1;
+package io.managed.services.test.k8.managedkafka.resources.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.fabric8.kubernetes.api.model.Namespaced;
@@ -6,7 +6,7 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.model.annotation.Group;
 import io.fabric8.kubernetes.model.annotation.Version;
-import io.managed.services.test.k8.operator.ManagedKafkaKeys;
+import io.managed.services.test.k8.managedkafka.ManagedKafkaKeys;
 import io.sundr.builder.annotations.Buildable;
 import io.sundr.builder.annotations.BuildableReference;
 
