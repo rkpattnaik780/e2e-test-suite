@@ -11,6 +11,7 @@ import io.managed.services.test.client.kafkamgmt.KafkaNotDeletedException;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpStatus;
+import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -463,5 +464,23 @@ public class BillingModelTest {
         } finally {
             cleanup(user);
         }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testFailOnAwsAccountWithGcpProvider() {
+        String user = Environment.STRATOSPHERE_SCENARIO_4_USER;
+        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+
+        String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
+        var payload = new KafkaRequestPayload()
+            .name(KAFKA_INSTANCE_NAME)
+            .cloudProvider("gcp")
+            .region("us-east1")
+            .billingCloudAccountId(cloudAccountId);
+
+        log.info("create kafka instance '{}'", payload.getName());
+
+        Assert.assertThrows(ApiGenericException.class, () -> KafkaMgmtApiUtils.createKafkaInstance(kafkaMgmtApi, payload));
     }
 }
