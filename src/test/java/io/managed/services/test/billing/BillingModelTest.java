@@ -11,6 +11,8 @@ import io.managed.services.test.client.kafkamgmt.KafkaNotDeletedException;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpStatus;
+import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -81,6 +83,9 @@ public class BillingModelTest {
     // User does not provide any of billing_model, billing_cloud_account_id, marketplace.
     // Outcome: success, existing single cloud account is automatically chosen
     public void testAutomaticallyPickSingleCloudAccount() {
+        if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
+            throw new SkipException("gcp marketplace is not available as a billing option at this time");
+        }
         String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
         KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
 
@@ -238,6 +243,9 @@ public class BillingModelTest {
     // User sets the billing_cloud_account_id to a value that does match the linked account.
     // Outcome: success, marketplace cloud account is chosen.
     public void testSubmitValidAWSCloudAccount() {
+        if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
+            throw new SkipException("gcp marketplace is not available as a billing option at this time");
+        }
         String user = Environment.STRATOSPHERE_SCENARIO_2_USER;
         KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
 
@@ -298,6 +306,9 @@ public class BillingModelTest {
     // The customers provide the billing_cloud_account_id of the linked AWS account.
     // Outcome: success, AWS cloud account chosen because there is only one matching account.
     public void testSelectValidAWSCloudAccountFromMultiple() {
+        if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
+            throw new SkipException("gcp marketplace is not available as a billing option at this time");
+        }
         String user = Environment.STRATOSPHERE_SCENARIO_3_USER;
         KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
 
@@ -427,6 +438,10 @@ public class BillingModelTest {
     // The customer provides the billing_cloud_account_id of one of the AWS accounts.
     // Outcome: success, exactly one cloud account matches.
     public void testCreateWithValidAWSAccountFromMultiple() {
+        if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
+            throw new SkipException("gcp marketplace is not available as a billing option at this time");
+        }
+
         String user = Environment.STRATOSPHERE_SCENARIO_4_USER;
         KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
 
@@ -449,5 +464,23 @@ public class BillingModelTest {
         } finally {
             cleanup(user);
         }
+    }
+
+    @Test
+    @SneakyThrows
+    public void testFailOnAwsAccountWithGcpProvider() {
+        String user = Environment.STRATOSPHERE_SCENARIO_4_USER;
+        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+
+        String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
+        var payload = new KafkaRequestPayload()
+            .name(KAFKA_INSTANCE_NAME)
+            .cloudProvider("gcp")
+            .region("us-east1")
+            .billingCloudAccountId(cloudAccountId);
+
+        log.info("create kafka instance '{}'", payload.getName());
+
+        Assert.assertThrows(ApiGenericException.class, () -> KafkaMgmtApiUtils.createKafkaInstance(kafkaMgmtApi, payload));
     }
 }
