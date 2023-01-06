@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e2e-querry-ns
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e2e-query-sa
+  namespace: e2e-querry-ns
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: query-cluster-role
+rules:
+  # namespaces in order to query prometheus endpoint
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+  # managedkafka resources in order to query them in tests related to reserved deployments.
+  - apiGroups: ["managedkafka.bf2.org"]
+    resources: ["managedkafkas", "managedkafkaagents"]
+    verbs: ["list","get"]
+  # be able to view state of pods which actually holds resources reserved by managedkafka
+  - apiGroups: [""]
+    resources: ["pods","events","secrets","services"]
+    verbs: ["list","get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: e2e-querry-crb
+subjects:
+  - kind: ServiceAccount
+    name: e2e-query-sa
+    namespace: e2e-querry-ns
+roleRef:
+  kind: ClusterRole
+  name: query-cluster-role
+  apiGroup: rbac.authorization.k8s.io
