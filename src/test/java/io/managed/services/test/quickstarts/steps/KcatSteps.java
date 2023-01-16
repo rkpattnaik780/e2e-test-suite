@@ -59,6 +59,12 @@ public class KcatSteps {
         return Objects.requireNonNull(consumerProcess);
     }
 
+    @Then("bla bla vla")
+    public void blaBlaVla() {
+
+        log.info(("dhnsfjjkf dsjjkj"));
+    }
+
     @Given("you have downloaded and verified the latest supported version of Kcat for your operating system")
     public void you_have_downloaded_and_verified_the_latest_supported_version_of_kcat_for_your_operating_system() throws Throwable {
 

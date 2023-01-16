@@ -183,16 +183,16 @@ public class KafkaMgmtApiUtils {
      */
     public static void deleteKafkaByNameIfExists(KafkaMgmtApi api, String name) throws ApiGenericException {
 
-        var exists = getKafkaByName(api, name);
-        if (exists.isPresent()) {
-            var kafka = exists.get();
-            LOGGER.info("delete kafka instance '{}'", kafka.getName());
-            LOGGER.debug(kafka);
-            api.deleteKafkaById(kafka.getId(), true);
-            LOGGER.info("kafka instance '{}' deleted", kafka.getName());
-        } else {
-            LOGGER.info("kafka instance '{}' not found", name);
-        }
+        // var exists = getKafkaByName(api, name);
+        // if (exists.isPresent()) {
+        //     var kafka = exists.get();
+        //     LOGGER.info("delete kafka instance '{}'", kafka.getName());
+        //     LOGGER.debug(kafka);
+        //     api.deleteKafkaById(kafka.getId(), true);
+        //     LOGGER.info("kafka instance '{}' deleted", kafka.getName());
+        // } else {
+        //     LOGGER.info("kafka instance '{}' not found", name);
+        // }
     }
 
     /**

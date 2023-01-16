@@ -75,21 +75,21 @@ public class ServiceAccountSteps {
 
     @After
     public void teardown() {
-        assumeTeardown();
+        // assumeTeardown();
 
-        var securityMgmtApi = openShiftAPIContext.getSecurityMgmtApi();
-        if (securityMgmtApi == null) {
-            throw new SkipException("skip service account teardown");
-        }
+        // var securityMgmtApi = openShiftAPIContext.getSecurityMgmtApi();
+        // if (securityMgmtApi == null) {
+        //     throw new SkipException("skip service account teardown");
+        // }
 
-        // delete service account
-        try {
-            log.info("clean service account '{}'", SERVICE_ACCOUNT_UNIQUE_NAME);
-            SecurityMgmtAPIUtils.cleanServiceAccount(securityMgmtApi, SERVICE_ACCOUNT_UNIQUE_NAME);
-        } catch (Throwable t) {
-            log.error("clean service account error: ", t);
-        }
+        // // delete service account
+        // try {
+        //     log.info("clean service account '{}'", SERVICE_ACCOUNT_UNIQUE_NAME);
+        //     SecurityMgmtAPIUtils.cleanServiceAccount(securityMgmtApi, SERVICE_ACCOUNT_UNIQUE_NAME);
+        // } catch (Throwable t) {
+        //     log.error("clean service account error: ", t);
+        // }
 
-        serviceAccountContext.setServiceAccount(null);
+        // serviceAccountContext.setServiceAccount(null);
     }
 }

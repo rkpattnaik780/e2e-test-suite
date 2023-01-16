@@ -100,13 +100,13 @@ public class KafkaInstanceSteps {
 
     @AfterAll
     public static void clean_kafka_instance() throws Throwable {
-        assumeTeardown();
+        // assumeTeardown();
 
-        var keycloakLoginSession = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var redHatUser = bwait(keycloakLoginSession.loginToRedHatSSO());
-        var kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, redHatUser);
+        // var keycloakLoginSession = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
+        // var redHatUser = bwait(keycloakLoginSession.loginToRedHatSSO());
+        // var kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, redHatUser);
 
-        log.info("clean kafka instance: {}", KAFKA_INSTANCE_UNIQUE_NAME);
-        KafkaMgmtApiUtils.cleanKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_UNIQUE_NAME);
+        // log.info("clean kafka instance: {}", KAFKA_INSTANCE_UNIQUE_NAME);
+        // KafkaMgmtApiUtils.cleanKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_UNIQUE_NAME);
     }
 }

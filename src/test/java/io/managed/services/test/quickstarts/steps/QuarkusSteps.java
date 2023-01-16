@@ -129,7 +129,7 @@ public class QuarkusSteps {
     @When("you run Quarkus example applications")
     public void you_run_quarkus_example_applications() throws IOException, ProcessException, InterruptedException, CliGenericException {
 
-        log.info("package run quarkus example application");
+        log.info("package run quarkus example application 2");
 
         // set path to root of quickstart
         String quickstartRoot = this.repository.getAbsolutePath() +

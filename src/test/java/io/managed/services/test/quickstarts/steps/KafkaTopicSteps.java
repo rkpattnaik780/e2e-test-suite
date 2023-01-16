@@ -79,20 +79,20 @@ public class KafkaTopicSteps {
     public void cleanTopics() {
 
         // nothing to clan
-        if (topicNames.isEmpty()) return;
+        // if (topicNames.isEmpty()) return;
 
-        assumeTeardown();
+        // assumeTeardown();
 
-        var kafkaInstanceApi = kafkaInstanceContext.kafkaInstanceApi();
-        for (var topic : topicNames) {
-            try {
-                log.info("delete topic: {}", topic);
-                kafkaInstanceApi.deleteTopic(topic);
-            } catch (Throwable t) {
-                log.error("clean topic error: ", t);
-            }
-        }
+        // var kafkaInstanceApi = kafkaInstanceContext.kafkaInstanceApi();
+        // for (var topic : topicNames) {
+        //     try {
+        //         log.info("delete topic: {}", topic);
+        //         kafkaInstanceApi.deleteTopic(topic);
+        //     } catch (Throwable t) {
+        //         log.error("clean topic error: ", t);
+        //     }
+        // }
 
-        topicNames.clear();
+        // topicNames.clear();
     }
 }
