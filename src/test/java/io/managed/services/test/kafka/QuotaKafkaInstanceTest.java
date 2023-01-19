@@ -5,12 +5,12 @@ import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
-import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
 import io.managed.services.test.client.oauth.KeycloakLoginSession;
+import io.managed.services.test.client.oauth.KeycloakUser;
 import lombok.SneakyThrows;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +20,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static io.managed.services.test.TestUtils.bwait;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -64,25 +65,24 @@ public class QuotaKafkaInstanceTest extends TestBase {
 
     private KafkaMgmtApi quotaUserKafkaMgmtApi;
     private KafkaMgmtApi noQuotaUserKafkaMgmtApi;
-    
-    private KafkaRequest kafka;
 
     @BeforeClass
+    @SneakyThrows
     public void bootstrap() {
         assertNotNull(Environment.DIFF_ORG_USERNAME, "the DIFF_ORG_USERNAME env is null");
         assertNotNull(Environment.DIFF_ORG_PASSWORD, "the DIFF_ORG_PASSWORD env is null");
         assertNotNull(Environment.ALIEN_USERNAME, "the ALIENUSERNAME env is null");
         assertNotNull(Environment.ALIEN_PASSWORD, "the ALIENPASSWORD env is null");
 
-        var quotaUserAuth = new KeycloakLoginSession(Environment.DIFF_ORG_USERNAME, Environment.DIFF_ORG_PASSWORD);
-        var noQuotaUserAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
+        KeycloakLoginSession quotaUserAuth = new KeycloakLoginSession(Environment.DIFF_ORG_USERNAME, Environment.DIFF_ORG_PASSWORD);
+        KeycloakLoginSession noQuotaUserAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
 
-        ApplicationServicesApi quotaUserApi = ApplicationServicesApi.applicationServicesApi(quotaUserAuth);
-        ApplicationServicesApi noQuotaUserApi = ApplicationServicesApi.applicationServicesApi(noQuotaUserAuth);
+        KeycloakUser quotaUser = bwait(quotaUserAuth.loginToRedHatSSO());
+        KeycloakUser noQuotaUser = bwait(noQuotaUserAuth.loginToRedHatSSO());
 
-        this.quotaUserKafkaMgmtApi = quotaUserApi.kafkaMgmt();
-        this.noQuotaUserKafkaMgmtApi = noQuotaUserApi.kafkaMgmt();
-        
+        quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, quotaUser);
+        noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, noQuotaUser);
+
         LOGGER.info("Preparing environment by deleting existing Kafka instances");
         deleteAllKafkaInstances();  
     }
@@ -95,13 +95,13 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     private void deleteAllKafkaInstances() {
         try {
-            KafkaMgmtApiUtils.deleteAllKafkas(noQuotaUserKafkaMgmtApi);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, Environment.ALIEN_USERNAME);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instance for ALIEN user: ", t);
         }
 
         try {
-            KafkaMgmtApiUtils.deleteAllKafkas(quotaUserKafkaMgmtApi);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, Environment.DIFF_ORG_USERNAME);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instances for DIFF_ORG user: ", t);
         }
@@ -117,7 +117,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
                 .name(KAFKA_INSTANCE_NAME_FAIL)
                 .cloudProvider(Environment.CLOUD_PROVIDER)
                 .plan(PLAN_DEVELOPER);
-            kafka = KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
+            KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiGenericException e) {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
@@ -136,7 +136,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             .name(KAFKA_INSTANCE_NAME_QUOTA)
             .cloudProvider(Environment.CLOUD_PROVIDER)
             .plan(PLAN_STANDARD);
-        kafka = KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
+        KafkaRequest kafka = KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
         assertEquals(kafka.getName(), KAFKA_INSTANCE_NAME_QUOTA);
         assertEquals(kafka.getInstanceType() + '.' + kafka.getSizeId(), PLAN_STANDARD);
     }
@@ -191,7 +191,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             .name(KAFKA_INSTANCE_NAME_NO_QUOTA)
             .cloudProvider(Environment.CLOUD_PROVIDER)
             .plan(PLAN_DEVELOPER);
-        kafka = KafkaMgmtApiUtils.createKafkaInstance(noQuotaUserKafkaMgmtApi, payload);
+        KafkaRequest kafka = KafkaMgmtApiUtils.createKafkaInstance(noQuotaUserKafkaMgmtApi, payload);
         assertEquals(kafka.getName(), KAFKA_INSTANCE_NAME_NO_QUOTA);
         assertEquals(kafka.getInstanceType() + '.' + kafka.getSizeId(), PLAN_DEVELOPER);
     }
