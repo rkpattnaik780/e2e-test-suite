@@ -26,6 +26,11 @@
             <class name="io.managed.services.test.kafka.KafkaInstanceAPITest"/>
         </classes>
     </test>
+    <test name="KafkaInstanceQuotaTest">
+        <classes>
+            <class name="io.managed.services.test.kafka.QuotaKafkaInstanceTest"/>
+        </classes>
+    </test>
     <test name="KafkaAccessMgmtTest">
         <classes>
             <class name="io.managed.services.test.kafka.KafkaAccessMgmtTest"/>

@@ -60,6 +60,17 @@ public class KafkaMgmtApiUtils {
         return list.getItems().stream().findAny();
     }
 
+    /**
+     * Get any Kafka or return empty optional
+     *
+     * @param api  KafkaMgmtApi
+     * @return Optional KafkaRequest
+     */
+    public static Optional<KafkaRequest> getAnyKafka(KafkaMgmtApi api) throws ApiGenericException {
+        var list = api.getKafkas("1", "1", null, null);
+        return list.getItems().stream().findAny();
+    }
+
     public static KafkaRequestPayload defaultKafkaInstance(String name) {
         return new KafkaRequestPayload()
             .name(name)
@@ -194,6 +205,46 @@ public class KafkaMgmtApiUtils {
         } else {
             LOGGER.info("kafka instance '{}' not found", name);
         }
+    }
+    
+    /**
+     * Delete all the Kafka Instances if it exists and if the SKIP_KAFKA_TEARDOWN env is set to false.
+     *
+     * @param api  KafkaMgmtApi
+     * @throws ApiGenericException, KafkaNotDeletedException
+     */
+    public static void cleanAllKafkaInstances(KafkaMgmtApi api) throws ApiGenericException, KafkaNotDeletedException {
+        if (Environment.SKIP_KAFKA_TEARDOWN) {
+            LOGGER.warn("skip kafka instance clean up");
+            return;
+        }
+        deleteAllKafkas(api);
+    }
+
+    /**
+     * Delete all Kafka Instances
+     *
+     * @param api  KafkaMgmtApi
+     * @throws ApiGenericException, KafkaNotDeletedException
+     */
+    public static void deleteAllKafkas(KafkaMgmtApi api) throws ApiGenericException, KafkaNotDeletedException {
+        var anyKafka = getAnyKafka(api);
+        while (anyKafka.isPresent()) {
+            var kafka = anyKafka.get();
+            LOGGER.info("kafka instance '{}' to be deleted", kafka.getName());
+            LOGGER.debug(kafka);
+            api.deleteKafkaById(kafka.getId(), true);
+            try {
+                waitUntilKafkaIsDeleted(api, kafka.getId());
+            } catch (InterruptedException e) {
+                throw new KafkaNotDeletedException(kafka, e);
+            } catch (KafkaNotDeletedException e) {
+                throw new KafkaNotDeletedException(kafka, e);
+            }
+            LOGGER.info("kafka instance '{}' deleted", kafka.getName());
+            anyKafka = getAnyKafka(api);
+        }
+        LOGGER.info("all kafka instances for current user are deleted");
     }
 
     /**

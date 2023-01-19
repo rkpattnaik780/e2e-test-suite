@@ -16,11 +16,10 @@ import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static io.managed.services.test.TestUtils.assumeTeardown;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -84,37 +83,31 @@ public class QuotaKafkaInstanceTest extends TestBase {
         this.quotaUserKafkaMgmtApi = quotaUserApi.kafkaMgmt();
         this.noQuotaUserKafkaMgmtApi = noQuotaUserApi.kafkaMgmt();
         
-        deleteExistingKafkaInstances();
+        LOGGER.info("Preparing environment by deleting existing Kafka instances");
+        deleteAllKafkaInstances();  
     }
 
-    @AfterClass(alwaysRun = true)
+    @AfterMethod(alwaysRun = true)
     public void teardown() {
-        deleteExistingKafkaInstances();
+        LOGGER.info("Cleaning up environment by deleting existing Kafka instances");
+        deleteAllKafkaInstances();  
     }
-
-    private void deleteExistingKafkaInstances() {
-        assumeTeardown();
-        
+    
+    private void deleteAllKafkaInstances() {
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstance(quotaUserKafkaMgmtApi, KAFKA_INSTANCE_NAME_QUOTA);
+            KafkaMgmtApiUtils.deleteAllKafkas(noQuotaUserKafkaMgmtApi);
         } catch (Throwable t) {
-            LOGGER.error("failed to clean kafka instance: ", t);
-        }
-        
-        try {
-            KafkaMgmtApiUtils.cleanKafkaInstance(noQuotaUserKafkaMgmtApi, KAFKA_INSTANCE_NAME_NO_QUOTA);
-        } catch (Throwable t) {
-            LOGGER.error("failed to clean kafka instance: ", t);
+            LOGGER.error("failed to clean kafka instance for ALIEN user: ", t);
         }
 
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstance(noQuotaUserKafkaMgmtApi, KAFKA_INSTANCE_NAME_FAIL);
+            KafkaMgmtApiUtils.deleteAllKafkas(quotaUserKafkaMgmtApi);
         } catch (Throwable t) {
-            LOGGER.error("failed to clean kafka instance: ", t);
+            LOGGER.error("failed to clean kafka instances for DIFF_ORG user: ", t);
         }
     }
 
-    @Test(priority = 1)
+    @Test
     @SneakyThrows
     public void testQuotaUserFailedCreateDeveloperInstance() {
         LOGGER.info("Trying to create Developer Kafka instance '{}'", KAFKA_INSTANCE_NAME_FAIL);
@@ -134,7 +127,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
         }
     }
 
-    @Test(priority = 2)
+    @Test
     @SneakyThrows
     public void testQuotaUserSucceededCreateStandardInstance() {
         LOGGER.info("Trying to create Standard Kafka instance '{}'", KAFKA_INSTANCE_NAME_QUOTA);
@@ -148,11 +141,12 @@ public class QuotaKafkaInstanceTest extends TestBase {
         assertEquals(kafka.getInstanceType() + '.' + kafka.getSizeId(), PLAN_STANDARD);
     }
 
-    @Test(priority = 3)
+    @Test
     @SneakyThrows
     public void testQuotaUserFailedCreateStandardInstanceWhenQuotaIsReached() {
         LOGGER.info("Trying to create Standard Kafka instance when quota is reached '{}'", KAFKA_INSTANCE_NAME_FAIL);
-
+        
+        testQuotaUserSucceededCreateStandardInstance();
         try {
             var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME_FAIL)
@@ -168,7 +162,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
         }
     }
 
-    @Test(priority = 4)
+    @Test
     @SneakyThrows
     public void testNoQuotaUserFailedCreateStandardInstance() {
         LOGGER.info("Trying to create Standard Kafka instance with no quota '{}'", KAFKA_INSTANCE_NAME_FAIL);
@@ -188,7 +182,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
         }
     }
 
-    @Test(priority = 5)
+    @Test
     @SneakyThrows
     public void testNoQuotaUserSucceededCreateDeveloperInstance() {
         LOGGER.info("Trying to create Developer Kafka instance with no quota '{}'", KAFKA_INSTANCE_NAME_NO_QUOTA);
