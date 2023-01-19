@@ -57,6 +57,37 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
     When you run Java client example consumer
     Then Java client consumer should print proper message
 
+  Scenario: Python test
+
+    Given you have a Red Hat account
+    * you are logged in to the OpenShift Streams for Apache Kafka web console
+    * you have a running Kafka instance in OpenShift Streams for Apache Kafka
+
+     # 1. Importing the Python sample code
+    When you clone the rhosak_example_codes repository from GitHub examples
+    Then the rhosak_example_codes example repository is available locally
+
+    # 2. Configuring the Python example application to connect to a Kafka instance
+    Given you have the bootstrap server endpoint for your Kafka instance
+    * you have the generated credentials for your service account
+    * you have the OAUTHBEARER token endpoint for the Kafka instance
+    When you set the Kafka instance bootstrap server endpoint, service account credentials, and OAUTHBEARER token endpoint as environment variables for Python app
+
+    # 3. Creating the prices Kafka topic in OpenShift Streams for Apache Kafka
+    Given you have a running Kafka instance in OpenShift Streams for Apache Kafka
+    * the Kafka instance is in Ready state
+    When you have created the Kafka topic prices
+    Then the Kafka topic prices is listed in the topics table
+
+    # 4. Running the Python example producer
+    Given the Kafka instance is in Ready state
+    Given you have set the permissions for your service account to produce and consume from topic prices
+    Then you run Python example producer
+
+    # 4. Running the Python example consumer
+    Given the Kafka instance is in Ready state
+    Then Python example consumer should print the produced message
+
   Scenario: Using Quarkus applications with Kafka instances in Red Hat OpenShift Streams for Apache Kafka
     Given you have a Red Hat account
     * you are logged in to the OpenShift Streams for Apache Kafka
@@ -197,4 +228,3 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
     When you consume messages from the topic kafka-script-topic you created using `kafka-console-consumer.sh`
     Then your `kafka-console-consumer` is running without any errors
     And the `kafka-console-consumer` display the example messages from the producer
-
