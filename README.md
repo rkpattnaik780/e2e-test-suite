@@ -58,8 +58,10 @@ Environment variables can also be configured in the [config.json](#config-file) 
 | `PRIMARY_PASSWORD`                 | ** primary user password                                                                                                                          |                                            |
 | `SECONDARY_USERNAME`               | ** https://sso.redhat.com username in the same organization as the primary user                                                                   |                                            |
 | `SECONDARY_PASSWORD`               | ** secondary user password                                                                                                                        |                                            |
-| `ALIEN_USERNAME`                   | ** https://sso.redhat.com username in a different organization respect the primary user                                                           |                                            |
+| `ALIEN_USERNAME`                   | ** https://sso.redhat.com username in a different organization respect the primary user with no quota                                             |                                            |
 | `ALIEN_PASSWORD`                   | ** alien user password                                                                                                                            |                                            |
+| `DIFF_ORG_USERNAME`                | ** https://sso.redhat.com username in a different organization respect the primary user and alien user with quota: 1 SKU                          |                                            |
+| `DIFF_ORG_PASSWORD`                | ** diff_org user password                                                                                                                         |                                            |
 | `OPENSHIFT_API_URI`                | the base URI for the application services mgmt APIs (See [Test Environments](#test-environments))                                                 | `https://api.stage.openshift.com`          |
 | `REDHAT_SSO_URI`                   | users authentication endpoint for application services mgmt APIs                                                                                  | `https://sso.redhat.com`                   |
 | `REDHAT_SSO_LOGIN_FORM_ID`         | HTML `id` value of the login `<form>` the SSO application will present after redirect                                                             | `#rh-password-verification-form`           |
@@ -180,6 +182,19 @@ tests.
 3. Fill all the required and optional data fields for the alien user and create the account
 
 > This will create the Alien user in a new organization
+
+#### Diff org user
+
+1. Go to https://cloud.redhat.com/ and click on **Create an account**
+2. You can choose _Personal_ or _Corporate_
+3. Fill all the required and optional data fields for the alien user and create the account
+4. Get the org id for the user created
+   ````
+    ocm get /api/accounts_mgmt/v1/organizations/$(ocm account orgs --columns ID | tail -n1) | jq -r .external_id
+    ```
+5. Create a MR on `ocm-resources` repo to add quota for that org [example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/2986)
+
+> This will create the Diff org user in a new organization and add quota to create standard Kafka Instances
 
 ### Create test namespace on the dev cluster
 

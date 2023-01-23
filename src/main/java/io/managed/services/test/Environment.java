@@ -40,6 +40,8 @@ public class Environment {
     private static final String SECONDARY_PASSWORD_ENV = "SECONDARY_PASSWORD";
     private static final String ALIEN_USERNAME_ENV = "ALIEN_USERNAME";
     private static final String ALIEN_PASSWORD_ENV = "ALIEN_PASSWORD";
+    private static final String DIFF_ORG_PASSWORD_ENV = "DIFF_ORG_PASSWORD";
+    private static final String DIFF_ORG_USERNAME_ENV = "DIFF_ORG_USERNAME";
     private static final String ADMIN_USERNAME_ENV = "ADMIN_USERNAME";
     private static final String ADMIN_PASSWORD_ENV = "ADMIN_PASSWORD";
 
@@ -119,6 +121,10 @@ public class Environment {
     // sso.redhat.com alien user (See README.md)
     public static final String ALIEN_USERNAME = getOrDefault(ALIEN_USERNAME_ENV, null);
     public static final String ALIEN_PASSWORD = getOrDefault(ALIEN_PASSWORD_ENV, null);
+
+    // sso.redhat.com different organization user with 1 SKU quota only for stage environment (See README.md)
+    public static final String DIFF_ORG_USERNAME = getOrDefault(DIFF_ORG_USERNAME_ENV, null);
+    public static final String DIFF_ORG_PASSWORD = getOrDefault(DIFF_ORG_PASSWORD_ENV, null);
 
     public static final String ADMIN_USERNAME = getOrDefault(ADMIN_USERNAME_ENV, null);
     public static final String ADMIN_PASSWORD = getOrDefault(ADMIN_PASSWORD_ENV, null);

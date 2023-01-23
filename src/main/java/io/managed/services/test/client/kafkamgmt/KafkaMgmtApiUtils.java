@@ -60,6 +60,18 @@ public class KafkaMgmtApiUtils {
         return list.getItems().stream().findAny();
     }
 
+    /**
+     * Get any Kafka or return empty optional
+     *
+     * @param api  KafkaMgmtApi
+     * @param owner The name of the creator of the Kafka instance
+     * @return Optional KafkaRequest
+     */
+    public static Optional<KafkaRequest> getKafkaByOwner(KafkaMgmtApi api, String owner) throws ApiGenericException {
+        var list = api.getKafkas("1", "1", null, String.format("owner = %s", owner.trim()));
+        return list.getItems().stream().findAny();
+    }
+
     public static KafkaRequestPayload defaultKafkaInstance(String name) {
         return new KafkaRequestPayload()
             .name(name)
@@ -194,6 +206,47 @@ public class KafkaMgmtApiUtils {
         } else {
             LOGGER.info("kafka instance '{}' not found", name);
         }
+    }
+    
+    /**
+     * Delete all the Kafka Instances by owner if they exists and if the SKIP_KAFKA_TEARDOWN env is set to false.
+     *
+     * @param api   KafkaMgmtApi
+     * @param owner The name of the creator of the Kafka instance
+     * @throws ApiGenericException, KafkaNotDeletedException
+     */
+    public static void cleanKafkaInstanceByOwner(KafkaMgmtApi api, String owner) throws ApiGenericException, KafkaNotDeletedException {
+        if (Environment.SKIP_KAFKA_TEARDOWN) {
+            LOGGER.warn("skip kafka instance clean up");
+            return;
+        }
+        deleteAllKafkasFromOwner(api, owner);
+    }
+
+    /**
+     * Delete all Kafka Instances by owner
+     *
+     * @param api   KafkaMgmtApi
+     * @param owner The name of the creator of the Kafka instance
+     * @throws ApiGenericException, KafkaNotDeletedException
+     */
+    private static void deleteAllKafkasFromOwner(KafkaMgmtApi api, String owner) throws ApiGenericException, KafkaNotDeletedException {
+        Optional<KafkaRequest> optionalKafka = getKafkaByOwner(api, owner);
+        while (optionalKafka.isPresent()) {
+            KafkaRequest kafka = optionalKafka.get();
+
+            LOGGER.info("kafka instance '{}' to be deleted", kafka.getName());
+            api.deleteKafkaById(kafka.getId(), true);
+            try {
+                waitUntilKafkaIsDeleted(api, kafka.getId());
+            } catch (InterruptedException | KafkaNotDeletedException e) {
+                throw new KafkaNotDeletedException(kafka, e);
+            }
+            LOGGER.info("kafka instance '{}' deleted", kafka.getName());
+
+            optionalKafka = getKafkaByOwner(api, owner);
+        }
+        LOGGER.info("all kafka instances for {} user are deleted", owner);
     }
 
     /**
