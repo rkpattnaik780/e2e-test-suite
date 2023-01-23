@@ -65,8 +65,6 @@ public class QuotaKafkaInstanceTest extends TestBase {
 
     private KafkaMgmtApi quotaUserKafkaMgmtApi;
     private KafkaMgmtApi noQuotaUserKafkaMgmtApi;
-    
-    private KafkaRequest kafka;
 
     @BeforeClass
     @SneakyThrows
@@ -97,13 +95,13 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     private void deleteAllKafkaInstances() {
         try {
-            KafkaMgmtApiUtils.deleteAllKafkas(noQuotaUserKafkaMgmtApi);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, Environment.ALIEN_USERNAME);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instance for ALIEN user: ", t);
         }
 
         try {
-            KafkaMgmtApiUtils.deleteAllKafkas(quotaUserKafkaMgmtApi);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, Environment.DIFF_ORG_USERNAME);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instances for DIFF_ORG user: ", t);
         }
@@ -119,7 +117,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
                 .name(KAFKA_INSTANCE_NAME_FAIL)
                 .cloudProvider(Environment.CLOUD_PROVIDER)
                 .plan(PLAN_DEVELOPER);
-            kafka = KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
+            KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiGenericException e) {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
@@ -138,7 +136,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             .name(KAFKA_INSTANCE_NAME_QUOTA)
             .cloudProvider(Environment.CLOUD_PROVIDER)
             .plan(PLAN_STANDARD);
-        kafka = KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
+        KafkaRequest kafka = KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
         assertEquals(kafka.getName(), KAFKA_INSTANCE_NAME_QUOTA);
         assertEquals(kafka.getInstanceType() + '.' + kafka.getSizeId(), PLAN_STANDARD);
     }
@@ -193,7 +191,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             .name(KAFKA_INSTANCE_NAME_NO_QUOTA)
             .cloudProvider(Environment.CLOUD_PROVIDER)
             .plan(PLAN_DEVELOPER);
-        kafka = KafkaMgmtApiUtils.createKafkaInstance(noQuotaUserKafkaMgmtApi, payload);
+        KafkaRequest kafka = KafkaMgmtApiUtils.createKafkaInstance(noQuotaUserKafkaMgmtApi, payload);
         assertEquals(kafka.getName(), KAFKA_INSTANCE_NAME_NO_QUOTA);
         assertEquals(kafka.getInstanceType() + '.' + kafka.getSizeId(), PLAN_DEVELOPER);
     }
