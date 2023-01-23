@@ -5,21 +5,22 @@ import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
-import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
 import io.managed.services.test.client.oauth.KeycloakLoginSession;
+import io.managed.services.test.client.oauth.KeycloakUser;
 import lombok.SneakyThrows;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONObject;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.json.JSONObject;
 
+import static io.managed.services.test.TestUtils.bwait;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -68,21 +69,22 @@ public class QuotaKafkaInstanceTest extends TestBase {
     private KafkaRequest kafka;
 
     @BeforeClass
+    @SneakyThrows
     public void bootstrap() {
         assertNotNull(Environment.DIFF_ORG_USERNAME, "the DIFF_ORG_USERNAME env is null");
         assertNotNull(Environment.DIFF_ORG_PASSWORD, "the DIFF_ORG_PASSWORD env is null");
         assertNotNull(Environment.ALIEN_USERNAME, "the ALIENUSERNAME env is null");
         assertNotNull(Environment.ALIEN_PASSWORD, "the ALIENPASSWORD env is null");
 
-        var quotaUserAuth = new KeycloakLoginSession(Environment.DIFF_ORG_USERNAME, Environment.DIFF_ORG_PASSWORD);
-        var noQuotaUserAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
+        KeycloakLoginSession quotaUserAuth = new KeycloakLoginSession(Environment.DIFF_ORG_USERNAME, Environment.DIFF_ORG_PASSWORD);
+        KeycloakLoginSession noQuotaUserAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
 
-        ApplicationServicesApi quotaUserApi = ApplicationServicesApi.applicationServicesApi(quotaUserAuth);
-        ApplicationServicesApi noQuotaUserApi = ApplicationServicesApi.applicationServicesApi(noQuotaUserAuth);
+        KeycloakUser quotaUser = bwait(quotaUserAuth.loginToRedHatSSO());
+        KeycloakUser noQuotaUser = bwait(noQuotaUserAuth.loginToRedHatSSO());
 
-        this.quotaUserKafkaMgmtApi = quotaUserApi.kafkaMgmt();
-        this.noQuotaUserKafkaMgmtApi = noQuotaUserApi.kafkaMgmt();
-        
+        quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, quotaUser);
+        noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, noQuotaUser);
+
         LOGGER.info("Preparing environment by deleting existing Kafka instances");
         deleteAllKafkaInstances();  
     }
