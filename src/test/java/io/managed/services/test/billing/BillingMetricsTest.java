@@ -76,8 +76,8 @@ public class BillingMetricsTest extends TestBase {
 
     // TODO metrics will soon be renamed to match new naming convention, more at MGDSTRM-7080.
     private static final String METRIC_STORAGE = "kafka_broker_quota_totalstorageusedbytes";
-    private static final String METRIC_TRAFFIC_IN = "haproxy_server_bytes_in_total";
-    private static final String METRIC_TRAFFIC_OUT = "haproxy_server_bytes_out_total";
+    private static final String METRIC_TRAFFIC_IN = "kafka_instance_incoming_byte_total";
+    private static final String METRIC_TRAFFIC_OUT = "kafka_instance_outgoing_byte_total";
     private static final String METRIC_CLUSTER_HOURS = "kafka_id:strimzi_resource_state:max_over_time1h";
 
     // size and count of messages to be produced/ consumed
@@ -138,11 +138,11 @@ public class BillingMetricsTest extends TestBase {
         // initialize map of snapshots for specific queries (metrics)
         PrometheusWebClient.Query queryTrafficIn = new PrometheusWebClient.Query()
             .metric(METRIC_TRAFFIC_IN)
-            .label("exported_namespace", String.format("kafka-%s", kafka.getId()))
+            .label("namespace", String.format("kafka-%s", kafka.getId()))
             .aggregateFunction("sum");
         PrometheusWebClient.Query queryTrafficOut = new PrometheusWebClient.Query()
             .metric(METRIC_TRAFFIC_OUT)
-            .label("exported_namespace", String.format("kafka-%s", kafka.getId()))
+            .label("namespace", String.format("kafka-%s", kafka.getId()))
             .aggregateFunction("sum");
         PrometheusWebClient.Query queryStorageIncrease = new PrometheusWebClient.Query()
             .metric(METRIC_STORAGE)
