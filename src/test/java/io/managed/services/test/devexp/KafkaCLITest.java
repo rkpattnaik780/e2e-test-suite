@@ -59,8 +59,8 @@ import static org.testng.Assert.assertTrue;
 public class KafkaCLITest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaCLITest.class);
 
-    private static final String KAFKA_INSTANCE_NAME = "cli-e2e-test-instance-" + Environment.LAUNCH_KEY;
-    private static final String SERVICE_ACCOUNT_NAME = "cli-e2e-service-account-" + Environment.LAUNCH_KEY;
+    private static final String KAFKA_INSTANCE_NAME = "cli-e2e-test-instance-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
+    private static final String SERVICE_ACCOUNT_NAME = "cli-e2e-service-account-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
     private static final String TOPIC_NAME = "cli-e2e-test-topic";
     // used for testing quickstart for data production and consumption
     private static final String TOPIC_NAME_PRODUCE_CONSUME = "produce-consume-test-topic";

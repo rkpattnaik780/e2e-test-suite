@@ -31,7 +31,7 @@ import static org.testng.Assert.assertTrue;
 @Log4j2
 public class BillingModelTest {
 
-    static final String KAFKA_INSTANCE_NAME = "mk-e2e-" + Environment.LAUNCH_KEY;
+    static final String KAFKA_INSTANCE_NAME = "mk-e2e-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
 
     private final Map<String, KafkaMgmtApi> mgmtApis = new HashMap<>();
 

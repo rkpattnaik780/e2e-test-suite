@@ -17,7 +17,7 @@ import static org.testng.Assert.assertNotNull;
 
 @Log4j2
 public class KafkaRegressionTest {
-    static final String KAFKA_INSTANCE_NAME = "mk-e2e-reg-" + Environment.LAUNCH_KEY;
+    static final String KAFKA_INSTANCE_NAME = "mk-e2e-reg-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
 
     private KafkaMgmtApi kafkaMgmtApi;
 

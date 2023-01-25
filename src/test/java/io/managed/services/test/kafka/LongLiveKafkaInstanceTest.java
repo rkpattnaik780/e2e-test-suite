@@ -58,8 +58,8 @@ import static org.testng.Assert.fail;
 public class LongLiveKafkaInstanceTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(LongLiveKafkaInstanceTest.class);
 
-    public static final String KAFKA_INSTANCE_NAME = "mk-e2e-ll-" + Environment.LAUNCH_KEY;
-    public static final String SERVICE_ACCOUNT_NAME = "mk-e2e-ll-sa-" + Environment.LAUNCH_KEY;
+    public static final String KAFKA_INSTANCE_NAME = "mk-e2e-ll-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
+    public static final String SERVICE_ACCOUNT_NAME = "mk-e2e-ll-sa-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
 
     private static final String TOPIC_NAME = "test-topic";
     private static final String MULTI_PARTITION_TOPIC_NAME = "multi-partitions-topic";
