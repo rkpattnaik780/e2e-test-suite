@@ -5,7 +5,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.openshift.client.OpenShiftClient;
-import io.managed.services.test.k8.managedkafka.resources.v1alpha1.ManagedKafka;
+import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafka;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

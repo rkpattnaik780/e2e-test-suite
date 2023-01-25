@@ -1,4 +1,4 @@
-package io.managed.services.test.k8.managedkafka.resources.v1alpha1;
+package io.managed.services.test.k8.managedkafka.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.sundr.builder.annotations.Buildable;
@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.regex.Matcher;

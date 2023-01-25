@@ -9,7 +9,7 @@ import io.managed.services.test.TestBase;
 import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.k8.managedkafka.resources.v1alpha1.ManagedKafka;
+import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafka;
 import io.managed.services.test.k8.managedkafka.ManagedKafkaUtils;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
