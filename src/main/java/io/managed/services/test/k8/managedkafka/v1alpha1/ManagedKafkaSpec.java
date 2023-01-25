@@ -1,10 +1,11 @@
-package io.managed.services.test.k8.managedkafka.resources.v1alpha1;
+package io.managed.services.test.k8.managedkafka.v1alpha1;
 
 import io.sundr.builder.annotations.Buildable;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 

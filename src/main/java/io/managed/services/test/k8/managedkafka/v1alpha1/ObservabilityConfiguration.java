@@ -1,4 +1,4 @@
-package io.managed.services.test.k8.managedkafka.resources.v1alpha1;
+package io.managed.services.test.k8.managedkafka.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.sundr.builder.annotations.Buildable;
@@ -9,9 +9,6 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 
-/**
- * Defines the endpoint related information used for reaching the ManagedKafka instance
- */
 @Buildable(
         builderPackage = "io.fabric8.kubernetes.api.builder",
         editableEnabled = false
@@ -21,9 +18,12 @@ import javax.validation.constraints.NotNull;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
-public class ManagedKafkaEndpoint {
-
+public class ObservabilityConfiguration {
     @NotNull
-    private String bootstrapServerHost;
-    private TlsKeyPair tls;
+    private String accessToken;
+    private String channel;
+    @NotNull
+    private String repository;
+    private String tag;
+
 }
