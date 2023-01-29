@@ -17,6 +17,7 @@ import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
+import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static io.managed.services.test.TestUtils.waitFor;
 import static java.time.Duration.ofDays;
@@ -39,6 +41,7 @@ import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
 
+@Log4j2
 public class KafkaMgmtApiUtils {
     private static final Logger LOGGER = LogManager.getLogger(KafkaMgmtApiUtils.class);
     private static final String CLUSTER_CAPACITY_EXHAUSTED_CODE = "KAFKAS-MGMT-24";
@@ -124,7 +127,7 @@ public class KafkaMgmtApiUtils {
     }
 
     /**
-     * Create a Kafka instance but retry for 10 minutes if the cluster capacity is exhausted.
+     * Create a Kafka instance but retry for 30 minutes if the cluster capacity is exhausted.
      *
      * @param api     KafkaMgmtApi
      * @param payload CreateKafkaPayload
@@ -132,6 +135,13 @@ public class KafkaMgmtApiUtils {
      */
     public static KafkaRequest createKafkaInstance(KafkaMgmtApi api, KafkaRequestPayload payload)
         throws ApiGenericException, InterruptedException, KafkaClusterCapacityExhaustedException, KafkaUnprovisionedException {
+        var kafkaRequest =  attemptCreatingKafkaInstance(api, payload, ofSeconds(30), ofMinutes(30));
+
+        return waitUntilKafkaIsProvisioning(api, kafkaRequest.getId());
+    }
+
+    public static KafkaRequest attemptCreatingKafkaInstance(KafkaMgmtApi api, KafkaRequestPayload payload, Duration queryingInterval, Duration timeout)
+            throws ApiGenericException, InterruptedException, KafkaClusterCapacityExhaustedException {
 
         var kafkaAtom = new AtomicReference<KafkaRequest>();
         var exceptionAtom = new AtomicReference<ApiForbiddenException>();
@@ -162,15 +172,13 @@ public class KafkaMgmtApiUtils {
         };
 
         try {
-            waitFor("create kafka instance", ofSeconds(30), ofDays(1), ready);
+            waitFor("create kafka instance", queryingInterval, timeout, ready);
         } catch (TimeoutException e) {
             throw new KafkaClusterCapacityExhaustedException(exceptionAtom.get());
         }
 
-        // If there is space in other regions but not in the requested region the Kafka instance
-        // remains in the accepted state until a space doesn't become available in the requested region
-        // Workaround for https://issues.redhat.com/browse/MGDSTRM-5995
-        return waitUntilKafkaIsProvisioning(api, kafkaAtom.get().getId());
+        // returned kafka instance which was attempted to be created
+        return kafkaAtom.get();
     }
 
     /**
@@ -206,6 +214,38 @@ public class KafkaMgmtApiUtils {
             LOGGER.info("kafka instance '{}' not found", name);
         }
     }
+
+    /**
+     * Delete all the Kafka Instances searched by instancenameSubstring owned by user with ownerName. This operation includes waiting for deletion
+     *
+     * @param instancenameSubstring part of name which will be actually searched by
+     * @param ownerName The name of the creator of the Kafka instance
+     * @param api KafkaMgmtApi
+     * @throws ApiGenericException, KafkaNotDeletedException
+     */
+    public static void deleteSearchedKafkaInstancesByOwner(KafkaMgmtApi api, String instancenameSubstring, String ownerName) throws ApiGenericException, KafkaNotDeletedException, InterruptedException {
+        log.debug("search for kafka instances by substring '{}' owned by user name '{}'", instancenameSubstring, ownerName);
+        var kafkaList = api
+                .getKafkas(null, null, null, null)
+                .getItems().stream()
+                .filter(e -> e.getName().contains(instancenameSubstring))
+                .filter(e -> e.getOwner().equals(ownerName))
+                .collect(Collectors.toList());
+        log.debug("number of total kafka instances to be deleted '{}'", kafkaList.size());
+
+        // specific kafka instances to be deleted
+        for (KafkaRequest kafkaRequest : kafkaList) {
+            log.debug("found kafka instance '{}' owned by '{}'", kafkaRequest, ownerName);
+            deleteKafkaByNameIfExists(api, kafkaRequest.getName());
+        }
+
+        log.debug("wait for kafka deletions");
+        for (KafkaRequest kafkaRequest : kafkaList) {
+            waitUntilKafkaIsDeleted(api, kafkaRequest.getId());
+        }
+
+    }
+
     
     /**
      * Delete all the Kafka Instances by owner if they exists and if the SKIP_KAFKA_TEARDOWN env is set to false.
