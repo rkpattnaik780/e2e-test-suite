@@ -64,7 +64,7 @@ public class FleetshardUtils {
 
     public  static Map<String, Integer> getReadyNodesPerEachMachineSetContainingName(OpenShiftClient oc, String containedName) {
         return oc.machine().machineSets().list().getItems().stream()
-                .filter(e -> e.getMetadata().getName().contains("kafka-standard"))
+                .filter(e -> e.getMetadata().getName().contains(containedName))
                 .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m.getStatus().getReadyReplicas()));
     }
 
