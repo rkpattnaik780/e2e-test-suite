@@ -9,6 +9,7 @@ import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafka;
 import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafkaAgent;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,14 @@ public class FleetshardUtils {
             .count();
     }
 
-    private static ManagedKafkaAgent getManagedKafka(OpenShiftClient oc) throws Exception {
+    public static List<ManagedKafka> listManagedKafka(OpenShiftClient oc, ManagedKafkaType mkType) {
+        return FleetshardUtils.managedKafka(oc).inAnyNamespace().list().getItems()
+                .stream()
+                .filter(e -> mkType.toString().equals(e.getLabel("bf2.org/kafkaInstanceProfileType").orElse("not present")))
+                .collect(Collectors.toList());
+    }
+
+    private static ManagedKafkaAgent getManagedKafka(OpenShiftClient oc) throws Throwable {
         ManagedKafkaAgent mkAgent = FleetshardUtils.managedKafkaAgent(oc).list().getItems().stream()
             .findAny()
             .orElseThrow(() -> new Exception("managed kafka agent is not present in cluster"));
@@ -38,7 +46,7 @@ public class FleetshardUtils {
         return mkAgent;
     }
 
-    public static int getClusterCapacityFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Exception {
+    public static int getClusterCapacityFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
         return FleetshardUtils.getManagedKafka(oc)
                 .getStatus()
                 .getCapacity()
@@ -46,7 +54,7 @@ public class FleetshardUtils {
                 .getMaxUnits();
     }
 
-    public static int getCapacityRemainingUnitsFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Exception {
+    public static int getCapacityRemainingUnitsFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
         return FleetshardUtils.getManagedKafka(oc)
                 .getStatus()
                 .getCapacity()

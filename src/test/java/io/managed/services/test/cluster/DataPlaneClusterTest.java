@@ -28,12 +28,13 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 // TODO unify and add env variables for gcp data plane clusters.
 /**
@@ -56,7 +57,7 @@ import static org.testng.Assert.assertTrue;
  * </ul>
  */
 @Log4j2
-public class DeploymentsTest extends TestBase {
+public class DataPlaneClusterTest extends TestBase {
 
 
     static final String KAFKA_INSTANCE_NAME = "cl-e2e-" + Environment.LAUNCH_SUFFIX;
@@ -65,14 +66,9 @@ public class DeploymentsTest extends TestBase {
 
     private static int maxStandardInstancesInCluster;
     private static int maxDeveloperInstancesInCluster;
-
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
-    private static final String KAFKAS_MGMT_21_REASON = "unable to detect instance type in plan provided: ";
-    private static final String PLAN_DEVELOPER = "developer.x1";
     private static final String PLAN_STANDARD = "standard.x1";
-
     private static final String INSTANCE_NAME_PREFIX = "cl-e2e-placeholder-";
-
     private KafkaMgmtApi kafkaMgmtApi;
 
     @BeforeClass
@@ -120,7 +116,7 @@ public class DeploymentsTest extends TestBase {
             {"developer"}};
     }
 
-    @Test(dataProvider = "managedKafkaTypes", enabled = true)
+    @Test(dataProvider = "managedKafkaTypes")
     @SneakyThrows
     public void testReservedDeploymentExistence(String mkType) {
 
@@ -133,10 +129,10 @@ public class DeploymentsTest extends TestBase {
         Assert.assertTrue(mkOptional.isPresent(), "reserved deployment is not present");
     }
 
-    @Test(dataProvider = "managedKafkaTypes", enabled = true)
+    @Test(dataProvider = "managedKafkaTypes")
     public void testReservedDeploymentDoesNotPreventKafkaCreation(String mkType) throws Exception {
 
-        log.info("Obtain information about available quota for managed kafka type: '{}'", mkType);
+        log.info("testing managed kafka type: '{}'", mkType);
 
         // obtain max limit of kafka instances per given mk type (developer, standard)
         int upperLimitPerManagedKafkaType;
@@ -182,8 +178,10 @@ public class DeploymentsTest extends TestBase {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());
-            assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertTrue(jsonResponse.get("reason").toString().contains(KAFKAS_MGMT_21_REASON));
+            if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
+                throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
+            else
+                throw  e;
         } finally {
             // cleanup of kafka instance
             log.info("clean kafka instance with name '{}'", KAFKA_INSTANCE_NAME);
@@ -197,7 +195,7 @@ public class DeploymentsTest extends TestBase {
         }
     }
 
-    @Test(enabled = true)
+    @Test()
     @SneakyThrows
     public void testStandardKafkaNodeAutoscaling() {
 
@@ -279,6 +277,84 @@ public class DeploymentsTest extends TestBase {
         } finally {
             // delete and wait for cleaning of all instances spawned
             KafkaMgmtApiUtils.deleteSearchedKafkaInstancesByOwner(kafkaMgmtApi, INSTANCE_NAME_PREFIX, Environment.PRIMARY_USERNAME);
+        }
+    }
+
+    @Test(dataProvider = "managedKafkaTypes")
+    @SneakyThrows
+    public void testReportedCapacityMatchesNumberOfExistingInstances(String mkType) {
+
+        int observedRemainingCapacityInitially = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.valueOf(mkType));
+        log.info("observed remaining capacity before creating new instance '{}'", observedRemainingCapacityInitially);
+        if (observedRemainingCapacityInitially == 0)
+            throw new SkipException("cluster has no free capacity to test at the moment");
+
+        Set<String> kafkaInstanceNamesBeforeCreating = FleetshardUtils.listManagedKafka(oc, ManagedKafkaType.valueOf(mkType)).stream()
+            .map(e -> e.getMetadata().getName())
+            .collect(Collectors.toSet());
+        log.debug("existing mk instances before creating a new one {}", kafkaInstanceNamesBeforeCreating);
+
+        // create kafka instance of expected type
+        log.info(KAFKA_INSTANCE_NAME + "-" + mkType);
+        KafkaRequestPayload payload = new KafkaRequestPayload()
+                .name(KAFKA_INSTANCE_NAME + "-" + mkType)
+                .cloudProvider("aws")
+                .region("us-east-1")
+                .plan(String.format("%s.x1", mkType));
+
+        log.info("attempt to create kafka instance");
+        KafkaRequest kafkaRequest = null;
+        try {
+            kafkaRequest = kafkaMgmtApi.createKafka(true, payload);
+            log.debug(kafkaRequest);
+            log.info("wait for provisioning of kafka instance with id '{}'", kafkaRequest.getId());
+            KafkaMgmtApiUtils.waitUntilKafkaIsProvisioning(kafkaMgmtApi, kafkaRequest.getId());
+
+            // wait for three minutes to see if reported capacity already increased (exclusively)
+            TestUtils.waitFor(
+                "update of number of nodes scaled due to creation of new standard managed kafka instance",
+                Duration.ofSeconds(5),
+                Duration.ofMinutes(2),
+                ready -> {
+                    int remainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.standard);
+                    log.info("remaining capacity in the cluster '{}'", remainingCapacity);
+
+                    // spawn new instance if there is a capacity for it
+                    int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.valueOf(mkType));
+                    log.debug("newly observed remaining capacity '{}'", newlyObservedRemainingCapacity);
+                    if (newlyObservedRemainingCapacity < observedRemainingCapacityInitially)
+                        return true;
+                    return false;
+                });
+
+            // get number of instances that were deleted while waiting for provisioning of new kafka instance
+            List<String> kafkaInstanceNamesAfterCreating = FleetshardUtils.listManagedKafka(oc, ManagedKafkaType.valueOf(mkType)).stream()
+                .map(e -> e.getMetadata().getName())
+                .collect(Collectors.toList());
+            List<String> deletedInstances = kafkaInstanceNamesBeforeCreating.stream().filter(e -> !kafkaInstanceNamesAfterCreating.contains(e)).collect(Collectors.toList());
+            log.debug("instances that have been deleted since begging of the test {}", deletedInstances);
+
+            int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.valueOf(mkType));
+            // remaining capacity should be lowered by 1, but as there are instances which may have been deleted by other users (which would free some space) we are not including them
+            Assert.assertTrue(newlyObservedRemainingCapacity <= observedRemainingCapacityInitially - 1  +  deletedInstances.size());
+        } catch (ApiGenericException e) {
+            // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
+            log.warn(e);
+            JSONObject jsonResponse = new JSONObject(e.getResponseBody());
+            if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
+                throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
+            else
+                throw  e;
+        } finally {
+            // cleanup of kafka instance
+            log.info("clean kafka instance with name '{}'", KAFKA_INSTANCE_NAME + "-" + mkType);
+            try {
+                KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
+                log.info("wait until kafka is deleted");
+                KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
+            } catch (Exception e) {
+                log.error("error while cleaning kafka instance: %s", e);
+            }
         }
     }
 
