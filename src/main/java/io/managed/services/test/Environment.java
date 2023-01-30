@@ -82,7 +82,7 @@ public class Environment {
 
     private static final String PROMETHEUS_PUSH_GATEWAY_ENV = "PROMETHEUS_PUSH_GATEWAY";
 
-    private static final String STRATOSPHERE_PASSWORD_ENV = "STRATOSPHERE_PASSWORD";
+    private static final String STRATOSPHERE_OFFLINE_TOKEN_ENV = "STRATOSPHERE_OFFLINE_TOKEN";
     private static final String STRATOSPHERE_SCENARIO_1_USER_ENV = "STRATOSPHERE_SCENARIO_1_USER";
     private static final String STRATOSPHERE_SCENARIO_2_USER_ENV = "STRATOSPHERE_SCENARIO_2_USER";
     private static final String STRATOSPHERE_SCENARIO_3_USER_ENV = "STRATOSPHERE_SCENARIO_3_USER";
@@ -180,7 +180,7 @@ public class Environment {
 
     public static final String PROMETHEUS_PUSH_GATEWAY = getOrDefault(PROMETHEUS_PUSH_GATEWAY_ENV, null);
 
-    public static final String STRATOSPHERE_PASSWORD = getOrDefault(STRATOSPHERE_PASSWORD_ENV, null);
+    public static final String STRATOSPHERE_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_OFFLINE_TOKEN_ENV, null);
     public static final String STRATOSPHERE_SCENARIO_1_USER = getOrDefault(STRATOSPHERE_SCENARIO_1_USER_ENV, null);
     public static final String STRATOSPHERE_SCENARIO_2_USER = getOrDefault(STRATOSPHERE_SCENARIO_2_USER_ENV, null);
     public static final String STRATOSPHERE_SCENARIO_3_USER = getOrDefault(STRATOSPHERE_SCENARIO_3_USER_ENV, null);

@@ -33,7 +33,6 @@ public class KafkaInstanceContext {
     public KafkaInstanceApi kafkaInstanceApi() {
         var masUser = userContext.requireMasUser();
         var kafkaInstance = this.requireKafkaInstance();
-        // TODO: check if this is the correct token to be used
         return KafkaInstanceApiUtils.kafkaInstanceApi(kafkaInstance, Environment.PRIMARY_OFFLINE_TOKEN);
     }
 }

@@ -41,7 +41,7 @@ public class BillingModelTest {
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_2_USER, "the STRATOSPHERE_SCENARIO_2_USER env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_3_USER, "the STRATOSPHERE_SCENARIO_3_USER env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_4_USER, "the STRATOSPHERE_SCENARIO_4_USER env is null");
-        assertNotNull(Environment.STRATOSPHERE_PASSWORD, "the STRATOSPHERE_PASSWORD env is null");
+        assertNotNull(Environment.STRATOSPHERE_OFFLINE_TOKEN, "the STRATOSPHERE_OFFLINE_TOKEN env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID env is null");
@@ -61,8 +61,7 @@ public class BillingModelTest {
             return api;
         }
 
-        // TODO: not sure how this works, this is going to be broken ...
-        var apps = ApplicationServicesApi.applicationServicesApi(Environment.STRATOSPHERE_PASSWORD);
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.STRATOSPHERE_OFFLINE_TOKEN);
 
         mgmtApis.put(user, apps.kafkaMgmt());
         return mgmtApis.get(user);
