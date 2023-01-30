@@ -17,9 +17,8 @@ public class SecurityMgmtApi extends BaseApi {
     private final SecurityApi api;
 
     public SecurityMgmtApi(ApiClient apiClient, String offlineToken) {
-        super();
+        super(offlineToken);
         this.apiClient = apiClient;
-        ((HttpBearerAuth) apiClient.getAuthentication("Bearer")).setBearerToken(offlineToken);
         this.api = new SecurityApi(apiClient);
     }
 
@@ -30,6 +29,11 @@ public class SecurityMgmtApi extends BaseApi {
             return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
         }
         return null;
+    }
+
+    @Override
+    protected void setAccessToken(String accessToken) {
+        ((HttpBearerAuth) apiClient.getAuthentication("Bearer")).setBearerToken(accessToken);
     }
 
     @SuppressWarnings("unused")

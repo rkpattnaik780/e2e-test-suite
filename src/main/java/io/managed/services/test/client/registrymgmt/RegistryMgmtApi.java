@@ -17,9 +17,8 @@ public class RegistryMgmtApi extends BaseApi {
     private final RegistriesApi registriesApi;
 
     public RegistryMgmtApi(ApiClient apiClient, String offlineToken) {
-        super();
+        super(offlineToken);
         this.apiClient = apiClient;
-        ((HttpBearerAuth) this.apiClient.getAuthentication("Bearer")).setBearerToken(offlineToken);
         this.registriesApi = new RegistriesApi(apiClient);
     }
 
@@ -30,6 +29,11 @@ public class RegistryMgmtApi extends BaseApi {
             return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
         }
         return null;
+    }
+
+    @Override
+    protected void setAccessToken(String accessToken) {
+        ((HttpBearerAuth) this.apiClient.getAuthentication("Bearer")).setBearerToken(accessToken);
     }
 
     public Registry createRegistry(RegistryCreate registryCreateRest) throws ApiGenericException {

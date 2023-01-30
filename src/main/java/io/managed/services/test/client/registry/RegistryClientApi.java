@@ -22,9 +22,8 @@ public class RegistryClientApi extends BaseApi {
     private final BearerAuth bearerAuth;
 
     public RegistryClientApi(String baseUrl, String offlineToken) {
-        super();
+        super(offlineToken);
         this.bearerAuth = new BearerAuth();
-        this.bearerAuth.setAccessToken(offlineToken);
         this.registryClient = RegistryClientFactory.create(baseUrl, new HashMap<>(), bearerAuth);
     }
 
@@ -43,6 +42,11 @@ public class RegistryClientApi extends BaseApi {
             return new ApiUnknownException(e.getMessage(), ((RestClientException) e).getError().getErrorCode(), new HashMap<>(), "", e);
         }
         return null;
+    }
+
+    @Override
+    protected void setAccessToken(String accessToken) {
+        this.bearerAuth.setAccessToken(accessToken);
     }
 
     public ArtifactMetaData createArtifact(String groupId, String artifactId, byte[] data) throws ApiGenericException {

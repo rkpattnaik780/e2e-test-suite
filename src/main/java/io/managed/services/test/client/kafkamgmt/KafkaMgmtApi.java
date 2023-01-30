@@ -24,9 +24,8 @@ public class KafkaMgmtApi extends BaseApi {
     private final DefaultApi api;
 
     public KafkaMgmtApi(ApiClient apiClient, String offlineToken) {
-        super();
+        super(offlineToken);
         this.apiClient = Objects.requireNonNull(apiClient);
-        ((HttpBearerAuth) this.apiClient.getAuthentication("Bearer")).setBearerToken(offlineToken);
         this.api = new DefaultApi(apiClient);
     }
 
@@ -37,6 +36,11 @@ public class KafkaMgmtApi extends BaseApi {
             return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
         }
         return null;
+    }
+
+    @Override
+    protected void setAccessToken(String accessToken) {
+        ((HttpBearerAuth) this.apiClient.getAuthentication("Bearer")).setBearerToken(accessToken);
     }
 
     public KafkaRequest getKafkaById(String id) throws ApiGenericException {
