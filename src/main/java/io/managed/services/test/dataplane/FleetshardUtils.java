@@ -45,7 +45,7 @@ public class FleetshardUtils {
     }
 
     private static ManagedKafkaAgent getManagedKafkaAgent(OpenShiftClient oc) throws Throwable {
-        ManagedKafkaAgent mkAgent = FleetshardUtils.managedKafkaAgent(oc).list().getItems().stream()
+        ManagedKafkaAgent mkAgent = FleetshardUtils.managedKafkaAgent(oc).inAnyNamespace().list().getItems().stream()
             .findAny()
             .orElseThrow(() -> new Exception("managed kafka agent is not present in cluster"));
         log.trace(mkAgent);

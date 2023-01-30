@@ -52,8 +52,7 @@ import java.util.stream.Collectors;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 @Log4j2
