@@ -16,8 +16,6 @@ import io.fabric8.openshift.client.OpenShiftClient;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
@@ -40,7 +38,6 @@ import java.util.Base64;
 import java.util.HashMap;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
-import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.TestUtils.message;
 import static io.managed.services.test.TestUtils.waitFor;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
@@ -70,7 +67,6 @@ import static org.testng.Assert.assertNotNull;
 public class ServiceRegistryOperatorTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaOperatorTest.class);
 
-    private KeycloakUser user;
     private SecurityMgmtApi securityMgmtApi;
     private OpenShiftClient oc;
 
@@ -89,18 +85,13 @@ public class ServiceRegistryOperatorTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
         assertNotNull(Environment.DEV_CLUSTER_SERVER, "the DEV_CLUSTER_SERVER env is null");
         assertNotNull(Environment.DEV_CLUSTER_TOKEN, "the DEV_CLUSTER_TOKEN env is null");
 
-        var auth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        LOGGER.info("authenticate user '{}' against RH SSO", auth.getUsername());
-        user = bwait(auth.loginToRedHatSSO());
-
         LOGGER.info("initialize security and register apis");
-        securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, user);
-        registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, user);
+        securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
+        registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
 
         LOGGER.info("initialize openshift client");
         Config config = new ConfigBuilder()
@@ -217,7 +208,7 @@ public class ServiceRegistryOperatorTest extends TestBase {
 
         // Create Secret
         var data = new HashMap<String, String>();
-        data.put("value", Base64.getEncoder().encodeToString(user.getRefreshToken().getBytes()));
+        data.put("value", Base64.getEncoder().encodeToString(Environment.PRIMARY_OFFLINE_TOKEN.getBytes()));
 
         LOGGER.info("create access token secret with name: {}", ACCESS_TOKEN_SECRET_NAME);
         oc.secrets().create(OperatorUtils.buildSecret(ACCESS_TOKEN_SECRET_NAME, data));

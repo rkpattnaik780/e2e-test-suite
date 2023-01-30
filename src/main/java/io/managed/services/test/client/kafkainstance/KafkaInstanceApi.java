@@ -25,7 +25,6 @@ import com.openshift.cloud.api.kas.auth.models.TopicsList;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
-import io.managed.services.test.client.oauth.KeycloakUser;
 
 public class KafkaInstanceApi extends BaseApi {
 
@@ -34,9 +33,10 @@ public class KafkaInstanceApi extends BaseApi {
     private final GroupsApi groupsApi;
     private final TopicsApi topicsApi;
 
-    public KafkaInstanceApi(ApiClient apiClient, KeycloakUser user) {
-        super(user);
+    public KafkaInstanceApi(ApiClient apiClient, String offlineToken) {
+        super();
         this.apiClient = apiClient;
+        this.apiClient.setAccessToken(offlineToken);
         this.aclsApi = new AclsApi(apiClient);
         this.groupsApi = new GroupsApi(apiClient);
         this.topicsApi = new TopicsApi(apiClient);
@@ -49,11 +49,6 @@ public class KafkaInstanceApi extends BaseApi {
             return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
         }
         return null;
-    }
-
-    @Override
-    protected void setAccessToken(String t) {
-        apiClient.setAccessToken(t);
     }
 
 

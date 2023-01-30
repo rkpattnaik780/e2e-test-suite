@@ -10,16 +10,16 @@ import com.openshift.cloud.api.kas.models.ServiceAccountRequest;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
-import io.managed.services.test.client.oauth.KeycloakUser;
 
 public class SecurityMgmtApi extends BaseApi {
 
     private final ApiClient apiClient;
     private final SecurityApi api;
 
-    public SecurityMgmtApi(ApiClient apiClient, KeycloakUser user) {
-        super(user);
+    public SecurityMgmtApi(ApiClient apiClient, String offlineToken) {
+        super();
         this.apiClient = apiClient;
+        ((HttpBearerAuth) apiClient.getAuthentication("Bearer")).setBearerToken(offlineToken);
         this.api = new SecurityApi(apiClient);
     }
 
@@ -30,11 +30,6 @@ public class SecurityMgmtApi extends BaseApi {
             return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
         }
         return null;
-    }
-
-    @Override
-    protected void setAccessToken(String t) {
-        ((HttpBearerAuth) apiClient.getAuthentication("Bearer")).setBearerToken(t);
     }
 
     @SuppressWarnings("unused")

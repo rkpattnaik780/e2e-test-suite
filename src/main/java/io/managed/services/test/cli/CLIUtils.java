@@ -19,7 +19,6 @@ import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaNotDeletedException;
 import io.managed.services.test.client.kafkamgmt.KafkaNotReadyException;
 import io.managed.services.test.client.kafkamgmt.KafkaUnknownHostsException;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.managed.services.test.client.registrymgmt.RegistryNotDeletedException;
 import io.managed.services.test.client.registrymgmt.RegistryNotReadyException;
@@ -82,33 +81,22 @@ public class CLIUtils {
         throw new IOException("cli not found");
     }
 
-    public static CompletableFuture<Void> login(Vertx vertx, CLI cli, String username, String password) {
-        var session = new KeycloakLoginSession(vertx, username, password);
-        return login(vertx, cli, session);
-    }
-
-    public static CompletableFuture<Void> login(Vertx vertx, CLI cli, KeycloakLoginSession session) {
+    public static CompletableFuture<Void> login(CLI cli, String offlineToken) {
         boolean insecure = Environment.KAFKA_INSECURE_TLS;
-        return login(vertx, cli, session, insecure);
+        return login(cli, offlineToken, insecure);
     }
 
-    public static CompletableFuture<Void> login(Vertx vertx, CLI cli, KeycloakLoginSession session, boolean insecureLogin) {
+    public static CompletableFuture<Void> login(CLI cli, String offlineToken, boolean insecureLogin) {
 
         var authURL = String.format("%s/auth/realms/%s", Environment.REDHAT_SSO_URI, Environment.REDHAT_SSO_REALM);
 
-        LOGGER.info("start CLI login with username: {}", session.getUsername());
-        var process = cli.login(Environment.OPENSHIFT_API_URI, authURL, insecureLogin);
-
-        LOGGER.info("start oauth login against CLI");
-        var oauthFuture = parseUrl(vertx, process.stdout(), String.format("%s/auth/.*", Environment.REDHAT_SSO_URI))
-            .compose(l -> session.login(l))
-            .onSuccess(__ -> LOGGER.info("first oauth login completed"))
-            .toCompletionStage().toCompletableFuture();
+        LOGGER.info("start CLI login");
+        var process = cli.login(Environment.OPENSHIFT_API_URI, authURL, insecureLogin, offlineToken);
 
         var cliFuture = process.future(Duration.ofMinutes(3))
-            .thenAccept(r -> LOGGER.info("CLI login completed"));
+                .thenAccept(r -> LOGGER.info("CLI login completed"));
 
-        return CompletableFuture.allOf(oauthFuture, cliFuture);
+        return cliFuture;
     }
 
     private static Future<String> parseUrl(Vertx vertx, BufferedReader stdout, String urlRegex) {

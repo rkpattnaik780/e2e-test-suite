@@ -9,10 +9,6 @@ import io.managed.services.test.ThrowingFunction;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
-import io.managed.services.test.client.oauth.KeycloakUser;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,24 +24,11 @@ import static java.time.Duration.ofSeconds;
 public class RegistryMgmtApiUtils {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtApiUtils.class);
 
-    @Deprecated
-    public static Future<RegistryMgmtApi> registryMgmtApi(String username, String password) {
-        return registryMgmtApi(new KeycloakLoginSession(Vertx.vertx(), username, password));
+    public static RegistryMgmtApi registryMgmtApi(String offlineToken) {
+        return new RegistryMgmtApi(new ApiClient().setBasePath(Environment.OPENSHIFT_API_URI), offlineToken);
     }
-
-    @Deprecated
-    public static Future<RegistryMgmtApi> registryMgmtApi(KeycloakLoginSession auth) {
-        LOGGER.info("authenticate user: {} against RH SSO", auth.getUsername());
-        return auth.loginToRedHatSSO().map(u -> registryMgmtApi(u));
-    }
-
-    @Deprecated
-    public static RegistryMgmtApi registryMgmtApi(KeycloakUser user) {
-        return registryMgmtApi(Environment.OPENSHIFT_API_URI, user);
-    }
-
-    public static RegistryMgmtApi registryMgmtApi(String uri, KeycloakUser user) {
-        return new RegistryMgmtApi(new ApiClient().setBasePath(uri), user);
+    public static RegistryMgmtApi registryMgmtApi(String uri, String offlineToken) {
+        return new RegistryMgmtApi(new ApiClient().setBasePath(uri), offlineToken);
     }
 
     /**

@@ -61,9 +61,8 @@ public class BillingModelTest {
             return api;
         }
 
-        var apps = ApplicationServicesApi.applicationServicesApi(
-                user,
-                Environment.STRATOSPHERE_PASSWORD);
+        // TODO: not sure how this works, this is going to be broken ...
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.STRATOSPHERE_PASSWORD);
 
         mgmtApis.put(user, apps.kafkaMgmt());
         return mgmtApis.get(user);

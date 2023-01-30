@@ -34,16 +34,14 @@ public class Environment {
 
     private static final String LOG_DIR_ENV = "LOG_DIR";
 
+    private static final String PRIMARY_OFFLINE_TOKEN_ENV = "PRIMARY_OFFLINE_TOKEN";
     private static final String PRIMARY_USERNAME_ENV = "PRIMARY_USERNAME";
-    private static final String PRIMARY_PASSWORD_ENV = "PRIMARY_PASSWORD";
+    private static final String SECONDARY_OFFLINE_TOKEN_ENV = "SECONDARY_OFFLINE_TOKEN";
     private static final String SECONDARY_USERNAME_ENV = "SECONDARY_USERNAME";
-    private static final String SECONDARY_PASSWORD_ENV = "SECONDARY_PASSWORD";
-    private static final String ALIEN_USERNAME_ENV = "ALIEN_USERNAME";
-    private static final String ALIEN_PASSWORD_ENV = "ALIEN_PASSWORD";
-    private static final String DIFF_ORG_PASSWORD_ENV = "DIFF_ORG_PASSWORD";
-    private static final String DIFF_ORG_USERNAME_ENV = "DIFF_ORG_USERNAME";
+    private static final String ALIEN_OFFLINE_TOKEN_ENV = "ALIEN_OFFLINE_TOKEN";
+    private static final String DIFF_ORG_OFFLINE_TOKEN_ENV = "DIFF_ORG_OFFLINE_TOKEN";
+    private static final String ADMIN_OFFLINE_TOKEN_ENV = "ADMIN_OFFLINE_TOKEN";
     private static final String ADMIN_USERNAME_ENV = "ADMIN_USERNAME";
-    private static final String ADMIN_PASSWORD_ENV = "ADMIN_PASSWORD";
 
     private static final String OPENSHIFT_API_URI_ENV = "OPENSHIFT_API_URI";
 
@@ -111,23 +109,21 @@ public class Environment {
     public static final Path LOG_DIR = getOrDefault(LOG_DIR_ENV, Paths::get, Paths.get(SUITE_ROOT, "target", "logs")).resolve("test-run-" + DATE_FORMAT.format(LocalDateTime.now()));
 
     // sso.redhat.com primary user (See README.md)
+    public static final String PRIMARY_OFFLINE_TOKEN = getOrDefault(PRIMARY_OFFLINE_TOKEN_ENV, null);
     public static final String PRIMARY_USERNAME = getOrDefault(PRIMARY_USERNAME_ENV, null);
-    public static final String PRIMARY_PASSWORD = getOrDefault(PRIMARY_PASSWORD_ENV, null);
 
     // sso.redhat.com secondary user (See README.md)
+    public static final String SECONDARY_OFFLINE_TOKEN = getOrDefault(SECONDARY_OFFLINE_TOKEN_ENV, null);
     public static final String SECONDARY_USERNAME = getOrDefault(SECONDARY_USERNAME_ENV, null);
-    public static final String SECONDARY_PASSWORD = getOrDefault(SECONDARY_PASSWORD_ENV, null);
 
     // sso.redhat.com alien user (See README.md)
-    public static final String ALIEN_USERNAME = getOrDefault(ALIEN_USERNAME_ENV, null);
-    public static final String ALIEN_PASSWORD = getOrDefault(ALIEN_PASSWORD_ENV, null);
+    public static final String ALIEN_OFFLINE_TOKEN = getOrDefault(ALIEN_OFFLINE_TOKEN_ENV, null);
 
     // sso.redhat.com different organization user with 1 SKU quota only for stage environment (See README.md)
-    public static final String DIFF_ORG_USERNAME = getOrDefault(DIFF_ORG_USERNAME_ENV, null);
-    public static final String DIFF_ORG_PASSWORD = getOrDefault(DIFF_ORG_PASSWORD_ENV, null);
+    public static final String DIFF_ORG_OFFLINE_TOKEN = getOrDefault(DIFF_ORG_OFFLINE_TOKEN_ENV, null);
 
+    public static final String ADMIN_OFFLINE_TOKEN = getOrDefault(ADMIN_OFFLINE_TOKEN_ENV, null);
     public static final String ADMIN_USERNAME = getOrDefault(ADMIN_USERNAME_ENV, null);
-    public static final String ADMIN_PASSWORD = getOrDefault(ADMIN_PASSWORD_ENV, null);
 
     // app-services APIs base URI
     public static final String OPENSHIFT_API_URI = getOrDefault(OPENSHIFT_API_URI_ENV, "https://api.stage.openshift.com");

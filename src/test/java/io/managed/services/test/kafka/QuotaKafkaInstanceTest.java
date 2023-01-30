@@ -9,8 +9,6 @@ import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import lombok.SneakyThrows;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +18,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.json.JSONObject;
 
-import static io.managed.services.test.TestUtils.bwait;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -69,19 +66,11 @@ public class QuotaKafkaInstanceTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.DIFF_ORG_USERNAME, "the DIFF_ORG_USERNAME env is null");
-        assertNotNull(Environment.DIFF_ORG_PASSWORD, "the DIFF_ORG_PASSWORD env is null");
-        assertNotNull(Environment.ALIEN_USERNAME, "the ALIENUSERNAME env is null");
-        assertNotNull(Environment.ALIEN_PASSWORD, "the ALIENPASSWORD env is null");
+        assertNotNull(Environment.DIFF_ORG_OFFLINE_TOKEN, "the DIFF_ORG_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ALIEN_OFFLINE_TOKEN, "the ALIEN_OFFLINE_TOKEN env is null");
 
-        KeycloakLoginSession quotaUserAuth = new KeycloakLoginSession(Environment.DIFF_ORG_USERNAME, Environment.DIFF_ORG_PASSWORD);
-        KeycloakLoginSession noQuotaUserAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
-
-        KeycloakUser quotaUser = bwait(quotaUserAuth.loginToRedHatSSO());
-        KeycloakUser noQuotaUser = bwait(noQuotaUserAuth.loginToRedHatSSO());
-
-        quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, quotaUser);
-        noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, noQuotaUser);
+        quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.DIFF_ORG_OFFLINE_TOKEN);
+        noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.ALIEN_OFFLINE_TOKEN);
 
         LOGGER.info("Preparing environment by deleting existing Kafka instances");
         deleteAllKafkaInstances();  
@@ -95,13 +84,13 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     private void deleteAllKafkaInstances() {
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, Environment.ALIEN_USERNAME);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, Environment.ALIEN_OFFLINE_TOKEN);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instance for ALIEN user: ", t);
         }
 
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, Environment.DIFF_ORG_USERNAME);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, Environment.DIFF_ORG_OFFLINE_TOKEN);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instances for DIFF_ORG user: ", t);
         }

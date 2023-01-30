@@ -15,8 +15,6 @@ import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtApi;
 import io.managed.services.test.framework.LogCollector;
@@ -37,7 +35,6 @@ import java.util.Base64;
 import java.util.HashMap;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
-import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.TestUtils.message;
 import static io.managed.services.test.TestUtils.waitFor;
 import static java.time.Duration.ofMinutes;
@@ -67,7 +64,6 @@ import static org.testng.Assert.assertNotNull;
 public class KafkaOperatorTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaOperatorTest.class);
 
-    private KeycloakUser user;
     private KafkaMgmtApi kafkaMgmtApi;
     private SecurityMgmtApi securityMgmtApi;
     private OpenShiftClient oc;
@@ -85,19 +81,13 @@ public class KafkaOperatorTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
         assertNotNull(Environment.DEV_CLUSTER_SERVER, "the DEV_CLUSTER_SERVER env is null");
         assertNotNull(Environment.DEV_CLUSTER_TOKEN, "the DEV_CLUSTER_TOKEN env is null");
 
-        var auth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-
-        LOGGER.info("authenticate user '{}' against RH SSO", auth.getUsername());
-        user = bwait(auth.loginToRedHatSSO());
-
         LOGGER.info("initialize kafka and security apis");
-        kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, user);
-        securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, user);
+        kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
+        securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
 
 
         LOGGER.info("initialize openshift client");
@@ -213,7 +203,7 @@ public class KafkaOperatorTest extends TestBase {
 
         // Create Secret
         var data = new HashMap<String, String>();
-        data.put("value", Base64.getEncoder().encodeToString(user.getRefreshToken().getBytes()));
+        data.put("value", Base64.getEncoder().encodeToString(Environment.PRIMARY_OFFLINE_TOKEN.getBytes()));
 
         LOGGER.info("create access token secret with name: {}", ACCESS_TOKEN_SECRET_NAME);
         oc.secrets().create(OperatorUtils.buildSecret(ACCESS_TOKEN_SECRET_NAME, data));

@@ -22,7 +22,6 @@ import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.oauth.KeycloakUser;
 import io.managed.services.test.client.sample.QuarkusSample;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtApi;
@@ -110,8 +109,7 @@ public class QuarkusApplicationTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
         assertNotNull(Environment.DEV_CLUSTER_SERVER, "the DEV_CLUSTER_SERVER env is null");
         assertNotNull(Environment.DEV_CLUSTER_TOKEN, "the DEV_CLUSTER_TOKEN env is null");
 
@@ -125,7 +123,7 @@ public class QuarkusApplicationTest extends TestBase {
                 .build();
         oc = new DefaultOpenShiftClient(config);
 
-        var auth = new KeycloakLoginSession(vertx, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
+        var offlineToken = Environment.PRIMARY_OFFLINE_TOKEN;
 
         // CLI
         var downloader = CLIDownloader.defaultDownloader();
@@ -136,15 +134,11 @@ public class QuarkusApplicationTest extends TestBase {
         LOGGER.info("login the cli");
         cli = new CLI(cliBinary);
         // insecure login
-        CLIUtils.login(vertx, cli, auth, false).get();
-
-        // User
-        LOGGER.info("authenticate user '{}' against RH SSO", auth.getUsername());
-        user = bwait(auth.loginToRedHatSSO());
+        CLIUtils.login(cli, offlineToken, false).get();
 
         // APIs
         LOGGER.info("initialize kafka and security mgmt apis");
-        var apis = new ApplicationServicesApi(Environment.OPENSHIFT_API_URI, user);
+        var apis = new ApplicationServicesApi(Environment.OPENSHIFT_API_URI, offlineToken);
         kafkaMgmtApi = apis.kafkaMgmt();
         securityMgmtApi = apis.securityMgmt();
 
@@ -154,7 +148,7 @@ public class QuarkusApplicationTest extends TestBase {
 
         // Topic
         LOGGER.info("create topic '{}'", TOPIC_NAME);
-        var kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(auth, kafka));
+        var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, offlineToken);
 
         var topicPayload = new NewTopicInput()
             .name(TOPIC_NAME)

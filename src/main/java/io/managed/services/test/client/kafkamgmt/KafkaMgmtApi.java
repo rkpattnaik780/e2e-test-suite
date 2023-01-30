@@ -12,7 +12,6 @@ import com.openshift.cloud.api.kas.models.MetricsInstantQueryList;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
@@ -24,9 +23,10 @@ public class KafkaMgmtApi extends BaseApi {
     private final ApiClient apiClient;
     private final DefaultApi api;
 
-    public KafkaMgmtApi(ApiClient apiClient, KeycloakUser user) {
-        super(user);
+    public KafkaMgmtApi(ApiClient apiClient, String offlineToken) {
+        super();
         this.apiClient = Objects.requireNonNull(apiClient);
+        ((HttpBearerAuth) this.apiClient.getAuthentication("Bearer")).setBearerToken(offlineToken);
         this.api = new DefaultApi(apiClient);
     }
 
@@ -37,11 +37,6 @@ public class KafkaMgmtApi extends BaseApi {
             return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
         }
         return null;
-    }
-
-    @Override
-    protected void setAccessToken(String t) {
-        ((HttpBearerAuth) apiClient.getAuthentication("Bearer")).setBearerToken(t);
     }
 
     public KafkaRequest getKafkaById(String id) throws ApiGenericException {

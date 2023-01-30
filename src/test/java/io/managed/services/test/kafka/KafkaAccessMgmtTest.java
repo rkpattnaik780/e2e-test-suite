@@ -28,7 +28,6 @@ import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiAccessUtils;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
 import io.managed.services.test.wait.ReadyFunction;
 import io.vertx.core.Vertx;
@@ -129,26 +128,16 @@ public class KafkaAccessMgmtTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.ADMIN_USERNAME, "the ADMIN_USERNAME env is null");
-        assertNotNull(Environment.ADMIN_PASSWORD, "the ADMIN_PASSWORD env is null");
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
-        assertNotNull(Environment.SECONDARY_USERNAME, "the SECONDARY_USERNAME env is null");
-        assertNotNull(Environment.SECONDARY_PASSWORD, "the SECONDARY_PASSWORD env is null");
-        assertNotNull(Environment.ALIEN_USERNAME, "the ALIEN_USERNAME env is null");
-        assertNotNull(Environment.ALIEN_PASSWORD, "the ALIEN_PASSWORD env is null");
-
-        // initialize the auth objects for all users
-        var primaryAuth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var secondaryAuth = new KeycloakLoginSession(Environment.SECONDARY_USERNAME, Environment.SECONDARY_PASSWORD);
-        var alienAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
-        var adminAuth = new KeycloakLoginSession(Environment.ADMIN_USERNAME, Environment.ADMIN_PASSWORD);
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.SECONDARY_OFFLINE_TOKEN, "the ADMIN_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ADMIN_OFFLINE_TOKEN, "the ADMIN_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ALIEN_OFFLINE_TOKEN, "the ALIEN_OFFLINE_TOKEN env is null");
 
         // initialize the mgmt APIs client for all users
-        primaryAPI = ApplicationServicesApi.applicationServicesApi(primaryAuth);
-        secondaryAPI = ApplicationServicesApi.applicationServicesApi(secondaryAuth);
-        alienAPI = ApplicationServicesApi.applicationServicesApi(alienAuth);
-        adminAPI = ApplicationServicesApi.applicationServicesApi(adminAuth);
+        primaryAPI = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
+        secondaryAPI = ApplicationServicesApi.applicationServicesApi(Environment.SECONDARY_OFFLINE_TOKEN);
+        alienAPI = ApplicationServicesApi.applicationServicesApi(Environment.ALIEN_OFFLINE_TOKEN);
+        adminAPI = ApplicationServicesApi.applicationServicesApi(Environment.ADMIN_OFFLINE_TOKEN);
 
         // create a kafka instance owned by the primary user
         LOGGER.info("create kafka instance '{}'", KAFKA_INSTANCE_NAME);
@@ -166,9 +155,9 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.info("kafka admin api initialized for instance: {}", kafka.getBootstrapServerHost());
 
         // initialize the Kafka Instance API (rest) clients for all users
-        primaryKafkaInstanceAPI = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(primaryAuth, kafka));
-        secondaryKafkaInstanceAPI = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(secondaryAuth, kafka));
-        adminKafkaInstanceAPI = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(adminAuth, kafka));
+        primaryKafkaInstanceAPI = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
+        secondaryKafkaInstanceAPI = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.SECONDARY_OFFLINE_TOKEN);
+        adminKafkaInstanceAPI = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.ADMIN_OFFLINE_TOKEN);
 
         // get the default ACLs for the Kafka instance
         // (the current ACLs of an unmodified Kafka instance are the default ACLs)

@@ -5,7 +5,6 @@ import io.managed.services.test.Environment;
 import io.managed.services.test.cli.CLI;
 import io.managed.services.test.cli.CLIDownloader;
 import io.managed.services.test.cli.CLIUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
@@ -49,8 +48,7 @@ public class RegistryCLITest {
 
     @BeforeClass
     public void bootstrap() throws Throwable {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
         LOGGER.info("download cli");
         var downloader = CLIDownloader.defaultDownloader();
@@ -58,17 +56,13 @@ public class RegistryCLITest {
         this.cli = new CLI(binary);
 
         LOGGER.info("login to RHOAS");
-        CLIUtils.login(vertx, cli, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD).get();
+        CLIUtils.login(cli, Environment.PRIMARY_OFFLINE_TOKEN).get();
     }
 
     @AfterClass(alwaysRun = true)
     @SneakyThrows
     public void clean() {
-
-
-        var auth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var user = bwait(auth.loginToRedHatSSO());
-        var registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, user);
+        var registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
 
         try {
             RegistryMgmtApiUtils.deleteRegistryByNameIfExists(registryMgmtApi, SERVICE_REGISTRY_NAME);

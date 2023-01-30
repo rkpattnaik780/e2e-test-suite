@@ -1,6 +1,7 @@
 package io.managed.services.test.quickstarts.contexts;
 
 import com.openshift.cloud.api.kas.models.KafkaRequest;
+import io.managed.services.test.Environment;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import lombok.Getter;
@@ -32,6 +33,7 @@ public class KafkaInstanceContext {
     public KafkaInstanceApi kafkaInstanceApi() {
         var masUser = userContext.requireMasUser();
         var kafkaInstance = this.requireKafkaInstance();
-        return KafkaInstanceApiUtils.kafkaInstanceApi(kafkaInstance, masUser);
+        // TODO: check if this is the correct token to be used
+        return KafkaInstanceApiUtils.kafkaInstanceApi(kafkaInstance, Environment.PRIMARY_OFFLINE_TOKEN);
     }
 }
