@@ -44,7 +44,7 @@ public class FleetshardUtils {
             .collect(Collectors.toList());
     }
 
-    private static ManagedKafkaAgent getManagedKafka(OpenShiftClient oc) throws Throwable {
+    private static ManagedKafkaAgent getManagedKafkaAgent(OpenShiftClient oc) throws Throwable {
         ManagedKafkaAgent mkAgent = FleetshardUtils.managedKafkaAgent(oc).list().getItems().stream()
             .findAny()
             .orElseThrow(() -> new Exception("managed kafka agent is not present in cluster"));
@@ -53,7 +53,7 @@ public class FleetshardUtils {
     }
 
     public static int getClusterCapacityFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
-        return FleetshardUtils.getManagedKafka(oc)
+        return FleetshardUtils.getManagedKafkaAgent(oc)
             .getStatus()
             .getCapacity()
             .get(mkType.toString())
@@ -61,7 +61,7 @@ public class FleetshardUtils {
     }
 
     public static int getCapacityRemainingUnitsFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
-        return FleetshardUtils.getManagedKafka(oc)
+        return FleetshardUtils.getManagedKafkaAgent(oc)
             .getStatus()
             .getCapacity()
             .get(mkType.toString())

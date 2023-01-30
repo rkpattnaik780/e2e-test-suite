@@ -4,9 +4,4 @@
             <class name="io.managed.services.test.cluster.DataPlaneClusterTest"/>
         </classes>
     </test>
-    <test name="BillingModelTest">
-        <classes>
-            <class name="io.managed.services.test.billing.BillingModelTest"/>
-        </classes>
-    </test>
 </suite>

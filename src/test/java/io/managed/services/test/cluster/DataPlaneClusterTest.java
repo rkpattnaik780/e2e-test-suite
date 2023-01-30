@@ -81,12 +81,14 @@ public class DataPlaneClusterTest extends TestBase {
             .withOauthToken(Environment.PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN)
             .withTrustCerts(true)
             .build();
-
         log.info("init openshift client");
         oc = new KubernetesClientBuilder().withConfig(config).build().adapt(OpenShiftClient.class);
 
-
         var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
+        oc.pods().list();
+        log.info(FleetshardUtils.managedKafkaAgent(oc).list().getItems());
+        log.info(FleetshardUtils.managedKafka(oc).list().getItems());
+        log.info(FleetshardUtils.managedKafkaAgent(oc).inAnyNamespace().list().getItems());
 
         log.info("init cluster capacity info");
         maxStandardStreamingUnitsInCluster = FleetshardUtils.getClusterCapacityFromMKAgent(oc, ManagedKafkaType.standard);
@@ -229,6 +231,7 @@ public class DataPlaneClusterTest extends TestBase {
         }
     }
 
+    // TODO node downscaling
     @Test()
     @SneakyThrows
     public void testStandardKafkaNodeAutoscaling() {
