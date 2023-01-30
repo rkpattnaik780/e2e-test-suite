@@ -8,7 +8,6 @@ import io.fabric8.openshift.client.OpenShiftClient;
 import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafka;
 import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafkaAgent;
 import lombok.extern.log4j.Log4j2;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,6 +15,9 @@ import java.util.stream.Collectors;
 @Log4j2
 public class FleetshardUtils {
 
+    private static final String BF2_DOMAIN = "bf2.org/";
+    private static final String PROFILE_QUOTA_CONSUMED = BF2_DOMAIN + "kafkaInstanceProfileQuotaConsumed";
+    private static final String PROFILE_TYPE = "bf2.org/kafkaInstanceProfileType";
     public static MixedOperation<ManagedKafka, KubernetesResourceList<ManagedKafka>, Resource<ManagedKafka>> managedKafka(KubernetesClient client) {
         return client.resources(ManagedKafka.class);
     }
@@ -24,18 +26,22 @@ public class FleetshardUtils {
         return client.resources(ManagedKafkaAgent.class);
     }
 
-    public static int getCountOfExistingGivenManagedKafkaCRType(OpenShiftClient oc, ManagedKafkaType mkType) {
-        return (int) FleetshardUtils.managedKafka(oc).inAnyNamespace().list().getItems()
+    public static int getStreamingUnitCountOfExistingGivenManagedKafkaCRType(OpenShiftClient oc, ManagedKafkaType mkType) {
+        return listManagedKafka(oc, mkType)
             .stream()
-            .filter(e -> mkType.toString().equals(e.getLabel("bf2.org/kafkaInstanceProfileType").orElse("notPresent")))
-            .count();
+            .mapToInt(FleetshardUtils::getStreamingUnitOfMkInstance)
+            .sum();
+    }
+
+    public static int getStreamingUnitOfMkInstance(ManagedKafka mkInstance) {
+        return Integer.parseInt(mkInstance.getLabel(PROFILE_QUOTA_CONSUMED).orElse("1"));
     }
 
     public static List<ManagedKafka> listManagedKafka(OpenShiftClient oc, ManagedKafkaType mkType) {
         return FleetshardUtils.managedKafka(oc).inAnyNamespace().list().getItems()
-                .stream()
-                .filter(e -> mkType.toString().equals(e.getLabel("bf2.org/kafkaInstanceProfileType").orElse("not present")))
-                .collect(Collectors.toList());
+            .stream()
+            .filter(e -> mkType.toString().equals(e.getLabel(PROFILE_TYPE).orElse("not present")))
+            .collect(Collectors.toList());
     }
 
     private static ManagedKafkaAgent getManagedKafka(OpenShiftClient oc) throws Throwable {
@@ -48,24 +54,24 @@ public class FleetshardUtils {
 
     public static int getClusterCapacityFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
         return FleetshardUtils.getManagedKafka(oc)
-                .getStatus()
-                .getCapacity()
-                .get(mkType.toString())
-                .getMaxUnits();
+            .getStatus()
+            .getCapacity()
+            .get(mkType.toString())
+            .getMaxUnits();
     }
 
     public static int getCapacityRemainingUnitsFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
         return FleetshardUtils.getManagedKafka(oc)
-                .getStatus()
-                .getCapacity()
-                .get(mkType.toString())
-                .getRemainingUnits();
+            .getStatus()
+            .getCapacity()
+            .get(mkType.toString())
+            .getRemainingUnits();
     }
 
     public  static Map<String, Integer> getReadyNodesPerEachMachineSetContainingName(OpenShiftClient oc, String containedName) {
         return oc.machine().machineSets().list().getItems().stream()
-                .filter(e -> e.getMetadata().getName().contains(containedName))
-                .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m.getStatus().getReadyReplicas()));
+            .filter(e -> e.getMetadata().getName().contains(containedName))
+            .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m.getStatus().getReadyReplicas()));
     }
 
 }
