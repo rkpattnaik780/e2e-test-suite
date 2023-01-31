@@ -1,15 +1,14 @@
-package io.managed.services.test.k8.managedkafka.resources.v1alpha1;
+package io.managed.services.test.k8.managedkafka.v1alpha1;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.sundr.builder.annotations.Buildable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 
-/**
- * Represents a TLS keys pair, both public (signed certificate) and private
- */
 @Buildable(
         builderPackage = "io.fabric8.kubernetes.api.builder",
         editableEnabled = false
@@ -19,11 +18,8 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @Setter
-public class TlsKeyPair {
-
-    private String cert;
-    private String key;
-    private SecretKeySelector certRef;
-    private SecretKeySelector keyRef;
-
+@Accessors(prefix = "_")
+public class NetworkConfiguration {
+    @JsonProperty("private")
+    private boolean privatee;
 }

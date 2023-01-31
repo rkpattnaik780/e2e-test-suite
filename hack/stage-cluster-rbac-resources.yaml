@@ -22,6 +22,10 @@ rules:
   - apiGroups: ["managedkafka.bf2.org"]
     resources: ["managedkafkas", "managedkafkaagents"]
     verbs: ["list","get"]
+  # machinesets resources in order to query them in tests related to node autoscaling.
+  - apiGroups: ["machine.openshift.io"]
+    resources: ["machinesets"]
+    verbs: ["list","get"]
   # be able to view state of pods which actually holds resources reserved by managedkafka
   - apiGroups: [""]
     resources: ["pods","events","secrets","services"]
