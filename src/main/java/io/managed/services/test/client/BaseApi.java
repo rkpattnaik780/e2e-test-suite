@@ -1,6 +1,7 @@
 package io.managed.services.test.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.managed.services.test.Environment;
 import io.managed.services.test.RetryUtils;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.ThrowingVoid;
@@ -16,15 +17,14 @@ import java.util.concurrent.atomic.AtomicReference;
 @Log4j2
 public abstract class BaseApi {
 
-    public final static String RH_SSO_URL = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token";
-
+    private String defaultSSOUrl = Environment.REDHAT_SSO_URI + "/auth/realms/" + Environment.REDHAT_SSO_REALM + "/protocol/openid-connect/token";
 
     private final String offlineToken;
     private final String url;
 
     protected BaseApi(String offlineToken) {
         this.offlineToken = offlineToken;
-        this.url = RH_SSO_URL;
+        this.url = defaultSSOUrl;
     }
 
     protected BaseApi(String offlineToken, String url) {
