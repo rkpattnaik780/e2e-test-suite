@@ -39,7 +39,7 @@ import static org.testng.Assert.assertTrue;
 public class RegistryCLITest {
     private static final Logger LOGGER = LogManager.getLogger(RegistryCLITest.class);
 
-    private static final String SERVICE_REGISTRY_NAME = "cli-e2e-test-registry-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
+    private static final String SERVICE_REGISTRY_NAME = "cli-e2e-test-registry-"  + Environment.LAUNCH_SUFFIX;
 
     private final Vertx vertx = Vertx.vertx();
 

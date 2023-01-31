@@ -23,7 +23,7 @@ import static org.testng.Assert.assertNotNull;
 @Log4j2
 public class KafkaOverseeingTest extends TestBase {
 
-    static final String KAFKA_INSTANCE_NAME = "mk-e2e-ow-" + Environment.LAUNCH_KEY;
+    static final String KAFKA_INSTANCE_NAME = "mk-e2e-ow-" + Environment.LAUNCH_SUFFIX;
 
     private KafkaRequest kafka;
     private KafkaInstanceApi kafkaInstanceApi;

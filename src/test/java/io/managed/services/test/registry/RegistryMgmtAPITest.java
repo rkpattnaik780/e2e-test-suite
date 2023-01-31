@@ -40,8 +40,8 @@ import static org.testng.Assert.assertTrue;
 public class RegistryMgmtAPITest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtAPITest.class);
 
-    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
-    private static final String SERVICE_REGISTRY_2_NAME = "mk-e2e-sr2-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
+    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_REGISTRY_2_NAME = "mk-e2e-sr2-"  + Environment.LAUNCH_SUFFIX;
     private static final String ARTIFACT_SCHEMA = "{\"type\":\"record\",\"name\":\"Greeting\",\"fields\":[{\"name\":\"Message\",\"type\":\"string\"},{\"name\":\"Time\",\"type\":\"long\"}]}";
 
     private RegistryMgmtApi registryMgmtApi;

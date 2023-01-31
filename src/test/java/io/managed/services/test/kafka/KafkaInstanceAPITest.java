@@ -64,8 +64,8 @@ import static org.testng.Assert.assertTrue;
 public class KafkaInstanceAPITest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaInstanceAPITest.class);
 
-    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-kaa-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
-    private static final String SERVICE_ACCOUNT_NAME = "mk-e2e-kaa-sa-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
+    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-kaa-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_ACCOUNT_NAME = "mk-e2e-kaa-sa-"  + Environment.LAUNCH_SUFFIX;
     private static final String TEST_TOPIC_NAME = "test-api-topic-1";
     private static final String TEST_NOT_EXISTING_TOPIC_NAME = "test-api-topic-not-exist";
 

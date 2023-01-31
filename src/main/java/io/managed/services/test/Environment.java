@@ -169,6 +169,7 @@ public class Environment {
     public static final String GITHUB_TOKEN = getOrDefault(GITHUB_TOKEN_ENV, null);
 
     public static final String LAUNCH_KEY = getOrDefault(LAUNCH_KEY_ENV, "change-me");
+    public static final String LAUNCH_SUFFIX = LAUNCH_KEY + "-" + CLOUD_PROVIDER;
 
     // Skip the whole teardown in some tests, although some of them will need top re-enable it to succeed
     public static final boolean SKIP_TEARDOWN = getOrDefault(SKIP_TEARDOWN_ENV, Boolean::parseBoolean, false);

@@ -81,7 +81,7 @@ public class QuarkusApplicationTest extends TestBase {
 
     // NOTE: Some names are hard coded because generated from CLI or hard coded in the yaml files
 
-    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-quarkus-" + Environment.LAUNCH_KEY + Environment.CLOUD_PROVIDER;
+    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-quarkus-"  + Environment.LAUNCH_SUFFIX;
     private static final String TOPIC_NAME = "prices";
 
     // this name is decided from the cli

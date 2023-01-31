@@ -1,0 +1,29 @@
+{
+  "LAUNCH_KEY": "e2e-tony",
+  "PRIMARY_USERNAME": "stage-primary",
+  "PRIMARY_PASSWORD": "password",
+
+  "SECONDARY_PASSWORD": "password",
+  "SECONDARY_USERNAME": "stage-secondary",
+  "ADMIN_PASSWORD": "password",
+  "ADMIN_USERNAME": "stage-admin",
+  "ALIEN_PASSWORD": "password",
+  "ALIEN_USERNAME": "stage-alien",
+
+
+  "OPENSHIFT_API_URI": "https://kas-fleet-manager-kas-fleet-manager-ci.apps.mk-int-gcp.t3jt.s2.devshift.org",
+  "OPENSHIFT_IDENTITY_URI": "https://sso.stage.redhat.com",
+
+  "REDHAT_SSO_URI": "https://sso.stage.redhat.com",
+  "REDHAT_SSO_REDIRECT_URI": "https://console.stage.redhat.com",
+
+  "KAFKA_INSECURE_TLS": "true",
+  "KAFKA_INSTANCE_API_TEMPLATE":"https://admin-server-%s",
+
+
+  "DEFAULT_KAFKA_REGION": "us-east-2",
+  "CLOUD_PROVIDER": "aws",
+  "TEST_LOG_LEVEL": "DEBUG", 
+  "SKIP_TEARDOWN": "false",
+  "SKIP_KAFKA_TEARDOWN": "false"
+}
