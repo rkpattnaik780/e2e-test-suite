@@ -62,7 +62,7 @@ public abstract class BaseApi {
         if (currentToken == null) {
             var data = new FormBody.Builder()
                     .add("grant_type", "refresh_token")
-                    .add("client_id", "rhsm-api")
+                    .add("client_id", "cloud-services")
                     .add("refresh_token", this.offlineToken)
                     .build();
 
