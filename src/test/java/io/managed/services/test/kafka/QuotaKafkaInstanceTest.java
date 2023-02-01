@@ -49,9 +49,9 @@ import static org.testng.Assert.fail;
 public class QuotaKafkaInstanceTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(QuotaKafkaInstanceTest.class);
 
-    private static final String KAFKA_INSTANCE_NAME_QUOTA = "mk-e2e-quota-" + Environment.LAUNCH_KEY;
-    private static final String KAFKA_INSTANCE_NAME_NO_QUOTA = "mk-e2e-no-quota-" + Environment.LAUNCH_KEY;
-    private static final String KAFKA_INSTANCE_NAME_FAIL = "mk-e2e-quota-fail-" + Environment.LAUNCH_KEY;
+    private static final String KAFKA_INSTANCE_NAME_QUOTA = "mk-e2e-quota-" + Environment.LAUNCH_SUFFIX;
+    private static final String KAFKA_INSTANCE_NAME_NO_QUOTA = "mk-e2e-no-quota-" + Environment.LAUNCH_SUFFIX;
+    private static final String KAFKA_INSTANCE_NAME_FAIL = "mk-e2e-quota-fail-" + Environment.LAUNCH_SUFFIX;
 
     // Kafka instance plans
     private static final String PLAN_DEVELOPER = "developer.x1";

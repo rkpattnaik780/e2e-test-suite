@@ -22,7 +22,7 @@ public class ServiceAccountSteps {
     private final OpenShiftAPIContext openShiftAPIContext;
     private final ServiceAccountContext serviceAccountContext;
 
-    private static final String SERVICE_ACCOUNT_UNIQUE_NAME = "cucumber-sa-qs-" + Environment.LAUNCH_KEY;
+    private static final String SERVICE_ACCOUNT_UNIQUE_NAME = "cucumber-sa-qs-"  + Environment.LAUNCH_SUFFIX;
 
     public ServiceAccountSteps(OpenShiftAPIContext openShiftAPIContext, ServiceAccountContext serviceAccountContext) {
         this.openShiftAPIContext = openShiftAPIContext;

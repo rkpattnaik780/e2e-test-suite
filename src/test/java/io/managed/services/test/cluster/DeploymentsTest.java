@@ -27,7 +27,7 @@ import java.util.Optional;
 @Log4j2
 public class DeploymentsTest extends TestBase {
 
-    static final String KAFKA_INSTANCE_NAME = "cl-e2e-" + Environment.LAUNCH_KEY;
+    static final String KAFKA_INSTANCE_NAME = "cl-e2e-" + Environment.LAUNCH_SUFFIX;
 
     private OpenShiftClient oc;
 

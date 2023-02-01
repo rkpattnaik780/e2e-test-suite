@@ -71,9 +71,9 @@ import static org.testng.Assert.assertTrue;
 @Log4j2
 public class KafkaMgmtAPITest extends TestBase {
 
-    static final String SERVICE_ACCOUNT_NAME_FOR_DELETION = "mk-e2e-sa-delete" + Environment.LAUNCH_KEY;
-    static final String KAFKA_INSTANCE_NAME = "mk-e2e-" + Environment.LAUNCH_KEY;
-    static final String SERVICE_ACCOUNT_NAME = "mk-e2e-sa-" + Environment.LAUNCH_KEY;
+    static final String SERVICE_ACCOUNT_NAME_FOR_DELETION = "mk-e2e-sa-delete"  + Environment.LAUNCH_SUFFIX;
+    static final String KAFKA_INSTANCE_NAME = "mk-e2e-"  + Environment.LAUNCH_SUFFIX;
+    static final String SERVICE_ACCOUNT_NAME = "mk-e2e-sa-"  + Environment.LAUNCH_SUFFIX;
     static final String TOPIC_NAME = "test-topic";
     static final String METRIC_TOPIC_NAME = "metric-test-topic";
     static final String[] KAFKA_METRICS = {

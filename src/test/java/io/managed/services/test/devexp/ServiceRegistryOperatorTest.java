@@ -78,12 +78,12 @@ public class ServiceRegistryOperatorTest extends TestBase {
 
     private final static String ACCESS_TOKEN_SECRET_NAME = "mk-e2e-api-accesstoken";
     private final static String CLOUD_SERVICE_ACCOUNT_REQUEST_NAME = "mk-e2e-service-account-request";
-    private final static String SERVICE_ACCOUNT_NAME = "mk-e2e-bo-sa-" + Environment.LAUNCH_KEY;
+    private final static String SERVICE_ACCOUNT_NAME = "mk-e2e-bo-sa-"  + Environment.LAUNCH_SUFFIX;
     private final static String SERVICE_ACCOUNT_SECRET_NAME = "mk-e2e-service-account-secret";
     private final static String CLOUD_SERVICES_REQUEST_NAME = "mk-e2e-kafka-request";
     private final static String SERVICE_REGISTRY_CONNECTION_NAME = "mk-e2e-registry-connection";
 
-    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-operator-sr-" + Environment.LAUNCH_KEY;
+    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-operator-sr-"  + Environment.LAUNCH_SUFFIX;
     private RegistryMgmtApi registryMgmtApi;
 
     @BeforeClass

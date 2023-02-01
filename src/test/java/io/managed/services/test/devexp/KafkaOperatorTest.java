@@ -74,10 +74,10 @@ public class KafkaOperatorTest extends TestBase {
 
     private CloudServicesRequest cloudServicesRequest;
 
-    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ko-" + Environment.LAUNCH_KEY;
+    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ko-"  + Environment.LAUNCH_SUFFIX;
     private final static String ACCESS_TOKEN_SECRET_NAME = "mk-e2e-api-accesstoken";
     private final static String CLOUD_SERVICE_ACCOUNT_REQUEST_NAME = "mk-e2e-service-account-request";
-    private final static String SERVICE_ACCOUNT_NAME = "mk-e2e-bo-sa-" + Environment.LAUNCH_KEY;
+    private final static String SERVICE_ACCOUNT_NAME = "mk-e2e-bo-sa-"  + Environment.LAUNCH_SUFFIX;
     private final static String SERVICE_ACCOUNT_SECRET_NAME = "mk-e2e-service-account-secret";
     private final static String CLOUD_SERVICES_REQUEST_NAME = "mk-e2e-kafka-request";
     private final static String KAFKA_CONNECTION_NAME = "mk-e2e-kafka-connection";

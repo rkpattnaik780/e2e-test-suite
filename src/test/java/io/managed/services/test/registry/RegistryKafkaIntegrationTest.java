@@ -60,9 +60,9 @@ import static org.testng.Assert.assertNotNull;
 public class RegistryKafkaIntegrationTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(RegistryKafkaIntegrationTest.class);
 
-    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ki-rki-" + Environment.LAUNCH_KEY;
-    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-rki-" + Environment.LAUNCH_KEY;
-    private static final String SERVICE_ACCOUNT_NAME = "mk-e2e-sa-rki-" + Environment.LAUNCH_KEY;
+    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ki-rki-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-rki-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_ACCOUNT_NAME = "mk-e2e-sa-rki-"  + Environment.LAUNCH_SUFFIX;
     private static final String TOPIC_NAME = "test-topic";
     private static final String ARTIFACT_SCHEMA = "{\"type\":\"record\",\"name\":\"Greeting\",\"fields\":[{\"name\":\"Message\",\"type\":\"string\"},{\"name\":\"Time\",\"type\":\"long\"}]}";
 
