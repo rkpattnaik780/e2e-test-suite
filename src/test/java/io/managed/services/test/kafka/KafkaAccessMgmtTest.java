@@ -80,12 +80,9 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
- *     <li> SECONDARY_USERNAME
- *     <li> SECONDARY_PASSWORD
- *     <li> ALIEN_USERNAME
- *     <li> ALIEN_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> SECONDARY_OFFLINE_TOKEN
+ *     <li> ALIEN_OFFLINE_TOKEN
  * </ul>
  */
 public class KafkaAccessMgmtTest extends TestBase {

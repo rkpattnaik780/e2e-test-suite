@@ -34,14 +34,10 @@ import static org.testng.Assert.assertThrows;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
- *     <li> SECONDARY_USERNAME
- *     <li> SECONDARY_PASSWORD
- *     <li> ALIEN_USERNAME
- *     <li> ALIEN_PASSWORD
- *     <li> ADMIN_USERNAME
- *     <li> ADMIN_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> SECONDARY_OFFLINE_TOKEN
+ *     <li> ALIEN_OFFLINE_TOKEN
+ *     <li> ADMIN_OFFLINE_TOKEN
  * </ul>
  */
 public class RegistryMgmtAPIPermissionsTest extends TestBase {

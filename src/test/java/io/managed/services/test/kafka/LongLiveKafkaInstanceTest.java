@@ -51,8 +51,7 @@ import static org.testng.Assert.fail;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 public class LongLiveKafkaInstanceTest extends TestBase {

@@ -50,8 +50,8 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> GITHUB_TOKEN
  * </ul>
  */
 @Test
@@ -148,6 +148,7 @@ public class KafkaCLITest extends TestBase {
     @SneakyThrows
     public void testLogin() {
 
+        // make sure you are logout while developing locally.
         LOGGER.info("verify that we aren't logged-in");
         assertThrows(CliGenericException.class, () -> cli.listKafka());
 

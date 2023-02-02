@@ -30,8 +30,7 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 @Test

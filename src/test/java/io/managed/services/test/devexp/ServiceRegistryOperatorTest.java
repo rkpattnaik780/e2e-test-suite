@@ -58,8 +58,7 @@ import static org.testng.Assert.assertNotNull;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  *     <li> DEV_CLUSTER_SERVER
  *     <li> DEV_CLUSTER_TOKEN
  * </ul>

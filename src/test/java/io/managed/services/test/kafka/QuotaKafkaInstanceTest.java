@@ -5,6 +5,7 @@ import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
+import io.managed.services.test.client.accountmgmt.AccountMgmtApi;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
@@ -37,10 +38,8 @@ import static org.testng.Assert.fail;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> DIFF_ORG_USERNAME
- *     <li> DIFF_ORG_PASSWORD
- *     <li> ALIEN_USERNAME
- *     <li> ALIEN_PASSWORD
+ *     <li> DIFF_ORG_OFFLINE_TOKEN
+ *     <li> ALIEN_OFFLINE_TOKEN
  * </ul>
  */
 public class QuotaKafkaInstanceTest extends TestBase {
@@ -72,6 +71,10 @@ public class QuotaKafkaInstanceTest extends TestBase {
         quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.DIFF_ORG_OFFLINE_TOKEN);
         noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.ALIEN_OFFLINE_TOKEN);
 
+
+
+
+
         LOGGER.info("Preparing environment by deleting existing Kafka instances");
         deleteAllKafkaInstances();  
     }
@@ -84,13 +87,17 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     private void deleteAllKafkaInstances() {
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, Environment.ALIEN_OFFLINE_TOKEN);
+            String noQuotaUserUsername = new AccountMgmtApi(Environment.OPENSHIFT_API_URI, Environment.ALIEN_OFFLINE_TOKEN).getAccountUsername();
+            LOGGER.debug("try to delete all instances owned by user with name '{}'", noQuotaUserUsername);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, noQuotaUserUsername);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instance for ALIEN user: ", t);
         }
 
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, Environment.DIFF_ORG_OFFLINE_TOKEN);
+            String quotaUserUsername = new AccountMgmtApi(Environment.OPENSHIFT_API_URI, Environment.DIFF_ORG_OFFLINE_TOKEN).getAccountUsername();
+            LOGGER.debug("try to delete all instances owned by user with name '{}'", quotaUserUsername);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, quotaUserUsername);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instances for DIFF_ORG user: ", t);
         }
