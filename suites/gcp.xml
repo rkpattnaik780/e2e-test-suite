@@ -1,0 +1,170 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+
+<suite name="GCP">
+    <test name="SmokeTest">
+        <classes>
+            <class name="io.managed.services.test.SmokeTest"/>
+        </classes>
+    </test>
+    <test name="SSOAuthTest">
+        <classes>
+            <class name="io.managed.services.test.SSOAuthTest"/>
+        </classes>
+    </test>
+    <test name="TestBase">
+        <classes>
+            <class name="io.managed.services.test.TestBase"/>
+        </classes>
+    </test>    
+    <test name="DeploymentsTest">
+        <classes>
+            <class name="io.managed.services.test.cluster.DeploymentsTest"/>
+        </classes>
+    </test>     
+    <test name="KafkaCLITest">
+        <classes>
+            <class name="io.managed.services.test.devexp.KafkaCLITest"/>
+        </classes>
+    </test>    
+    <test name="KafkaOperatorTest">
+        <classes>
+            <class name="io.managed.services.test.devexp.KafkaOperatorTest"/>
+        </classes>
+    </test> 
+    <test name="ServiceRegistryOperatorTest">
+        <classes>
+            <class name="io.managed.services.test.devexp.ServiceRegistryOperatorTest"/>
+        </classes>
+    </test> 
+    <test name="KafkaAccessMgmtTest">
+        <classes>
+            <class name="io.managed.services.test.kafka.KafkaAccessMgmtTest"/>
+        </classes>
+    </test>
+    <test name="KafkaInstanceAPITest">
+        <classes>
+            <class name="io.managed.services.test.kafka.KafkaInstanceAPITest"/>
+        </classes>
+    </test>
+    <test name="KafkaMgmtAPITest">
+        <classes>
+            <class name="io.managed.services.test.kafka.KafkaMgmtAPITest"/>
+        </classes>
+    </test>
+    <test name="KafkaOverseeingTest">
+        <classes>
+            <class name="io.managed.services.test.kafka.KafkaOverseeingTest"/>
+        </classes>
+    </test>
+    <test name="KafkaRegressionTest">
+        <classes>
+            <class name="io.managed.services.test.kafka.KafkaRegressionTest"/>
+        </classes>
+    </test>
+    <test name="LongLiveKafkaInstanceTest">
+        <classes>
+            <class name="io.managed.services.test.kafka.LongLiveKafkaInstanceTest"/>
+        </classes>
+    </test>
+    <test name="QuotaKafkaInstanceTest">
+        <classes>
+            <class name="io.managed.services.test.kafka.QuotaKafkaInstanceTest"/>
+        </classes>
+    </test>
+
+    <test name="KafkaInstanceContext">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.contexts.KafkaInstanceContext"/>
+        </classes>
+    </test>
+    <test name="OpenShiftAPIContext">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.contexts.OpenShiftAPIContext"/>
+        </classes>
+    </test>
+    <test name="ServiceAccountContext">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.contexts.ServiceAccountContext"/>
+        </classes>
+    </test>
+    <test name="UserContext">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.contexts.UserContext"/>
+        </classes>
+    </test>
+    <test name="KafkaAccessSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.KafkaAccessSteps"/>
+        </classes>
+    </test>
+    <test name="KafkaInstanceSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.KafkaInstanceSteps"/>
+        </classes>
+    </test>
+    <test name="KafkaScriptsSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.KafkaScriptsSteps"/>
+        </classes>
+    </test>
+    <test name="KafkaTopicSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.KafkaTopicSteps"/>
+        </classes>
+    </test>
+    <test name="KcatSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.KcatSteps"/>
+        </classes>
+    </test>
+    <test name="LoginSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.LoginSteps"/>
+        </classes>
+    </test>
+    <test name="QuarkusSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.QuarkusSteps"/>
+        </classes>
+    </test>
+    <test name="ServiceAccountSteps">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.ServiceAccountSteps"/>
+        </classes>
+    </test>
+    <test name="TodoStepDefinitions">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.steps.TodoStepDefinitions"/>
+        </classes>
+    </test>
+    <test name="CucumberQuickstartsTest">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.CucumberQuickstartsTest"/>
+        </classes>
+    </test>
+    <test name="QuarkusApplicationTest">
+        <classes>
+            <class name="io.managed.services.test.quickstarts.QuarkusApplicationTest"/>
+        </classes>
+    </test>
+    <test name="RegistryCLITest">
+        <classes>
+            <class name="io.managed.services.test.registry.RegistryCLITest"/>
+        </classes>
+    </test>
+    <test name="RegistryKafkaIntegrationTest">
+        <classes>
+            <class name="io.managed.services.test.registry.RegistryKafkaIntegrationTest"/>
+        </classes>
+    </test>
+    <test name="RegistryMgmtAPIPermissionsTest">
+        <classes>
+            <class name="io.managed.services.test.registry.RegistryMgmtAPIPermissionsTest"/>
+        </classes>
+    </test>
+    <test name="RegistryMgmtAPITest">
+        <classes>
+            <class name="io.managed.services.test.registry.RegistryMgmtAPITest"/>
+        </classes>
+    </test>
+</suite>
