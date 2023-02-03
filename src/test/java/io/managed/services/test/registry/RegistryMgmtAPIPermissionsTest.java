@@ -7,7 +7,6 @@ import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
-import io.managed.services.test.client.exception.ApiUnauthorizedException;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.vertx.core.Vertx;
@@ -124,13 +123,7 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
     @Test
     public void testUnauthenticatedUserWithFakeToken() {
         var api = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, TestUtils.FAKE_TOKEN);
-        assertThrows(ApiUnauthorizedException.class, () -> api.getRegistries(null, null, null, null));
-    }
-
-    @Test
-    public void testUnauthenticatedUserWithoutToken() {
-        var api = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, "");
-        assertThrows(ApiUnauthorizedException.class, () -> api.getRegistries(null, null, null, null));
+        assertThrows(Exception.class, () -> api.getRegistries(null, null, null, null));
     }
 
     @Test

@@ -16,10 +16,6 @@ public class KafkaInstanceContext {
 
     private KafkaRequest kafkaInstance;
 
-    public KafkaInstanceContext() {
-
-    }
-
     public KafkaRequest requireKafkaInstance() {
         return Objects.requireNonNull(kafkaInstance);
     }

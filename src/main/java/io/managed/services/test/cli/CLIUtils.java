@@ -101,9 +101,9 @@ public class CLIUtils {
 
         LOGGER.info("start oauth login against CLI");
         var oauthFuture = parseUrl(vertx, process.stdout(), String.format("%s/auth/.*", Environment.REDHAT_SSO_URI))
-                .compose(l -> session.login(l))
-                .onSuccess(__ -> LOGGER.info("first oauth login completed"))
-                .toCompletionStage().toCompletableFuture();
+            .compose(l -> session.login(l))
+            .onSuccess(__ -> LOGGER.info("first oauth login completed"))
+            .toCompletionStage().toCompletableFuture();
 
         var cliFuture = process.future(Duration.ofMinutes(3))
                 .thenAccept(r -> LOGGER.info("CLI login completed"));
