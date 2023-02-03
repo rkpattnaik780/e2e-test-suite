@@ -16,9 +16,4 @@
             <class name="io.managed.services.test.devexp.ServiceRegistryOperatorTest"/>
         </classes>
     </test>
-    <test name="QuarkusApplicationTest">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.QuarkusApplicationTest"/>
-        </classes>
-    </test>
 </suite>

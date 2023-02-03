@@ -347,7 +347,8 @@ public class QuarkusApplicationTest extends TestBase {
         bwait(vertx.close());
     }
 
-    @Test
+    // TODO test disabled until problem with deactivated offline tokens resolved.
+    @Test(enabled = false)
     public void testCLIConnectCluster() throws Throwable {
         cleanAccessTokenSecret();
         cleanKafkaConnection();
@@ -366,7 +367,7 @@ public class QuarkusApplicationTest extends TestBase {
         cli.useKafka(kafka.getId());
 
         LOGGER.info("cli cluster connect using kubeconfig: {}", kubeconfgipath);
-        cli.connectCluster(user.getRefreshToken(), kubeconfgipath, "kafka");
+        cli.connectCluster(Environment.PRIMARY_OFFLINE_TOKEN, kubeconfgipath, "kafka");
     }
 
     @Test(dependsOnMethods = "testCLIConnectCluster")
