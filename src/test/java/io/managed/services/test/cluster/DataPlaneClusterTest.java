@@ -146,12 +146,12 @@ public class DataPlaneClusterTest extends TestBase {
         }
 
         log.info("test that '{}' Zookeeper Pod/s are present in namespace '{}'", expectedZookeeperPodsCount, namespace);
-        int actualNumberOfZookeeperPods = countNumberOfPodsWithNameExisting(namespace, "zookeeper");
-        Assert.assertEquals(expectedZookeeperPodsCount, actualNumberOfZookeeperPods, "unexpected number of zookeeper pods");
+        int actualNumberOfZookeeperPods = countNumberOfPodsWithNameExisting(namespace, namespace + "-zookeeper");
+        Assert.assertEquals(actualNumberOfZookeeperPods, expectedZookeeperPodsCount, "unexpected number of zookeeper pods");
 
         log.info("test that '{}' Kafka Pod/s are present in namespace '{}'", expectedKafkaPodsCount, namespace);
-        int actualNumberOfKafkaPods = countNumberOfPodsWithNameExisting(namespace, "kafka");
-        Assert.assertEquals(expectedKafkaPodsCount, actualNumberOfKafkaPods, "unexpected number of kafka pods");
+        int actualNumberOfKafkaPods = countNumberOfPodsWithNameExisting(namespace, namespace + "-kafka");
+        Assert.assertEquals(actualNumberOfKafkaPods, expectedKafkaPodsCount, "unexpected number of kafka pods");
 
     }
 
@@ -171,11 +171,11 @@ public class DataPlaneClusterTest extends TestBase {
 
         // obtain max limit of kafka instances per given mk type (developer, standard)
         int upperStreamingUnitLimitPerManagedKafkaType;
-        switch (mkType.name()) {
-            case "standard":
+        switch (mkType) {
+            case standard:
                 upperStreamingUnitLimitPerManagedKafkaType = maxStandardStreamingUnitsInCluster;
                 break;
-            case "developer":
+            case developer:
                 upperStreamingUnitLimitPerManagedKafkaType = maxDeveloperStreamingUnitsInCluster;
                 break;
             default:
