@@ -132,12 +132,12 @@ public class DataPlaneClusterTest extends TestBase {
         log.info("assert existence of resources which are part of reserved deployment");
         int expectedZookeeperPodsCount;
         int expectedKafkaPodsCount;
-        switch (mkType.name()) {
-            case "standard":
+        switch (mkType) {
+            case standard:
                 expectedZookeeperPodsCount = 3;
                 expectedKafkaPodsCount = 3;
                 break;
-            case "developer":
+            case developer:
                 expectedZookeeperPodsCount = 1;
                 expectedKafkaPodsCount = 1;
                 break;
@@ -150,8 +150,8 @@ public class DataPlaneClusterTest extends TestBase {
         Assert.assertEquals(expectedZookeeperPodsCount, actualNumberOfZookeeperPods, "unexpected number of zookeeper pods");
 
         log.info("test that '{}' Kafka Pod/s are present in namespace '{}'", expectedKafkaPodsCount, namespace);
-        int actualNumberOfKafkaPods = countNumberOfPodsWithNameExisting(namespace, "zookeeper");
-        Assert.assertEquals(expectedKafkaPodsCount, actualNumberOfKafkaPods, "unexpected number of zookeeper pods");
+        int actualNumberOfKafkaPods = countNumberOfPodsWithNameExisting(namespace, "kafka");
+        Assert.assertEquals(expectedKafkaPodsCount, actualNumberOfKafkaPods, "unexpected number of kafka pods");
 
     }
 
@@ -230,7 +230,7 @@ public class DataPlaneClusterTest extends TestBase {
         }
     }
 
-    // TODO node downscaling
+    // TODO node downscaling, see https://github.com/bf2fc6cc711aee1a0c2a/e2e-test-suite/pull/448#discussion_r1090303391 for the related discussion
     @Test()
     @SneakyThrows
     public void testStandardKafkaNodeAutoscaling() {
