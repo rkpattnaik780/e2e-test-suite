@@ -106,7 +106,7 @@ public class CLIUtils {
             .toCompletionStage().toCompletableFuture();
 
         var cliFuture = process.future(Duration.ofMinutes(3))
-            .thenAccept(r -> LOGGER.info("CLI login completed"));
+                .thenAccept(r -> LOGGER.info("CLI login completed"));
 
         return CompletableFuture.allOf(oauthFuture, cliFuture);
     }

@@ -8,7 +8,6 @@ import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.testng.annotations.AfterClass;
@@ -16,7 +15,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
-import static io.managed.services.test.TestUtils.bwait;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -34,20 +32,16 @@ public class KafkaOverseeingTest extends TestBase {
     @SneakyThrows
     public void bootstrap() {
 
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
         assertNotNull(Environment.STAGE_DATA_PLANE_ADMIN_CLIENT_ID, "the STAGE_DATA_PLANE_ADMIN_CLIENT_ID env is null");
         assertNotNull(Environment.STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET, "the STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET env is null");
 
-        var auth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-
         // initialize the mgmt APIs
-        var user = bwait(auth.loginToRedHatSSO());
-        kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, user);
+        kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
 
         log.info("create kafka instance '{}'", KAFKA_INSTANCE_NAME);
         kafka = KafkaMgmtApiUtils.applyKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
-        kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(auth, kafka));
+        kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
 
         // initialize client to communicate with admin endpoint on openshift uri.
         adminEndpointApi = new OpenshiftAdminEndpointApi(

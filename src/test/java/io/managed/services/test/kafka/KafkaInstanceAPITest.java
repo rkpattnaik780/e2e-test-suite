@@ -23,8 +23,6 @@ import io.managed.services.test.client.kafkainstance.KafkaInstanceApiAccessUtils
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtApi;
 import io.vertx.core.Vertx;
@@ -57,8 +55,7 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 public class KafkaInstanceAPITest extends TestBase {
@@ -85,18 +82,16 @@ public class KafkaInstanceAPITest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
-        var auth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var apps = ApplicationServicesApi.applicationServicesApi(auth);
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
         kafkaMgmtApi = apps.kafkaMgmt();
         securityMgmtApi = apps.securityMgmt();
         LOGGER.info("kafka and security mgmt api initialized");
 
         kafka = KafkaMgmtApiUtils.applyKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
 
-        kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(auth, kafka));
+        kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
         LOGGER.info("kafka instance api client initialized");
     }
 
@@ -136,18 +131,15 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test
     @SneakyThrows
     public void testFailToCallAPIIfUserBelongsToADifferentOrganization() {
-
-        var kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(
-            new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD), kafka));
+        var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.ALIEN_OFFLINE_TOKEN);
         assertThrows(ApiUnauthorizedException.class, () -> kafkaInstanceApi.getTopics());
     }
 
     @Test
     @SneakyThrows
     public void testFailToCallAPIIfTokenIsInvalid() {
-        var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(
-            KafkaInstanceApiUtils.kafkaInstanceApiUri(kafka), new KeycloakUser(TestUtils.FAKE_TOKEN));
-        assertThrows(ApiUnauthorizedException.class, () -> kafkaInstanceApi.getTopics());
+        var api = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, TestUtils.FAKE_TOKEN);
+        assertThrows(Exception.class, api::getTopics);
     }
 
     @Test

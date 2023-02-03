@@ -19,7 +19,6 @@ import io.managed.services.test.client.kafkainstance.KafkaInstanceApiAccessUtils
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
@@ -53,8 +52,7 @@ import static org.testng.Assert.assertNotNull;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 public class RegistryKafkaIntegrationTest extends TestBase {
@@ -79,14 +77,13 @@ public class RegistryKafkaIntegrationTest extends TestBase {
 
     @BeforeClass
     public void bootstrap() throws Throwable {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the OFFLINE_TOKEN env is null");
 
-        var oauth = new KeycloakLoginSession(vertx, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
+        var offlineToken = Environment.PRIMARY_OFFLINE_TOKEN;
 
         // registry api
         LOGGER.info("initialize registry, kafka security services apis");
-        var apis = ApplicationServicesApi.applicationServicesApi(oauth);
+        var apis = ApplicationServicesApi.applicationServicesApi(offlineToken);
         registryMgmtApi = apis.registryMgmt();
         kafkaMgmtApi = apis.kafkaMgmt();
         securityMgmtApi = apis.securityMgmt();
@@ -106,8 +103,7 @@ public class RegistryKafkaIntegrationTest extends TestBase {
 
         // topic
         LOGGER.info("create topic: {}", TOPIC_NAME);
-        var user = bwait(oauth.loginToOpenshiftIdentity());
-        var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafkaInstanceApiUri(kafka), user);
+        var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafkaInstanceApiUri(kafka), offlineToken);
         var topic = KafkaInstanceApiUtils.applyTopic(kafkaInstanceApi, TOPIC_NAME);
         LOGGER.debug(topic);
 
@@ -117,7 +113,7 @@ public class RegistryKafkaIntegrationTest extends TestBase {
 
         // grant access to the service account to the registry
         LOGGER.info("grant access to the registry for service account: {}", serviceAccount.getClientId());
-        var registryClient = registryClient(registry.getRegistryUrl(), user);
+        var registryClient = registryClient(registry.getRegistryUrl(), offlineToken);
         var role = new RoleMapping();
         // We expect the service account to be always created with the same name
         // if that will not be the case in the feature we will have to retrieve the

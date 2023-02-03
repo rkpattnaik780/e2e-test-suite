@@ -64,8 +64,7 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 @Log4j2
@@ -108,12 +107,9 @@ public class KafkaMgmtAPITest extends TestBase {
 
     @BeforeClass(alwaysRun = true)
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
-        var apps = ApplicationServicesApi.applicationServicesApi(
-            Environment.PRIMARY_USERNAME,
-            Environment.PRIMARY_PASSWORD);
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
 
         securityMgmtApi = apps.securityMgmt();
         kafkaMgmtApi = apps.kafkaMgmt();
@@ -177,8 +173,7 @@ public class KafkaMgmtAPITest extends TestBase {
         log.info("create kafka instance '{}'", payload.getName());
         kafka = KafkaMgmtApiUtils.applyKafkaInstance(kafkaMgmtApi, payload);
 
-        kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(kafka,
-            Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD));
+        kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
     }
 
     @Test(groups = "production")

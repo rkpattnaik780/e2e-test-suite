@@ -6,7 +6,7 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
     Given you have a Red Hat account
 
     # 1. Creating a Kafka instance in OpenShift Streams for Apache Kafka
-    Given you are logged in to the OpenShift Streams for Apache Kafka web console
+    Given you are logged in to the OpenShift Streams for Apache Kafka
     When you create a Kafka instance with a unique name
     Then the Kafka instance is listed in the instances table
     And the Kafka instance is shown as Ready
@@ -27,7 +27,7 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
 
   Scenario: Using Quarkus applications with Kafka instances in Red Hat OpenShift Streams for Apache Kafka
     Given you have a Red Hat account
-    * you are logged in to the OpenShift Streams for Apache Kafka web console
+    * you are logged in to the OpenShift Streams for Apache Kafka
     * you have a running Kafka instance in OpenShift Streams for Apache Kafka
 
     # 1. Importing the Quarkus sample code
@@ -56,7 +56,7 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
 
   Scenario: Using Node.js applications with Kafka instances in Red Hat OpenShift Streams for Apache Kafka
     Given you have a Red Hat account
-    * you are logged in to the OpenShift Streams for Apache Kafka web console
+    * you are logged in to the OpenShift Streams for Apache Kafka
     * you have a running Kafka instance in OpenShift Streams for Apache Kafka
     * the Kafka instance is in Ready state
     * Git is installed
@@ -98,7 +98,7 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
 
   Scenario: Using Kcat with Kafka instances in Red Hat OpenShift Streams for Apache Kafka
     Given you have a Red Hat account
-    * you are logged in to the OpenShift Streams for Apache Kafka web console
+    * you are logged in to the OpenShift Streams for Apache Kafka
     * you have downloaded and verified the latest supported version of Kcat for your operating system
     * you have a running Kafka instance in OpenShift Streams for Apache Kafka
 
@@ -131,7 +131,7 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
 
   Scenario: Using Kafka scripts to connect with Red Hat OpenShift Streams for Apache Kafka
     Given you have a Red Hat account
-    * you are logged in to the OpenShift Streams for Apache Kafka web console
+    * you are logged in to the OpenShift Streams for Apache Kafka
     * you have a running Kafka instance in OpenShift Streams for Apache Kafka
     * the Kafka instance has a generated bootstrap server
     * you have downloaded and verified the latest supported binary version of the Apache Kafka distribution

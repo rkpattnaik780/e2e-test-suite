@@ -1,23 +1,35 @@
 package io.managed.services.test.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.managed.services.test.Environment;
 import io.managed.services.test.RetryUtils;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.ThrowingVoid;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiUnauthorizedException;
 import io.managed.services.test.client.exception.ApiUnknownException;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import lombok.extern.log4j.Log4j2;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
-import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Log4j2
 public abstract class BaseApi {
 
-    private final KeycloakUser user;
+    private String defaultSSOUrl = Environment.REDHAT_SSO_URI + "/auth/realms/" + Environment.REDHAT_SSO_REALM + "/protocol/openid-connect/token";
 
-    protected BaseApi(KeycloakUser user) {
-        this.user = Objects.requireNonNull(user);
+    private final String offlineToken;
+    private final String url;
+
+    protected BaseApi(String offlineToken) {
+        this.offlineToken = offlineToken;
+        this.url = defaultSSOUrl;
+    }
+
+    protected BaseApi(String offlineToken, String url) {
+        this.offlineToken = offlineToken;
+        this.url = url;
     }
 
     /**
@@ -41,18 +53,51 @@ public abstract class BaseApi {
         }
     }
 
-    private <A> A handle(ThrowingSupplier<A, Exception> f) throws ApiGenericException {
+    private final OkHttpClient client = new OkHttpClient();
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final AtomicReference<String> lastRefreshToken = new AtomicReference<>();
 
+    private String newToken() {
+        String currentToken = lastRefreshToken.get();
+        if (currentToken == null) {
+            var data = new FormBody.Builder()
+                    .add("grant_type", "refresh_token")
+                    .add("client_id", "cloud-services")
+                    .add("refresh_token", this.offlineToken)
+                    .build();
+
+            var request = new Request.Builder()
+                    .url(url)
+                    .post(data)
+                    .build();
+
+            String accessToken = null;
+            try {
+                var response = client.newCall(request).execute();
+                accessToken = mapper.readTree(response.body().string()).get("access_token").asText();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to get credentials", e);
+            }
+
+            lastRefreshToken.set(accessToken);
+            return accessToken;
+        } else {
+            return currentToken;
+        }
+    }
+
+    private <A> A handle(ThrowingSupplier<A, Exception> f) throws ApiGenericException {
         // Set the access token before each call because another API could
         // have renewed it
-        setAccessToken(user.getAccessToken());
+        setAccessToken(newToken());
 
         try {
             return handleException(f);
-        } catch (ApiUnauthorizedException e) {
+        } catch (RuntimeException e) {
             log.debug("renew access token");
             // Try to renew the access token
-            setAccessToken(user.renewToken().getAccessToken());
+            lastRefreshToken.set(null);
+            setAccessToken(newToken());
             // and retry
             return handleException(f);
         }

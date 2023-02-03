@@ -3,7 +3,6 @@ package io.managed.services.test.billing;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import io.managed.services.test.Environment;
-import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
@@ -17,8 +16,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
@@ -33,20 +30,34 @@ public class BillingModelTest {
 
     static final String KAFKA_INSTANCE_NAME = "mk-e2e-"  + Environment.LAUNCH_SUFFIX;
 
-    private final Map<String, KafkaMgmtApi> mgmtApis = new HashMap<>();
+    private KafkaMgmtApi kafkaMgmtApiStratosphere1;
+    private KafkaMgmtApi kafkaMgmtApiStratosphere2;
+    private KafkaMgmtApi kafkaMgmtApiStratosphere3;
+    private KafkaMgmtApi kafkaMgmtApiStratosphere4;
 
     @BeforeClass
     public void bootstrap() {
-        assertNotNull(Environment.STRATOSPHERE_SCENARIO_1_USER, "the STRATOSPHERE_SCENARIO_1_USER env is null");
-        assertNotNull(Environment.STRATOSPHERE_SCENARIO_2_USER, "the STRATOSPHERE_SCENARIO_2_USER env is null");
-        assertNotNull(Environment.STRATOSPHERE_SCENARIO_3_USER, "the STRATOSPHERE_SCENARIO_3_USER env is null");
-        assertNotNull(Environment.STRATOSPHERE_SCENARIO_4_USER, "the STRATOSPHERE_SCENARIO_4_USER env is null");
-        assertNotNull(Environment.STRATOSPHERE_PASSWORD, "the STRATOSPHERE_PASSWORD env is null");
+
+        log.info("assert offline tokens of all used users");
+        assertNotNull(Environment.STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN, "the STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN, "the STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN, "the STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.STRATOSPHERE_SCENARIO_4_USER_OFFLINE_TOKEN, "the STRATOSPHERE_SCENARIO_4_USER_OFFLINE_TOKEN env is null");
+
+        log.info("assert associated accounts of all used users");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID env is null");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID, "the STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID env is null");
+
+        // setApis
+        log.info("set up application services for all stratosphere users");
+        kafkaMgmtApiStratosphere1 = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN);
+        kafkaMgmtApiStratosphere2 = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN);
+        kafkaMgmtApiStratosphere3 = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN);
+        kafkaMgmtApiStratosphere4 = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.STRATOSPHERE_SCENARIO_4_USER_OFFLINE_TOKEN);
+
     }
 
     @AfterClass(alwaysRun = true)
@@ -54,23 +65,7 @@ public class BillingModelTest {
         assumeTeardown();
     }
 
-    // gets and caches Kafka management APIs per user
-    private KafkaMgmtApi getMgmtApiForUser(String user) {
-        var api = mgmtApis.get(user);
-        if (api != null) {
-            return api;
-        }
-
-        var apps = ApplicationServicesApi.applicationServicesApi(
-                user,
-                Environment.STRATOSPHERE_PASSWORD);
-
-        mgmtApis.put(user, apps.kafkaMgmt());
-        return mgmtApis.get(user);
-    }
-
-    private void cleanup(String user) throws KafkaNotDeletedException, ApiGenericException, InterruptedException {
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+    private void cleanup(KafkaMgmtApi kafkaMgmtApi) throws KafkaNotDeletedException, ApiGenericException, InterruptedException {
         Optional<KafkaRequest> kafka = KafkaMgmtApiUtils.getKafkaByName(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
         if (kafka.isPresent()) {
             KafkaMgmtApiUtils.cleanKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
@@ -86,8 +81,8 @@ public class BillingModelTest {
         if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
             throw new SkipException("gcp marketplace is not available as a billing option at this time");
         }
-        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
         var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME)
@@ -103,7 +98,7 @@ public class BillingModelTest {
             assertEquals(kafka.getMarketplace(), "aws");
             assertEquals(kafka.getBillingCloudAccountId(), Environment.STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID);
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -113,8 +108,8 @@ public class BillingModelTest {
     // User sets the billing_model to standard.
     // Outcome: failure, the organization does not have standard quota.
     public void testFailWhenBillingModelIsNotAvailable() {
-        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+        KafkaMgmtApi kafkaMgmtApi =  kafkaMgmtApiStratosphere1;
 
         var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME)
@@ -137,7 +132,7 @@ public class BillingModelTest {
             assertEquals(body.reason, "Billing account id missing or invalid: requested billing model does not match assigned. requested: standard, assigned: marketplace-aws");
             assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -147,8 +142,8 @@ public class BillingModelTest {
     // User sets the billing_cloud_account_id to a value that does not match the linked account.
     // Outcome: failure, no matching cloud account.
     public void testFailWhenCloudAccountNotFound() {
-        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
         var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME)
@@ -174,7 +169,7 @@ public class BillingModelTest {
                                     "Provided: dummy, Available: [{3 %s aws}]",
                             Environment.STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID));
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -183,8 +178,8 @@ public class BillingModelTest {
     // User sets the marketplace to RHM.
     // Outcome: failure, no cloud account linked for that marketplace.
     public void testFailWhenMarketplaceNotAvailable() {
-        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
         var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME)
@@ -207,7 +202,7 @@ public class BillingModelTest {
             assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
             assertEquals(body.reason, "Billing account id missing or invalid: no billing account provided for marketplace: rhm");
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -216,8 +211,7 @@ public class BillingModelTest {
     // User does not provide any of the parameters billing_cloud_account_id, marketplace, billing_model.
     // Outcome: success, standard quota is chosen.
     public void testDefaultToStandardWhenNoCloudAccountAvailable() {
-        String user = Environment.STRATOSPHERE_SCENARIO_2_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere2;
 
         var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME)
@@ -234,7 +228,7 @@ public class BillingModelTest {
             assertNull(kafka.getBillingCloudAccountId());
             assertEquals(kafka.getBillingModel(), "standard");
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -246,8 +240,7 @@ public class BillingModelTest {
         if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
             throw new SkipException("gcp marketplace is not available as a billing option at this time");
         }
-        String user = Environment.STRATOSPHERE_SCENARIO_2_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere2;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID;
         var payload = new KafkaRequestPayload()
@@ -266,7 +259,7 @@ public class BillingModelTest {
             assertEquals(kafka.getBillingCloudAccountId(), cloudAccountId);
             assertEquals(kafka.getBillingModel(), "marketplace");
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -275,8 +268,7 @@ public class BillingModelTest {
     // The customer provides the billing_model set to the marketplace.
     // Outcome: failure, ambiguous cloud accounts.
     public void testFailWhenCloudAccountsAreAmbiguous() {
-        String user = Environment.STRATOSPHERE_SCENARIO_3_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME)
@@ -297,7 +289,7 @@ public class BillingModelTest {
             var body = ex.decode();
             assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -309,8 +301,7 @@ public class BillingModelTest {
         if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
             throw new SkipException("gcp marketplace is not available as a billing option at this time");
         }
-        String user = Environment.STRATOSPHERE_SCENARIO_3_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID;
         var payload = new KafkaRequestPayload()
@@ -329,7 +320,7 @@ public class BillingModelTest {
             assertEquals(kafka.getBillingCloudAccountId(), cloudAccountId);
             assertEquals(kafka.getBillingModel(), "marketplace");
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -338,8 +329,7 @@ public class BillingModelTest {
     // The customers provide the billing_cloud_account_id of the linked RHM account but with the marketplace set to AWS.
     // Outcome: failure, no matching cloud account found.
     public void testFailWhenMarketplaceDoesNotMatchCloudAccount() {
-        String user = Environment.STRATOSPHERE_SCENARIO_3_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID;
         var payload = new KafkaRequestPayload()
@@ -366,7 +356,7 @@ public class BillingModelTest {
             assertTrue(body.reason.contains(Environment.STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID));
             assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -376,8 +366,7 @@ public class BillingModelTest {
     // The customers provide the billing_cloud_account_id of the linked RHM account.
     // Outcome: success, RHM cloud account chosen because there is only one matching account.
     public void testCreateWithValidRHMCloudAccount() {
-        String user = Environment.STRATOSPHERE_SCENARIO_3_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID;
         var payload = new KafkaRequestPayload()
@@ -396,7 +385,7 @@ public class BillingModelTest {
             assertEquals(kafka.getBillingCloudAccountId(), cloudAccountId);
             assertEquals(kafka.getBillingModel(), "marketplace");
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -405,8 +394,7 @@ public class BillingModelTest {
     // The customers provide the billing_model set to the marketplace and the marketplace set to AWS.
     // Outcome: failure, ambiguous cloud accounts.
     public void testFailWhenNoCloudAccountIsChosenAndMultipleAvailable() {
-        String user = Environment.STRATOSPHERE_SCENARIO_4_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
         var payload = new KafkaRequestPayload()
                 .name(KAFKA_INSTANCE_NAME)
@@ -429,7 +417,7 @@ public class BillingModelTest {
             assertEquals(body.reason, "Billing account id missing or invalid: no billing account provided for marketplace: aws");
             assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
@@ -441,9 +429,7 @@ public class BillingModelTest {
         if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
             throw new SkipException("gcp marketplace is not available as a billing option at this time");
         }
-
-        String user = Environment.STRATOSPHERE_SCENARIO_4_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
         var payload = new KafkaRequestPayload()
@@ -462,15 +448,14 @@ public class BillingModelTest {
             assertEquals(kafka.getBillingCloudAccountId(), cloudAccountId);
             assertEquals(kafka.getBillingModel(), "marketplace");
         } finally {
-            cleanup(user);
+            cleanup(kafkaMgmtApi);
         }
     }
 
     @Test
     @SneakyThrows
     public void testFailOnAwsAccountWithGcpProvider() {
-        String user = Environment.STRATOSPHERE_SCENARIO_4_USER;
-        KafkaMgmtApi kafkaMgmtApi = getMgmtApiForUser(user);
+        KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
         var payload = new KafkaRequestPayload()

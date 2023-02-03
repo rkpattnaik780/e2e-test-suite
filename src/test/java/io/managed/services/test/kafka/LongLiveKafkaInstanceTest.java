@@ -51,8 +51,7 @@ import static org.testng.Assert.fail;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 public class LongLiveKafkaInstanceTest extends TestBase {
@@ -77,12 +76,9 @@ public class LongLiveKafkaInstanceTest extends TestBase {
 
     @BeforeClass
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
-        var apps = ApplicationServicesApi.applicationServicesApi(
-            Environment.PRIMARY_USERNAME,
-            Environment.PRIMARY_PASSWORD);
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
 
         this.kafkaMgmtApi = apps.kafkaMgmt();
         this.securityMgmtApi = apps.securityMgmt();
@@ -111,8 +107,7 @@ public class LongLiveKafkaInstanceTest extends TestBase {
         }
 
         LOGGER.info("initialize kafka instance api");
-        kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(kafka,
-            Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD));
+        kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
     }
 
     @Test(dependsOnMethods = "testRecreateTheLongLiveKafkaInstanceIfItDoesNotExist")

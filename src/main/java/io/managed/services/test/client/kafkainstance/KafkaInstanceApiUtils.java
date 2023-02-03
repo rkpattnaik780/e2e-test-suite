@@ -15,8 +15,6 @@ import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.kafka.KafkaAuthMethod;
 import io.managed.services.test.client.kafka.KafkaConsumerClient;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import io.managed.services.test.wait.TReadyFunction;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -51,20 +49,11 @@ public class KafkaInstanceApiUtils {
         return String.format(uriTemplate, hostname);
     }
 
-    public static Future<KafkaInstanceApi> kafkaInstanceApi(KafkaRequest kafka, String username, String password) {
-        return kafkaInstanceApi(new KeycloakLoginSession(username, password), kafka);
+    public static KafkaInstanceApi kafkaInstanceApi(KafkaRequest kafka, String offlineToken) {
+        return kafkaInstanceApi(kafkaInstanceApiUri(kafka), offlineToken);
     }
 
-    public static Future<KafkaInstanceApi> kafkaInstanceApi(KeycloakLoginSession auth, KafkaRequest kafka) {
-        log.info("authenticate user '{}' against MAS SSO", auth.getUsername());
-        return auth.loginToOpenshiftIdentity().map(u -> kafkaInstanceApi(kafkaInstanceApiUri(kafka), u));
-    }
-
-    public static KafkaInstanceApi kafkaInstanceApi(KafkaRequest kafka, KeycloakUser user) {
-        return kafkaInstanceApi(kafkaInstanceApiUri(kafka), user);
-    }
-
-    public static KafkaInstanceApi kafkaInstanceApi(String uri, KeycloakUser user) {
+    public static KafkaInstanceApi kafkaInstanceApi(String uri, String offlineToken) {
         ApiClient client = new ApiClient();
 
         if (Environment.KAFKA_INSECURE_TLS) {
@@ -77,7 +66,7 @@ public class KafkaInstanceApiUtils {
                     .build());
         }
 
-        return new KafkaInstanceApi(client.setBasePath(uri), user);
+        return new KafkaInstanceApi(client.setBasePath(uri), offlineToken);
     }
 
     public static Future<KafkaConsumerClient<String, String>> startConsumerGroup(

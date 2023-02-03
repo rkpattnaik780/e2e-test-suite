@@ -6,13 +6,11 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.managed.services.test.Environment;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.quickstarts.contexts.KafkaInstanceContext;
 import io.managed.services.test.quickstarts.contexts.OpenShiftAPIContext;
 import lombok.extern.log4j.Log4j2;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
-import static io.managed.services.test.TestUtils.bwait;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -102,9 +100,7 @@ public class KafkaInstanceSteps {
     public static void clean_kafka_instance() throws Throwable {
         assumeTeardown();
 
-        var keycloakLoginSession = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var redHatUser = bwait(keycloakLoginSession.loginToRedHatSSO());
-        var kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, redHatUser);
+        var kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
 
         log.info("clean kafka instance: {}", KAFKA_INSTANCE_UNIQUE_NAME);
         KafkaMgmtApiUtils.cleanKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_UNIQUE_NAME);

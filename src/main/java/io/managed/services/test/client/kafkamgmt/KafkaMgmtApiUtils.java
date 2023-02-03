@@ -17,7 +17,6 @@ import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,8 +43,8 @@ public class KafkaMgmtApiUtils {
     private static final Logger LOGGER = LogManager.getLogger(KafkaMgmtApiUtils.class);
     private static final String CLUSTER_CAPACITY_EXHAUSTED_CODE = "KAFKAS-MGMT-24";
 
-    public static KafkaMgmtApi kafkaMgmtApi(String uri, KeycloakUser user) {
-        return new KafkaMgmtApi(new ApiClient().setBasePath(uri), user);
+    public static KafkaMgmtApi kafkaMgmtApi(String uri, String offlineToken) {
+        return new KafkaMgmtApi(new ApiClient().setBasePath(uri), offlineToken);
     }
 
     /**

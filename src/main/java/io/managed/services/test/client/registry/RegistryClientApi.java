@@ -11,7 +11,6 @@ import io.apicurio.rest.client.auth.exception.NotAuthorizedException;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
-import io.managed.services.test.client.oauth.KeycloakUser;
 
 import java.io.ByteArrayInputStream;
 import java.net.HttpURLConnection;
@@ -22,8 +21,8 @@ public class RegistryClientApi extends BaseApi {
     private final RegistryClient registryClient;
     private final BearerAuth bearerAuth;
 
-    public RegistryClientApi(String baseUrl, KeycloakUser user) {
-        super(user);
+    public RegistryClientApi(String baseUrl, String offlineToken) {
+        super(offlineToken);
         this.bearerAuth = new BearerAuth();
         this.registryClient = RegistryClientFactory.create(baseUrl, new HashMap<>(), bearerAuth);
     }
@@ -46,8 +45,8 @@ public class RegistryClientApi extends BaseApi {
     }
 
     @Override
-    protected void setAccessToken(String t) {
-        bearerAuth.setAccessToken(t);
+    protected void setAccessToken(String accessToken) {
+        this.bearerAuth.setAccessToken(accessToken);
     }
 
     public ArtifactMetaData createArtifact(String groupId, String artifactId, byte[] data) throws ApiGenericException {

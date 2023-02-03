@@ -14,7 +14,6 @@ import io.managed.services.test.cli.CliNotFoundException;
 import io.managed.services.test.cli.ServiceAccountSecret;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
@@ -51,8 +50,8 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> GITHUB_TOKEN
  * </ul>
  */
 @Test
@@ -81,19 +80,17 @@ public class KafkaCLITest extends TestBase {
 
     @BeforeClass
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
     }
 
     @AfterClass(alwaysRun = true)
     @SneakyThrows
     public void clean() {
 
-        var auth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var user = bwait(auth.loginToRedHatSSO());
+        var offlineToken = Environment.PRIMARY_OFFLINE_TOKEN;
 
-        var kafkaMgmtApi =  KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, user);
-        var securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, user);
+        var kafkaMgmtApi =  KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
+        var securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
 
         try {
             KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
@@ -151,6 +148,7 @@ public class KafkaCLITest extends TestBase {
     @SneakyThrows
     public void testLogin() {
 
+        // make sure you are logout while developing locally.
         LOGGER.info("verify that we aren't logged-in");
         assertThrows(CliGenericException.class, () -> cli.listKafka());
 

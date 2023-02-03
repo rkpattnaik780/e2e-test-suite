@@ -24,7 +24,24 @@
         <rhoas-model.version>0.9.7</rhoas-model.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
+        <dependency>
+            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <artifactId>account-management-sdk</artifactId>
+            <version>0.0.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.andreaTP.kiota-utils</groupId>
+            <artifactId>kiota-rh-auth</artifactId>
+            <version>0.1.5</version>
+        </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>

@@ -50,9 +50,7 @@ public class DeploymentsTest extends TestBase {
         log.info("init openshift client");
         oc = new KubernetesClientBuilder().withConfig(config).build().adapt(OpenShiftClient.class);
 
-        var apps = ApplicationServicesApi.applicationServicesApi(
-            Environment.PRIMARY_USERNAME,
-            Environment.PRIMARY_PASSWORD);
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
         kafkaMgmtApi = apps.kafkaMgmt();
     }
 
