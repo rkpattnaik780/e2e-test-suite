@@ -13,12 +13,11 @@ import java.util.Objects;
 @Setter
 public class KafkaInstanceContext {
 
-    private final UserContext userContext;
 
     private KafkaRequest kafkaInstance;
 
-    public KafkaInstanceContext(UserContext userContext) {
-        this.userContext = userContext;
+    public KafkaInstanceContext() {
+
     }
 
     public KafkaRequest requireKafkaInstance() {
@@ -26,12 +25,11 @@ public class KafkaInstanceContext {
     }
 
     /**
-     * This method requires the Kafka Instance and the MAS SSO User to be initialized.
+     * This method requires the Kafka Instance to be initialized.
      *
      * @return the KafkaInstanceApi for the Kafka instance in context
      */
     public KafkaInstanceApi kafkaInstanceApi() {
-        var masUser = userContext.requireMasUser();
         var kafkaInstance = this.requireKafkaInstance();
         return KafkaInstanceApiUtils.kafkaInstanceApi(kafkaInstance, Environment.PRIMARY_OFFLINE_TOKEN);
     }

@@ -94,7 +94,7 @@ public class CLI {
      * This method only starts the CLI login, use CLIUtils.login() instead of this method
      * to login using username and password
      */
-    public AsyncProcess login(String apiGateway, String authURL, boolean insecure, String token) {
+    public AsyncProcess login(String apiGateway, String authURL, boolean insecure) {
 
         List<String> cmd = new ArrayList<>();
         cmd.add("login");
@@ -105,10 +105,6 @@ public class CLI {
 
         if (authURL != null) {
             cmd.addAll(List.of("--auth-url", authURL));
-        }
-
-        if (token != null) {
-            cmd.addAll(List.of("--token", token));
         }
 
         if (insecure) {

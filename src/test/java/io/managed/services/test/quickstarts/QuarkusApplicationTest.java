@@ -44,6 +44,7 @@ import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import io.managed.services.test.client.oauth.KeycloakLoginSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -109,21 +110,24 @@ public class QuarkusApplicationTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
+        LOGGER.debug("assert necessary environment variables");
+        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
+        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
         assertNotNull(Environment.DEV_CLUSTER_SERVER, "the DEV_CLUSTER_SERVER env is null");
         assertNotNull(Environment.DEV_CLUSTER_TOKEN, "the DEV_CLUSTER_TOKEN env is null");
 
         // OC
         LOGGER.info("initialize openshift client");
         var config = new ConfigBuilder()
-                .withMasterUrl(Environment.DEV_CLUSTER_SERVER)
-                .withOauthToken(Environment.DEV_CLUSTER_TOKEN)
-                .withNamespace(Environment.DEV_CLUSTER_NAMESPACE)
-                .withTrustCerts(true)
-                .build();
+            .withMasterUrl(Environment.DEV_CLUSTER_SERVER)
+            .withOauthToken(Environment.DEV_CLUSTER_TOKEN)
+            .withNamespace(Environment.DEV_CLUSTER_NAMESPACE)
+            .withTrustCerts(true)
+            .build();
         oc = new DefaultOpenShiftClient(config);
 
         var offlineToken = Environment.PRIMARY_OFFLINE_TOKEN;
+        var auth = new KeycloakLoginSession(vertx, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
 
         // CLI
         var downloader = CLIDownloader.defaultDownloader();
@@ -131,10 +135,10 @@ public class QuarkusApplicationTest extends TestBase {
         var cliBinary = downloader.downloadCLIInTempDir();
         LOGGER.info("cli downloaded successfully to: {}", cliBinary);
 
-        LOGGER.info("login the cli");
+        LOGGER.info("login to RHOAS CLI (insecure) with authorization based on logging to the console");
         cli = new CLI(cliBinary);
         // insecure login
-        CLIUtils.login(cli, offlineToken, false).get();
+        CLIUtils.login(vertx, cli, auth, false).get();
 
         // APIs
         LOGGER.info("initialize kafka and security mgmt apis");

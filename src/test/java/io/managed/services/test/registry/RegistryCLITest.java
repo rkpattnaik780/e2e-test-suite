@@ -47,15 +47,16 @@ public class RegistryCLITest {
 
     @BeforeClass
     public void bootstrap() throws Throwable {
-        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
+        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
 
         LOGGER.info("download cli");
         var downloader = CLIDownloader.defaultDownloader();
         var binary = downloader.downloadCLIInTempDir();
         this.cli = new CLI(binary);
 
-        LOGGER.info("login to RHOAS");
-        CLIUtils.login(cli, Environment.PRIMARY_OFFLINE_TOKEN).get();
+        LOGGER.info("login to RHOAS CLI with help of logging to the browser");
+        CLIUtils.login(vertx, cli, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD).get();
     }
 
     @AfterClass(alwaysRun = true)
