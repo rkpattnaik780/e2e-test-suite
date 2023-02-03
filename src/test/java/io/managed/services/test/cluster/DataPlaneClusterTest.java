@@ -200,11 +200,11 @@ public class DataPlaneClusterTest extends TestBase {
         }
 
         // create kafka instance of expected type
-        KafkaRequestPayload payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider("aws")
-            .region("us-east-1")
-            .plan(String.format("%s.x1", mkType));
+        KafkaRequestPayload payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider("aws");
+        payload.setRegion("us-east-1");
+        payload.setPlan(String.format("%s.x1", mkType));
 
         log.info("attempt to create kafka instance");
         KafkaRequest kafkaRequest = null;
@@ -257,11 +257,11 @@ public class DataPlaneClusterTest extends TestBase {
             throw new SkipException("cluster already reported to be at its maximum capacity");
 
         log.info("creating an instance");
-        var payload = new KafkaRequestPayload()
-            .name(DUMMY_KAFKA_INSTANCE_NAME)
-            .plan(PLAN_STANDARD)
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(DUMMY_KAFKA_INSTANCE_NAME);
+        payload.setPlan(PLAN_STANDARD);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         try {
             KafkaRequest kafkaRequest = KafkaMgmtApiUtils.attemptCreatingKafkaInstance(kafkaMgmtApi, payload, Duration.ofSeconds(20), Duration.ofSeconds(20));
@@ -335,11 +335,11 @@ public class DataPlaneClusterTest extends TestBase {
 
         // create kafka instance of expected type
         log.info(KAFKA_INSTANCE_NAME + "-" + mkType);
-        KafkaRequestPayload payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME + "-" + mkType)
-                .cloudProvider("aws")
-                .region("us-east-1")
-                .plan(String.format("%s.x1", mkType));
+        KafkaRequestPayload payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME + "-" + mkType);
+        payload.setCloudProvider("aws");
+        payload.setRegion("us-east-1");
+        payload.setPlan(String.format("%s.x1", mkType));
 
         log.info("attempt to create kafka instance");
         KafkaRequest kafkaRequest = null;

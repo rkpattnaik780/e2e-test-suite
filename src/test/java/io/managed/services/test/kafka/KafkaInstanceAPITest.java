@@ -39,6 +39,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -155,9 +156,11 @@ public class KafkaInstanceAPITest extends TestBase {
         LOGGER.info("topic '{}' not found", TEST_TOPIC_NAME);
 
         LOGGER.info("create topic '{}'", TEST_TOPIC_NAME);
-        var payload = new NewTopicInput()
-            .name(TEST_TOPIC_NAME)
-            .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(TEST_TOPIC_NAME);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         var topic = kafkaInstanceApi.createTopic(payload);
         LOGGER.debug(topic);
     }
@@ -223,15 +226,20 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test(dependsOnMethods = "testCreateTopic", groups = TestGroups.INTEGRATION)
     public void testFailToCreateTopicIfItAlreadyExist() {
         // create existing topic should fail
-        var payload = new NewTopicInput()
-            .name(TEST_TOPIC_NAME)
-            .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(TEST_TOPIC_NAME);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         assertThrows(ApiConflictException.class,
             () -> kafkaInstanceApi.createTopic(payload));
     }
 
-    private static ConfigEntry newCE() {
-        return new ConfigEntry();
+    private static ConfigEntry newCE(String key, String value) {
+        var ce = new ConfigEntry();
+        ce.setKey(key);
+        ce.setValue(value);
+        return ce;
     }
 
     @DataProvider(name = "policyData")
@@ -251,60 +259,60 @@ public class KafkaInstanceAPITest extends TestBase {
         }
 
         return new Object[][] {
-                {true, newCE().key("compression.type").value("producer")}, // default permitted
-                {false, newCE().key("compression.type").value("gzip")},
+                {true, newCE("compression.type", "producer")}, // default permitted
+                {false, newCE("compression.type", "gzip")},
 
-                {true, newCE().key("file.delete.delay.ms").value("60000")}, // default permitted
-                {false, newCE().key("file.delete.delay.ms").value("1")},
+                {true, newCE("file.delete.delay.ms", "60000")}, // default permitted
+                {false, newCE("file.delete.delay.ms", "1")},
 
-                {true, newCE().key("flush.messages").value(Long.toString(Long.MAX_VALUE))}, // default permitted
-                {false, newCE().key("flush.messages").value("1")},
+                {true, newCE("flush.messages", Long.toString(Long.MAX_VALUE))}, // default permitted
+                {false, newCE("flush.messages", "1")},
 
-                {true, newCE().key("flush.ms").value(Long.toString(Long.MAX_VALUE))}, // default permitted
-                {false, newCE().key("flush.ms").value("1")},
+                {true, newCE("flush.ms", Long.toString(Long.MAX_VALUE))}, // default permitted
+                {false, newCE("flush.ms", "1")},
 
-                {false, newCE().key("follower.replication.throttled.replicas").value("*")},
-                {false, newCE().key("follower.replication.throttled.replicas").value("1:1")},
+                {false, newCE("follower.replication.throttled.replicas", "*")},
+                {false, newCE("follower.replication.throttled.replicas", "1:1")},
 
-                {true, newCE().key("index.interval.bytes").value("4096")}, // default permitted
-                {false, newCE().key("index.interval.bytes").value("1")},
+                {true, newCE("index.interval.bytes", "4096")}, // default permitted
+                {false, newCE("index.interval.bytes", "1")},
 
-                {false, newCE().key("leader.replication.throttled.replicas").value("*")},
-                {false, newCE().key("leader.replication.throttled.replicas").value("1:1")},
+                {false, newCE("leader.replication.throttled.replicas", "*")},
+                {false, newCE("leader.replication.throttled.replicas", "1:1")},
 
-                {true, newCE().key("max.message.bytes").value(Integer.toString(messageSizeLimit))},
-                {true, newCE().key("max.message.bytes").value("1")},
-                {true, newCE().key("max.message.bytes").value(Integer.toString(messageSizeLimit - 1))},
-                {false, newCE().key("max.message.bytes").value(Integer.toString(messageSizeLimit + 1))},
+                {true, newCE("max.message.bytes", Integer.toString(messageSizeLimit))},
+                {true, newCE("max.message.bytes", "1")},
+                {true, newCE("max.message.bytes", Integer.toString(messageSizeLimit - 1))},
+                {false, newCE("max.message.bytes", Integer.toString(messageSizeLimit + 1))},
 
-                {false, newCE().key("message.format.version").value("3.0")},
-                {false, newCE().key("message.format.version").value("2.8")},
-                {false, newCE().key("message.format.version").value("2.1")},
+                {false, newCE("message.format.version", "3.0")},
+                {false, newCE("message.format.version", "2.8")},
+                {false, newCE("message.format.version", "2.1")},
 
-                {true, newCE().key("min.cleanable.dirty.ratio").value("0.5")},
-                {false, newCE().key("min.cleanable.dirty.ratio").value("0")},
-                {false, newCE().key("min.cleanable.dirty.ratio").value("1")},
+                {true, newCE("min.cleanable.dirty.ratio", "0.5")},
+                {false, newCE("min.cleanable.dirty.ratio", "0")},
+                {false, newCE("min.cleanable.dirty.ratio", "1")},
 
-                {desiredBrokerCount > 2, newCE().key("min.insync.replicas").value(desiredBrokerCount > 2 ? "2" : "1")},
-                {desiredBrokerCount < 3, newCE().key("min.insync.replicas").value("1")},
+                {desiredBrokerCount > 2, newCE("min.insync.replicas", desiredBrokerCount > 2 ? "2" : "1")},
+                {desiredBrokerCount < 3, newCE("min.insync.replicas", "1")},
 
-                {true, newCE().key("segment.bytes").value(Integer.toString(fiftyMi))},
-                {true, newCE().key("segment.bytes").value(Integer.toString(fiftyMi + 1))},
-                {false, newCE().key("segment.bytes").value(Integer.toString(fiftyMi - 1))},
-                {false, newCE().key("segment.bytes").value(Integer.toString(1))},
+                {true, newCE("segment.bytes", Integer.toString(fiftyMi))},
+                {true, newCE("segment.bytes", Integer.toString(fiftyMi + 1))},
+                {false, newCE("segment.bytes", Integer.toString(fiftyMi - 1))},
+                {false, newCE("segment.bytes", Integer.toString(1))},
 
-                {true, newCE().key("segment.index.bytes").value(Integer.toString(tenMi))},
-                {false, newCE().key("segment.index.bytes").value("1")},
+                {true, newCE("segment.index.bytes", Integer.toString(tenMi))},
+                {false, newCE("segment.index.bytes", "1")},
 
-                {false, newCE().key("segment.jitter.ms").value("0")},
-                {false, newCE().key("segment.jitter.ms").value("1")},
+                {false, newCE("segment.jitter.ms", "0")},
+                {false, newCE("segment.jitter.ms", "1")},
 
-                {true, newCE().key("segment.ms").value(Long.toString(Duration.ofDays(7).toMillis()))},
-                {true, newCE().key("segment.ms").value(Long.toString(Duration.ofMinutes(10).toMillis()))},
-                {false, newCE().key("segment.ms").value(Long.toString(Duration.ofMinutes(10).toMillis() - 1))},
+                {true, newCE("segment.ms", Long.toString(Duration.ofDays(7).toMillis()))},
+                {true, newCE("segment.ms", Long.toString(Duration.ofMinutes(10).toMillis()))},
+                {false, newCE("segment.ms", Long.toString(Duration.ofMinutes(10).toMillis() - 1))},
 
-                {true, newCE().key("unclean.leader.election.enable").value("false")},
-                {false, newCE().key("unclean.leader.election.enable").value("true")},
+                {true, newCE("unclean.leader.election.enable", "false")},
+                {false, newCE("unclean.leader.election.enable", "true")},
         };
     }
 
@@ -312,10 +320,11 @@ public class KafkaInstanceAPITest extends TestBase {
     @SneakyThrows
     public void testCreateTopicEnforcesPolicy(boolean allowed, ConfigEntry configEntry) {
         String testTopicName = UUID.randomUUID().toString();
-        var createSettings = new TopicSettings().addConfigItem(configEntry);
-        var payload = new NewTopicInput()
-            .name(testTopicName)
-            .settings(createSettings);
+        var createSettings = new TopicSettings();
+        createSettings.setConfig(List.of(configEntry));
+        var payload = new NewTopicInput();
+        payload.setName(testTopicName);
+        payload.setSettings(createSettings);
         try {
             if (allowed) {
                 // create should success without exception
@@ -340,10 +349,14 @@ public class KafkaInstanceAPITest extends TestBase {
     @SneakyThrows
     public void testAlterTopicEnforcesPolicy(boolean allowed, ConfigEntry configEntry) {
         var testTopicName = UUID.randomUUID().toString();
-        var updateSettings = new TopicSettings().addConfigItem(configEntry);
+        var updateSettings = new TopicSettings();
+        updateSettings.setConfig(List.of(configEntry));
 
         try {
-            kafkaInstanceApi.createTopic(new NewTopicInput().name(testTopicName).settings(new TopicSettings()));
+            var topicInput = new NewTopicInput();
+            topicInput.setName(testTopicName);
+            topicInput.setSettings(new TopicSettings());
+            kafkaInstanceApi.createTopic(topicInput);
             var first = kafkaInstanceApi.getTopics().getItems().stream().filter(topic -> testTopicName.equals(topic.getName())).findFirst();
             assertTrue(first.isPresent(), "failed to create topic before test");
 

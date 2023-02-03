@@ -144,10 +144,14 @@ public class LongLiveKafkaInstanceTest extends TestBase {
     }
 
     private Map<String, NewTopicInput> expectedTopics() {
-        BiFunction<String, Integer, NewTopicInput> topic = (String topicName, Integer numPartitions) ->
-            new NewTopicInput()
-                .name(topicName)
-                .settings(new TopicSettings().numPartitions(numPartitions));
+        BiFunction<String, Integer, NewTopicInput> topic = (String topicName, Integer numPartitions) -> {
+            var payload = new NewTopicInput();
+            payload.setName(topicName);
+            var settings = new TopicSettings();
+            settings.setNumPartitions(numPartitions);
+            payload.setSettings(settings);
+            return payload;
+        };
 
         var map = new HashMap<String, NewTopicInput>();
         map.put(TOPIC_NAME, topic.apply(TOPIC_NAME, 1));

@@ -1,54 +1,50 @@
 package io.managed.services.test.client.registrymgmt;
 
-import com.openshift.cloud.api.srs.RegistriesApi;
-import com.openshift.cloud.api.srs.invoker.ApiClient;
-import com.openshift.cloud.api.srs.invoker.ApiException;
-import com.openshift.cloud.api.srs.invoker.auth.HttpBearerAuth;
-import com.openshift.cloud.api.srs.models.Registry;
+import com.openshift.cloud.api.srs.ApiClient;
+import com.openshift.cloud.api.srs.api.serviceregistry_mgmt.v1.V1RequestBuilder;
 import com.openshift.cloud.api.srs.models.RegistryCreate;
 import com.openshift.cloud.api.srs.models.RegistryList;
+import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
 
+import java.util.concurrent.TimeUnit;
+
 public class RegistryMgmtApi extends BaseApi {
 
     private final ApiClient apiClient;
-    private final RegistriesApi registriesApi;
+    private final V1RequestBuilder v1;
 
     public RegistryMgmtApi(ApiClient apiClient, String offlineToken) {
         super(offlineToken);
         this.apiClient = apiClient;
-        this.registriesApi = new RegistriesApi(apiClient);
+        this.v1 = apiClient.api().serviceregistry_mgmt().v1();
     }
 
     @Override
     protected ApiUnknownException toApiException(Exception e) {
-        if (e instanceof ApiException) {
-            var ex = (ApiException) e;
-            return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
-        }
         return null;
     }
 
-    @Override
-    protected void setAccessToken(String accessToken) {
-        ((HttpBearerAuth) this.apiClient.getAuthentication("Bearer")).setBearerToken(accessToken);
+    public RootTypeForRegistry createRegistry(RegistryCreate registryCreateRest) throws ApiGenericException {
+        return retry(() -> v1.registries().post(registryCreateRest).get(1, TimeUnit.SECONDS));
     }
 
-    public Registry createRegistry(RegistryCreate registryCreateRest) throws ApiGenericException {
-        return retry(() -> registriesApi.createRegistry(registryCreateRest));
-    }
-
-    public Registry getRegistry(String id) throws ApiGenericException {
-        return retry(() -> registriesApi.getRegistry(id));
+    public RootTypeForRegistry getRegistry(String id) throws ApiGenericException {
+        return retry(() -> v1.registries(id).get().get(1, TimeUnit.SECONDS));
     }
 
     public RegistryList getRegistries(Integer page, Integer size, String orderBy, String search) throws ApiGenericException {
-        return retry(() -> registriesApi.getRegistries(page, size, orderBy, search));
+        return retry(() -> v1.registries().get(config -> {
+            config.queryParameters.page = page;
+            config.queryParameters.size = size;
+            config.queryParameters.orderBy = orderBy;
+            config.queryParameters.search = search;
+        }).get(1, TimeUnit.SECONDS));
     }
 
     public void deleteRegistry(String id) throws ApiGenericException {
-        retry(() -> registriesApi.deleteRegistry(id));
+        retry(() -> v1.registries(id).delete().get(1, TimeUnit.SECONDS));
     }
 }

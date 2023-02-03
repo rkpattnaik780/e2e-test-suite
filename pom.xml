@@ -18,10 +18,11 @@
         <maven.checkstyle.version>3.2.1</maven.checkstyle.version>
         <maven.failsafe.version>3.0.0-M7</maven.failsafe.version>
         <download.maven.plugin.version>1.6.8</download.maven.plugin.version>
-        <fabric8.version>6.4.0</fabric8.version>
+        <fabric8.version>6.4.1</fabric8.version>
         <sundrio.version>0.93.2</sundrio.version>
         <!-- See 'Update the rhoas-model dependency' in the README.md on how to build and update the rhoas-model -->
         <rhoas-model.version>0.9.7</rhoas-model.version>
+        <sdk.version>0.0.8</sdk.version>
     </properties>
 
     <repositories>
@@ -33,14 +34,46 @@
 
     <dependencies>
         <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <!-- TODO: check the prev version -->
+            <version>2.1.1</version>
+        </dependency>
+        
+        <dependency>
             <groupId>com.github.andreaTP.rh-java-sdk</groupId>
             <artifactId>account-management-sdk</artifactId>
-            <version>0.0.5-SNAPSHOT</version>
+            <version>${sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <artifactId>kafka-instance-sdk</artifactId>
+            <version>${sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <artifactId>kafka-management-sdk</artifactId>
+            <version>${sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <artifactId>registry-instance-sdk</artifactId>
+            <version>${sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <artifactId>registry-management-sdk</artifactId>
+            <version>${sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <artifactId>service-accounts-sdk</artifactId>
+            <version>${sdk.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.andreaTP.kiota-utils</groupId>
             <artifactId>kiota-rh-auth</artifactId>
-            <version>0.1.5</version>
+            <version>0.1.6</version>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
@@ -148,29 +181,9 @@
             <version>2.12.2</version>
         </dependency>
         <dependency>
-            <groupId>com.redhat.cloud</groupId>
-            <artifactId>kafka-management-sdk</artifactId>
-            <version>0.31.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
             <version>0.2.5</version>
-        </dependency>
-        <dependency>
-            <groupId>com.redhat.cloud</groupId>
-            <artifactId>registry-management-sdk</artifactId>
-            <version>0.31.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.redhat.cloud</groupId>
-            <artifactId>kafka-instance-sdk</artifactId>
-            <version>0.31.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.redhat.cloud</groupId>
-            <artifactId>service-accounts-sdk</artifactId>
-            <version>0.31.0</version>
         </dependency>
         <dependency>
             <groupId>io.apicurio</groupId>

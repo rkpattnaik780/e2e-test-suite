@@ -123,7 +123,9 @@ public class KafkaMgmtAPITest extends TestBase {
 
         if (Environment.SKIP_KAFKA_TEARDOWN) {
             try {
-                kafkaMgmtApi.updateKafka(kafka.getId(), new KafkaUpdateRequest().reauthenticationEnabled(true));
+                var request = new KafkaUpdateRequest();
+                request.setReauthenticationEnabled(true);
+                kafkaMgmtApi.updateKafka(kafka.getId(), request);
             } catch (Throwable t) {
                 log.warn("resat kafka reauth error: ", t);
             }
@@ -167,11 +169,10 @@ public class KafkaMgmtAPITest extends TestBase {
     public void testApplyKafkaInstance() {
 
         // Create Kafka Instance
-        // TODO enterprise: with new SDK create enteprise kafka instance by specifying clusterId, marketplace fields.
-        var payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         log.info("create kafka instance '{}'", payload.getName());
         kafka = KafkaMgmtApiUtils.applyKafkaInstance(kafkaMgmtApi, payload);
@@ -185,9 +186,10 @@ public class KafkaMgmtAPITest extends TestBase {
 
         // Create Service Account
         log.info("create service account '{}'", SERVICE_ACCOUNT_NAME);
-        serviceAccount = securityMgmtApi.createServiceAccount(new ServiceAccountRequest()
-                .name(SERVICE_ACCOUNT_NAME)
-                .description("E2E test service account"));
+        var sa = new ServiceAccountRequest();
+        sa.setName(SERVICE_ACCOUNT_NAME);
+        sa.setDescription("E2E test service account");
+        serviceAccount = securityMgmtApi.createServiceAccount(sa);
     }
 
     @Test(dependsOnMethods = {"testCreateServiceAccount", "testApplyKafkaInstance"}, groups = {"pr-check", "production"})
@@ -206,15 +208,19 @@ public class KafkaMgmtAPITest extends TestBase {
     public void testCreateTopics() {
 
         log.info("create topic '{}' on the instance '{}'", TOPIC_NAME, kafka.getName());
-        var topicPayload = new NewTopicInput()
-            .name(TOPIC_NAME)
-            .settings(new TopicSettings().numPartitions(1));
+        var topicPayload = new NewTopicInput();
+        topicPayload.setName(TOPIC_NAME);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        topicPayload.setSettings(settings);
         kafkaInstanceApi.createTopic(topicPayload);
 
         log.info("create topic '{}' on the instance '{}'", METRIC_TOPIC_NAME, kafka.getName());
-        var metricTopicPayload = new NewTopicInput()
-            .name(METRIC_TOPIC_NAME)
-            .settings(new TopicSettings().numPartitions(1));
+        var metricTopicPayload = new NewTopicInput();
+        metricTopicPayload.setName(METRIC_TOPIC_NAME);
+        var metricSettings = new TopicSettings();
+        metricSettings.setNumPartitions(1);
+        metricTopicPayload.setSettings(metricSettings);
         kafkaInstanceApi.createTopic(metricTopicPayload);
     }
 
@@ -228,9 +234,11 @@ public class KafkaMgmtAPITest extends TestBase {
         log.info("Max partition limit per given instance: {}", maxPartitionLimit);
 
         log.info("Attempt to create topic '{}', with too many partitions: {}", topicName, maxPartitionLimit + 1);
-        var payload = new NewTopicInput()
-                .name(topicName)
-                .settings(new TopicSettings().numPartitions(maxPartitionLimit + 1));
+        var payload = new NewTopicInput();
+        payload.setName(topicName);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(maxPartitionLimit + 1);
+        payload.setSettings(settings);
         assertThrows(ApiGenericException.class,
                 () -> kafkaInstanceApi.createTopic(payload));
     }
@@ -269,9 +277,11 @@ public class KafkaMgmtAPITest extends TestBase {
         final int partitionCountOfNewTopic = (maxPartitionLimit - currentPartitionCount) / 2;
         log.info("Creating first topic '{}'", topicNameFirst);
         // first topic
-        var payloadTopic1 = new NewTopicInput()
-                .name(topicNameFirst)
-                .settings(new TopicSettings().numPartitions(partitionCountOfNewTopic));
+        var payloadTopic1 = new NewTopicInput();
+        payloadTopic1.setName(topicNameFirst);
+        var settings1 = new TopicSettings();
+        settings1.setNumPartitions(partitionCountOfNewTopic);
+        payloadTopic1.setSettings(settings1);
         // creation of topic with big number of partition may take long time, which result in repetition of API call due to timeout, but topic will be created
         try {
             kafkaInstanceApi.createTopic(payloadTopic1);
@@ -285,9 +295,11 @@ public class KafkaMgmtAPITest extends TestBase {
         Thread.sleep(ofSeconds(20).toMillis());
         // second topic, which should overflow number of allowed partitions. 3 is just to make sure it really overflow given number (1 would fail in case of odd number of partitions)
         log.info("Creating second topic '{}'", topicNameSecond);
-        var payloadTopic2 = new NewTopicInput()
-                .name(topicNameSecond)
-                .settings(new TopicSettings().numPartitions(partitionCountOfNewTopic + 3));
+        var payloadTopic2 = new NewTopicInput();
+        payloadTopic2.setName(topicNameSecond);
+        var settings2 = new TopicSettings();
+        settings2.setNumPartitions(partitionCountOfNewTopic + 3);
+        payloadTopic2.setSettings(settings2);
         assertThrows(ApiGenericException.class, () -> kafkaInstanceApi.createTopic(payloadTopic2));
 
         // cleanup
@@ -320,9 +332,11 @@ public class KafkaMgmtAPITest extends TestBase {
         log.info("Create topic with partitions so that there is still 1 more partition within limit");
         final int maxPartitionLimit = KafkaMgmtApiUtils.getPartitionLimitMax(kafkaMgmtApi, kafka);
         final int currentPartitionCount = KafkaInstanceApiUtils.getPartitionCountTotal(kafkaInstanceApi);
-        var payloadTopicPartitionFiller = new NewTopicInput()
-                .name(topicFillPartitionCountName)
-                .settings(new TopicSettings().numPartitions(maxPartitionLimit - currentPartitionCount - 1));
+        var payloadTopicPartitionFiller = new NewTopicInput();
+        payloadTopicPartitionFiller.setName(topicFillPartitionCountName);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(maxPartitionLimit - currentPartitionCount - 1);
+        payloadTopicPartitionFiller.setSettings(settings);
 
         // creation of topic with big number of partition may take long time, which result in repetition of API call due to timeout, but topic will be created
         try {
@@ -510,10 +524,10 @@ public class KafkaMgmtAPITest extends TestBase {
     public void testFailToCreateKafkaInstanceIfItAlreadyExist() {
 
         // Create Kafka Instance with existing name
-        var payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         log.info("create kafka instance '{}' with existing name", payload.getName());
         assertThrows(ApiConflictException.class, () -> kafkaMgmtApi.createKafka(true, payload));
@@ -538,7 +552,9 @@ public class KafkaMgmtAPITest extends TestBase {
 
         // disable kafka instance reauthentication
         log.info("set Kafka reauthentication to false");
-        kafka = kafkaMgmtApi.updateKafka(kafka.getId(), new KafkaUpdateRequest().reauthenticationEnabled(false));
+        var request = new KafkaUpdateRequest();
+        request.setReauthenticationEnabled(false);
+        kafka = kafkaMgmtApi.updateKafka(kafka.getId(), request);
         assertFalse(kafka.getReauthenticationEnabled());
 
         ThrowingFunction<Boolean, Boolean, ApiGenericException> isReauthenticationDisabled = last -> {
@@ -562,9 +578,10 @@ public class KafkaMgmtAPITest extends TestBase {
 
         // create SA specifically for purpose of demonstration that it works, afterwards deleting it and fail to use it anymore
         log.info("create service account '{}'", SERVICE_ACCOUNT_NAME_FOR_DELETION);
-        var serviceAccountForDeletion = securityMgmtApi.createServiceAccount(new ServiceAccountRequest()
-                .name(SERVICE_ACCOUNT_NAME_FOR_DELETION)
-                .description("E2E test service account"));
+        var sa = new ServiceAccountRequest();
+        sa.setName(SERVICE_ACCOUNT_NAME_FOR_DELETION);
+        sa.setDescription("E2E test service account");
+        var serviceAccountForDeletion = securityMgmtApi.createServiceAccount(sa);
 
         // ACLs
         var principal = KafkaInstanceApiAccessUtils.toPrincipal(serviceAccountForDeletion.getClientId());

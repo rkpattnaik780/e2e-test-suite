@@ -2,13 +2,9 @@ package io.managed.services.test.client.kafkainstance;
 
 import com.openshift.cloud.api.kas.auth.models.AclBinding;
 import com.openshift.cloud.api.kas.auth.models.AclOperation;
-import com.openshift.cloud.api.kas.auth.models.AclOperationFilter;
 import com.openshift.cloud.api.kas.auth.models.AclPatternType;
-import com.openshift.cloud.api.kas.auth.models.AclPatternTypeFilter;
 import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
-import com.openshift.cloud.api.kas.auth.models.AclPermissionTypeFilter;
 import com.openshift.cloud.api.kas.auth.models.AclResourceType;
-import com.openshift.cloud.api.kas.auth.models.AclResourceTypeFilter;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
 import io.managed.services.test.client.exception.ApiGenericException;
 import lombok.extern.log4j.Log4j2;
@@ -51,12 +47,12 @@ public class KafkaInstanceApiAccessUtils {
     public static void deleteACL(KafkaInstanceApi api, AclBinding aclBinding) throws ApiGenericException {
 
         api.deleteAcls(
-            AclResourceTypeFilter.valueOf(aclBinding.getResourceType().getValue()),
+            aclBinding.getResourceType(),
             aclBinding.getResourceName(), // TODO: Verify why it was `null`
-            AclPatternTypeFilter.valueOf(aclBinding.getPatternType().getValue()),
+            aclBinding.getPatternType(),
             aclBinding.getPrincipal(),
-            AclOperationFilter.valueOf(aclBinding.getOperation().getValue()),
-            AclPermissionTypeFilter.valueOf(aclBinding.getPermission().getValue()));
+            aclBinding.getOperation(),
+            aclBinding.getPermission());
     }
 
     /**
@@ -90,13 +86,13 @@ public class KafkaInstanceApiAccessUtils {
     public static void createAllowAnyACL(KafkaInstanceApi api, String principal, AclResourceType resourceType, AclOperation operation)
         throws ApiGenericException {
 
-        var acl = new AclBinding()
-            .principal(principal)
-            .resourceType(resourceType)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("*")
-            .permission(AclPermissionType.ALLOW)
-            .operation(operation);
+        var acl = new AclBinding();
+        acl.setPrincipal(principal);
+        acl.setResourceType(resourceType);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName("*");
+        acl.setPermission(AclPermissionType.ALLOW);
+        acl.setOperation(operation);
 
         log.debug(acl);
 

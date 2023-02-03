@@ -84,10 +84,10 @@ public class BillingModelTest {
 //        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         KafkaRequest kafka;
         log.info("create kafka instance '{}'", payload.getName());
@@ -111,11 +111,11 @@ public class BillingModelTest {
 //        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
         KafkaMgmtApi kafkaMgmtApi =  kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("standard");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("standard");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -145,12 +145,12 @@ public class BillingModelTest {
 //        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("marketplace")
-                .billingCloudAccountId("dummy");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("marketplace");
+        payload.setBillingCloudAccountId("dummy");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -180,12 +180,12 @@ public class BillingModelTest {
 //        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("marketplace")
-                .marketplace("rhm");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("marketplace");
+        payload.setMarketplace("rhm");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -212,10 +212,10 @@ public class BillingModelTest {
     public void testDefaultToStandardWhenNoCloudAccountAvailable() {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere2;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -242,11 +242,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere2;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -269,11 +269,11 @@ public class BillingModelTest {
     public void testAutomaticallyPickMarketplaceRhmWhenBillingModelIsMarketplace() {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("marketplace");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("marketplace");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -298,11 +298,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -326,12 +326,12 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId)
-                .marketplace("aws");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
+        payload.setMarketplace("aws");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -361,11 +361,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -388,12 +388,12 @@ public class BillingModelTest {
     public void testFailWhenNoCloudAccountIsChosenAndMultipleAvailable() {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .marketplace("aws")
-                .billingModel("marketplace");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setMarketplace("aws");
+        payload.setBillingModel("marketplace");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -424,11 +424,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
 
@@ -450,11 +450,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider("gcp")
-            .region("us-east1")
-            .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider("gcp");
+        payload.setRegion("us-east1");
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
 

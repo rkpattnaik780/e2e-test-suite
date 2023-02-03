@@ -46,10 +46,10 @@ public class KafkaRegressionTest {
     public void testDeleteProvisioningKafkaInstance() {
 
         // Create Kafka Instance
-        var payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         log.info("create kafka instance '{}'", KAFKA_INSTANCE_NAME);
         var kafkaToDelete = KafkaMgmtApiUtils.createKafkaInstance(kafkaMgmtApi, payload);

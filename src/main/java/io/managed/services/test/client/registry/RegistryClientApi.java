@@ -44,11 +44,6 @@ public class RegistryClientApi extends BaseApi {
         return null;
     }
 
-    @Override
-    protected void setAccessToken(String accessToken) {
-        this.bearerAuth.setAccessToken(accessToken);
-    }
-
     public ArtifactMetaData createArtifact(String groupId, String artifactId, byte[] data) throws ApiGenericException {
         return retry(() -> registryClient.createArtifact(groupId, artifactId, new ByteArrayInputStream(data)));
     }

@@ -204,7 +204,13 @@ public class CLIUtils {
     public static Registry waitUntilServiceRegistryIsReady(CLI cli, String id)
             throws InterruptedException, CliGenericException, RegistryNotReadyException {
 
-        return RegistryMgmtApiUtils.waitUntilRegistryIsReady(() -> cli.describeServiceRegistry(id));
+        return RegistryMgmtApiUtils.waitUntilRegistryIsReady(() -> {
+            try {
+                return cli.describeServiceRegistry(id);
+            } catch (CliGenericException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public static Topic applyTopic(CLI cli, String topicName, int partitions) throws CliGenericException {

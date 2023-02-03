@@ -1,6 +1,6 @@
 package io.managed.services.test.registry;
 
-import com.openshift.cloud.api.srs.models.Registry;
+import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
@@ -52,7 +52,7 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
     private RegistryMgmtApi secondaryRegistryMgmtApi;
     private RegistryMgmtApi alienRegistryMgmtApi;
 
-    private Registry registry;
+    private RootTypeForRegistry registry;
 
     @BeforeClass
     public void bootstrap() throws Throwable {

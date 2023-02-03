@@ -1,19 +1,12 @@
 package io.managed.services.test.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.managed.services.test.Environment;
 import io.managed.services.test.RetryUtils;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.ThrowingVoid;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiUnauthorizedException;
 import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 @Log4j2
 public abstract class BaseApi {
@@ -39,8 +32,6 @@ public abstract class BaseApi {
      */
     protected abstract ApiUnknownException toApiException(Exception e);
 
-    protected abstract void setAccessToken(String t);
-
     private <A> A handleException(ThrowingSupplier<A, Exception> f) throws ApiGenericException {
         try {
             return f.get();
@@ -53,59 +44,8 @@ public abstract class BaseApi {
         }
     }
 
-    private final OkHttpClient client = new OkHttpClient();
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final AtomicReference<String> lastRefreshToken = new AtomicReference<>();
-
-    private String newToken() {
-        String currentToken = lastRefreshToken.get();
-        if (currentToken == null) {
-            var data = new FormBody.Builder()
-                    .add("grant_type", "refresh_token")
-                    .add("client_id", "cloud-services")
-                    .add("refresh_token", this.offlineToken)
-                    .build();
-
-            var request = new Request.Builder()
-                    .url(url)
-                    .post(data)
-                    .build();
-
-            String accessToken = null;
-            try {
-                var response = client.newCall(request).execute();
-                accessToken = mapper.readTree(response.body().string()).get("access_token").asText();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to get credentials", e);
-            }
-
-            lastRefreshToken.set(accessToken);
-            return accessToken;
-        } else {
-            return currentToken;
-        }
-    }
-
     private <A> A handle(ThrowingSupplier<A, Exception> f) throws ApiGenericException {
-        // Set the access token before each call because another API could
-        // have renewed it
-        setAccessToken(newToken());
-
-        try {
-            return handleException(f);
-        } catch (ApiUnauthorizedException e) {
-            // if exception is not related to expired bearer token rethrow it
-            if (!e.getMessage().contains("Bearer token is expired")) {
-                throw e;
-            }
-            log.debug("expired access token, renew it token");
-            // Try to renew the access token
-            lastRefreshToken.set(null);
-            setAccessToken(newToken());
-            // and retry
-            return handleException(f);
-        }
-
+        return handleException(f);
     }
 
     protected <A> A retry(ThrowingSupplier<A, Exception> f) throws ApiGenericException {

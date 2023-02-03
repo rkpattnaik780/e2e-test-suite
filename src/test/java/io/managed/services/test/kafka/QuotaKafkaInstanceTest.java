@@ -109,10 +109,10 @@ public class QuotaKafkaInstanceTest extends TestBase {
         LOGGER.info("Trying to create Developer Kafka instance '{}'", KAFKA_INSTANCE_NAME_FAIL);
 
         try {
-            var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME_FAIL)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .plan(PLAN_DEVELOPER);
+            var payload = new KafkaRequestPayload();
+            payload.setName(KAFKA_INSTANCE_NAME_FAIL);
+            payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+            payload.setPlan(PLAN_DEVELOPER);
             KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiGenericException e) {
@@ -128,10 +128,10 @@ public class QuotaKafkaInstanceTest extends TestBase {
     public void testQuotaUserSucceededCreateStandardInstance() {
         LOGGER.info("Trying to create Standard Kafka instance '{}'", KAFKA_INSTANCE_NAME_QUOTA);
 
-        var payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME_QUOTA)
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .plan(PLAN_STANDARD);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME_QUOTA);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setPlan(PLAN_STANDARD);
         KafkaRequest kafka = KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
         assertEquals(kafka.getName(), KAFKA_INSTANCE_NAME_QUOTA);
         assertEquals(kafka.getInstanceType() + '.' + kafka.getSizeId(), PLAN_STANDARD);
@@ -144,10 +144,10 @@ public class QuotaKafkaInstanceTest extends TestBase {
         
         testQuotaUserSucceededCreateStandardInstance();
         try {
-            var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME_FAIL)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .plan(PLAN_STANDARD);
+            var payload = new KafkaRequestPayload();
+            payload.setName(KAFKA_INSTANCE_NAME_FAIL);
+            payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+            payload.setPlan(PLAN_STANDARD);
             KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiForbiddenException e) {
@@ -164,10 +164,10 @@ public class QuotaKafkaInstanceTest extends TestBase {
         LOGGER.info("Trying to create Standard Kafka instance with no quota '{}'", KAFKA_INSTANCE_NAME_FAIL);
 
         try {
-            var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME_FAIL)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .plan(PLAN_STANDARD);
+            var payload = new KafkaRequestPayload();
+            payload.setName(KAFKA_INSTANCE_NAME_FAIL);
+            payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+            payload.setPlan(PLAN_STANDARD);
             KafkaMgmtApiUtils.createKafkaInstance(noQuotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiGenericException e) {
@@ -183,10 +183,10 @@ public class QuotaKafkaInstanceTest extends TestBase {
     public void testNoQuotaUserSucceededCreateDeveloperInstance() {
         LOGGER.info("Trying to create Developer Kafka instance with no quota '{}'", KAFKA_INSTANCE_NAME_NO_QUOTA);
 
-        var payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME_NO_QUOTA)
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .plan(PLAN_DEVELOPER);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME_NO_QUOTA);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setPlan(PLAN_DEVELOPER);
         KafkaRequest kafka = KafkaMgmtApiUtils.createKafkaInstance(noQuotaUserKafkaMgmtApi, payload);
         assertEquals(kafka.getName(), KAFKA_INSTANCE_NAME_NO_QUOTA);
         assertEquals(kafka.getInstanceType() + '.' + kafka.getSizeId(), PLAN_DEVELOPER);
