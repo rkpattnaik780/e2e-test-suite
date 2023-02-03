@@ -1,0 +1,7 @@
+<suite name="DataPlane">
+    <test name="DataPlaneCluster">
+        <classes>
+            <class name="io.managed.services.test.cluster.DataPlaneClusterTest"/>
+        </classes>
+    </test>
+</suite>
