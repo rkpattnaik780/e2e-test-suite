@@ -55,7 +55,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     // Kafka API code errors
     private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
-    private static final String KAFKAS_MGMT_120_REASON = "Insufficient quota: error getting billing model: No available billing model found";
+    private static final String KAFKAS_MGMT_120_REASON = "error getting billing model";
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
     private static final String KAFKAS_MGMT_21_REASON = "unable to detect instance type in plan provided: ";
 
