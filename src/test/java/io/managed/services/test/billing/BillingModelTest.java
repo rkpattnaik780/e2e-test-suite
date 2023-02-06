@@ -126,11 +126,11 @@ public class BillingModelTest {
             log.debug(kafka);
             assertNull(kafka);
         } catch (ApiGenericException ex) {
-            assertEquals(ex.getCode(), HttpStatus.SC_BAD_REQUEST);
+            assertEquals(ex.getCode(), HttpStatus.SC_FORBIDDEN);
 
             var body = ex.decode();
-            assertEquals(body.reason, "Billing account id missing or invalid: requested billing model does not match assigned. requested: standard, assigned: marketplace-aws");
-            assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
+            assertEquals(body.reason, "Insufficient quota: Insufficient Quota");
+            assertEquals(body.id, ApiGenericException.API_ERROR_INSUFFICIENT_QUOTA);
         } finally {
             cleanup(kafkaMgmtApi);
         }
@@ -165,8 +165,7 @@ public class BillingModelTest {
             var body = ex.decode();
             assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
             assertEquals(body.reason,
-                    String.format("Billing account id missing or invalid: no matching billing account found. " +
-                                    "Provided: dummy, Available: [{3 %s aws}]",
+                    String.format("Billing account id missing or invalid: we have not been able to validate your billingAccountID",
                             Environment.STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID));
         } finally {
             cleanup(kafkaMgmtApi);
@@ -266,8 +265,8 @@ public class BillingModelTest {
     @Test
     @SneakyThrows
     // The customer provides the billing_model set to the marketplace.
-    // Outcome: failure, ambiguous cloud accounts.
-    public void testFailWhenCloudAccountsAreAmbiguous() {
+    // Outcome: success, marketplace refers to marketplace-rhm.
+    public void testAutomaticallyPickMarketplaceRhmWhenBillingModelIsMarketplace() {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         var payload = new KafkaRequestPayload()
@@ -281,13 +280,8 @@ public class BillingModelTest {
         try {
             kafka = KafkaMgmtApiUtils.createKafkaInstance(kafkaMgmtApi, payload);
             log.debug(kafka);
-
-            // if we reach this line, the test has failed
-            assertNull(kafka);
-        } catch (ApiGenericException ex) {
-            assertEquals(ex.getCode(), HttpStatus.SC_BAD_REQUEST);
-            var body = ex.decode();
-            assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
+            assertNotNull(kafka);
+            assertEquals(kafka.getBillingModel(), "marketplace");
         } finally {
             cleanup(kafkaMgmtApi);
         }
@@ -351,9 +345,7 @@ public class BillingModelTest {
             assertEquals(ex.getCode(), HttpStatus.SC_BAD_REQUEST);
             var body = ex.decode();
             // TODO the error message in the fleet manager needs to be improved here to include the marketplace
-            assertTrue(body.reason.contains("Billing account id missing or invalid: no matching billing account found."));
-            assertTrue(body.reason.contains(Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID));
-            assertTrue(body.reason.contains(Environment.STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID));
+            assertTrue(body.reason.contains("Billing account id missing or invalid: we have not been able to validate your billingAccountID"));
             assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
         } finally {
             cleanup(kafkaMgmtApi);
