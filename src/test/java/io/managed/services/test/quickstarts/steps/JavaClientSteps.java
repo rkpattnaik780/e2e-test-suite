@@ -31,6 +31,8 @@ public class JavaClientSteps {
     private final KafkaInstanceContext kafkaInstanceContext;
     private final ServiceAccountContext serviceAccountContext;
 
+    public static String stdOutput = null;
+
     private Map<String, String> envsMap = new HashMap<>();
 
     public JavaClientSteps(KafkaInstanceContext kafkaInstanceContext, ServiceAccountContext serviceAccountContext) {
@@ -38,6 +40,7 @@ public class JavaClientSteps {
         this.serviceAccountContext = serviceAccountContext;
     }
 
+    // TODO: consider using github context
     // temporary usage to fetch examples from a different repository
     @When("you clone the {word} repository from GitHub examples for Java")
     public void you_clone_the_app_services_guides_repository_from_git_hub(String repository) throws IOException {
@@ -48,6 +51,7 @@ public class JavaClientSteps {
         appRepositoryTempWorkDir.toFile().deleteOnExit();
 
         try {
+            // TODO: Change it to "https://github.com/redhat-developer/app-services-guides"
             String repositoryLink = "https://github.com/rkpattnaik780/rhosak_example_codes";
             this.repository = new File(appRepositoryTempWorkDir.toString() + "/" + repository);
             Git.cloneRepository().setURI(repositoryLink).setDirectory(this.repository).call();
@@ -80,16 +84,13 @@ public class JavaClientSteps {
     @Then("you run Java client example producer")
     public void you_run_java_client_example_producer() throws IOException {
 
-        log.info("package run Java client example producer application, bla bla");
+        log.info("package run Java client example producer application");
 
         // set path to root of quickstart
         String quickstartRoot = this.repository.getAbsolutePath() + "/kafka-java-maven";
 
         ProcessBuilder builder = new ProcessBuilder("mvn", "compile", "exec:java", "-Pproducer");
-        log.info("THe command:");
-        log.info(builder.command().toString());
         builder.directory(Paths.get(quickstartRoot).toFile());
-//        builder.directory(Paths.get("/home/rkpattnaik780/coding/redhat/mk/e2e-test-suite/kafka-java-maven").toFile());
         Map<String, String> processEnvsMap2 = builder.environment();
         envsMap.entrySet().forEach(entry -> {
             processEnvsMap2.put(entry.getKey(), entry.getValue());
@@ -99,13 +100,12 @@ public class JavaClientSteps {
 
         Process process = builder.start();
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String s = null;
-        while ((s = stdInput.readLine()) != null) {
-            System.out.println(s);
+        while ((stdOutput = stdInput.readLine()) != null) {
+            System.out.println(stdOutput);
         }
     }
 
-    @Then("you run Java client example consumer")
+    @When("you run Java client example consumer")
     public void you_run_java_client_example_consumer() throws Exception {
 
         log.info("package run Java client example consumer application");
@@ -114,10 +114,7 @@ public class JavaClientSteps {
         String quickstartRoot = this.repository.getAbsolutePath() + "/kafka-java-maven";
 
         ProcessBuilder builder = new ProcessBuilder("mvn", "compile", "exec:java", "-Pconsumer");
-        log.info("THe command:");
-        log.info(builder.command().toString());
         builder.directory(Paths.get(quickstartRoot).toFile());
-//        builder.directory(Paths.get("/home/rkpattnaik780/coding/redhat/mk/e2e-test-suite/kafka-java-maven").toFile());
         Map<String, String> processEnvsMap2 = builder.environment();
         envsMap.entrySet().forEach(entry -> {
             processEnvsMap2.put(entry.getKey(), entry.getValue());
@@ -127,14 +124,17 @@ public class JavaClientSteps {
 
         Process process = builder.start();
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String s = null;
         String output = "";
-        while ((s = stdInput.readLine()) != null) {
-            output += s;
-            System.out.println(s);
+        while ((output = stdInput.readLine()) != null) {
+            stdOutput += output;
+            System.out.println(output);
         }
+    }
 
-        if (!output.contains("Test")) {
+    @Then("Java client consumer should print proper message")
+    public void javaClientConsumerShouldPrintProperMessage() throws Exception {
+
+        if (!stdOutput.contains("Test")) {
             throw new IOException("Not able to find the produced message");
         }
     }

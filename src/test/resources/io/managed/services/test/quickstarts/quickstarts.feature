@@ -52,9 +52,10 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
     Given you have set the permissions for your service account to produce and consume from topic prices
     Then you run Java client example producer
 
-    # 5. Running the Java client example producer
+    # 5. Running the Java client example consumer
     Given the Kafka instance is in Ready state
-    Then you run Java client example consumer
+    When you run Java client example consumer
+    Then Java client consumer should print proper message
 
   Scenario: Using Quarkus applications with Kafka instances in Red Hat OpenShift Streams for Apache Kafka
     Given you have a Red Hat account
