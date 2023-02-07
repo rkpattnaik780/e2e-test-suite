@@ -248,8 +248,8 @@ public class DataPlaneClusterTest extends TestBase {
         int remainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.standard);
         log.info("remaining capacity in the cluster '{}'", remainingCapacity);
 
-        // if either capacity or number of existing MK resources (type standard) already indicate full capacity there is no chance of obtaining correct  data within 15 minutes thus skip
-        if (remainingCapacity == 0 || minNodeInMachineSet == maxStandardStreamingUnitsInCluster)
+        // if no free capacity remains skip test
+        if (remainingCapacity == 0)
             throw new SkipException("cluster already reported to be at its maximum capacity");
 
         log.info("creating an instance");
