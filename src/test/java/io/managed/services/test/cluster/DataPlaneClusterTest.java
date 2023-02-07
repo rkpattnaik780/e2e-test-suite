@@ -8,6 +8,7 @@ import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.ApplicationServicesApi;
+import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.kafkamgmt.KafkaClusterCapacityExhaustedException;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
@@ -32,8 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
 
 
 // TODO unify and add env variables for gcp data plane clusters.
@@ -60,6 +61,7 @@ public class DataPlaneClusterTest extends TestBase {
 
 
     static final String KAFKA_INSTANCE_NAME = "cl-e2e-" + Environment.LAUNCH_SUFFIX;
+    private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
 
     private OpenShiftClient oc;
 
@@ -67,7 +69,7 @@ public class DataPlaneClusterTest extends TestBase {
     private static int maxDeveloperStreamingUnitsInCluster;
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
     private static final String PLAN_STANDARD = "standard.x1";
-    private static final String INSTANCE_NAME_PREFIX = "cl-e2e-placeholder-";
+    private static final String DUMMY_KAFKA_INSTANCE_NAME = "cl-e2e-placeholder-" + Environment.LAUNCH_KEY;
     private KafkaMgmtApi kafkaMgmtApi;
 
     @BeforeClass
@@ -237,49 +239,35 @@ public class DataPlaneClusterTest extends TestBase {
 
         //take a snapshot of machine sets with name (INITIAL)
         Map<String, Integer> machineSetToReadyNodeCountSnapshotBefore =  FleetshardUtils.getReadyNodesPerEachMachineSetContainingName(oc, "kafka-standard");
-        log.info(machineSetToReadyNodeCountSnapshotBefore);
+        log.debug(machineSetToReadyNodeCountSnapshotBefore);
+        // find out the minimum nodes value per machine set
+        int minNodeInMachineSet =  machineSetToReadyNodeCountSnapshotBefore.values().stream().mapToInt(Integer::valueOf).min().orElse(0);
+        log.info("currently minimum existing nodes in machine set '{}'", minNodeInMachineSet);
 
-        // obtain info how many remaining standard streaming units there are according to capacity
-        int remainingStandardInstancesCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.standard);
-        log.info("currently remaining standard managed kafka instances capacity '{}'", remainingStandardInstancesCapacity);
+        // get remaining capacity from MK agent
+        int remainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.standard);
+        log.info("remaining capacity in the cluster '{}'", remainingCapacity);
 
-        // there is not enough space in the cluster to observe nodes scaling.
-        if (remainingStandardInstancesCapacity == 0)
-            throw new SkipException("Already reached max limit of standard instances created");
+        // if either capacity or number of existing MK resources (type standard) already indicate full capacity there is no chance of obtaining correct  data within 15 minutes thus skip
+        if (remainingCapacity == 0 || minNodeInMachineSet == maxStandardStreamingUnitsInCluster)
+            throw new SkipException("cluster already reported to be at its maximum capacity");
 
-        // creating one instance less than to reach max as that would not help observing max node creation anyway.
-        log.info("creating at least '{}' standard managed kafka instances", remainingStandardInstancesCapacity);
-
-        // wait up to 15 minutes for observing increase in nodes number in relevant machine sets, or creation of new instance
-        AtomicInteger placeholderInstanceSuffixCounter = new AtomicInteger(1);
+        log.info("creating an instance");
+        var payload = new KafkaRequestPayload()
+            .name(DUMMY_KAFKA_INSTANCE_NAME)
+            .plan(PLAN_STANDARD)
+            .cloudProvider(Environment.CLOUD_PROVIDER)
+            .region(Environment.DEFAULT_KAFKA_REGION);
 
         try {
+            KafkaMgmtApiUtils.attemptCreatingKafkaInstance(kafkaMgmtApi, payload, Duration.ofSeconds(20), Duration.ofSeconds(20));
+
+            // wait either for new node to be scaled, or kafka instance to be in ready state if there are instances being deleted in the cluster
             TestUtils.waitFor(
                 "update of number of nodes scaled due to creation of new standard managed kafka instance",
                 Duration.ofSeconds(10),
                 Duration.ofMinutes(15),
                 ready -> {
-                    int remainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.standard);
-                    log.info("remaining capacity in the cluster '{}'", remainingCapacity);
-
-                    // spawn new instance if there is a capacity for it
-                    int minNodeInMachineSet =  machineSetToReadyNodeCountSnapshotBefore.values().stream().reduce(0, Integer::min);
-
-                    // if we did not reach max capacity, and at least of machineSet was not already at highest number we attempt creating new instances (quite common occurrence as downscaling take much longer time)
-                    if (remainingCapacity > 0 && minNodeInMachineSet < maxStandardStreamingUnitsInCluster) {
-                        log.info("creating an instance");
-                        var payload = new KafkaRequestPayload()
-                            .name(INSTANCE_NAME_PREFIX + placeholderInstanceSuffixCounter.getAndIncrement() + "-" + Environment.LAUNCH_KEY)
-                            .plan(PLAN_STANDARD)
-                            .cloudProvider(Environment.CLOUD_PROVIDER)
-                            .region(Environment.DEFAULT_KAFKA_REGION);
-                        try {
-                            KafkaMgmtApiUtils.attemptCreatingKafkaInstance(kafkaMgmtApi, payload, Duration.ofSeconds(20), Duration.ofSeconds(20));
-                        } catch (KafkaClusterCapacityExhaustedException e) {
-                            log.warn("capacity exhausted at the moment %s", e);
-                        }
-                    }
-
                     // observe if newly observed value in nodes increased from original snapshot
                     Map<String, Integer> machineSetToReadyNodeCountSnapshotCurrent = FleetshardUtils.getReadyNodesPerEachMachineSetContainingName(oc, "kafka-standard");
                     for (var currentlyObservedMachineSet  : machineSetToReadyNodeCountSnapshotCurrent.entrySet()) {
@@ -294,22 +282,34 @@ public class DataPlaneClusterTest extends TestBase {
                             log.info("MachineSet '{}' changed scaled number of its nodes", machineSetName);
                             return true;
                         }
+
                     }
 
+                    // if new some of original instances was deleted, we only wait for instance to be at least in ready state
                     // observe if any of newly crated kafka instance really is ready state (node for sure scaled), otherwise continue waiting
                     return kafkaMgmtApi
                         .getKafkas(null, null, null, null)
                         .getItems().stream()
-                        .filter(e -> e.getName().contains(INSTANCE_NAME_PREFIX))
+                        .filter(e -> e.getName().contains(DUMMY_KAFKA_INSTANCE_NAME))
                         .filter(e -> e.getOwner().equals(Environment.PRIMARY_USERNAME))
                         .anyMatch(e -> e.getStatus().equals("ready"));
                 }
             );
 
-        } catch (Exception ignored) {
+        } catch (ApiForbiddenException e) {
+            // if not quota related exception rethrow it
+            if (!(e.getCode() == 403 && new JSONObject(e.getResponseBody()).get("code").equals(KAFKAS_MGMT_120_CODE))) {
+                throw e;
+            }
+            log.warn("quota reached %s", e);
+            throw new SkipException("standard kafka instance quota reached");
+
+        } catch (KafkaClusterCapacityExhaustedException e) {
+            log.warn("capacity exhausted at the moment %s", e);
+            throw new SkipException("cluster capacity for standard kafka instances in aws data plane cluster reached");
         } finally {
             // delete and wait for cleaning of all instances spawned
-            KafkaMgmtApiUtils.deleteSearchedKafkaInstancesByOwner(kafkaMgmtApi, INSTANCE_NAME_PREFIX, Environment.PRIMARY_USERNAME);
+            KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, DUMMY_KAFKA_INSTANCE_NAME);
         }
     }
 
