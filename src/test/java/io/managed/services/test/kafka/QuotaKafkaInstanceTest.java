@@ -119,7 +119,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
             assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "'" + PLAN_DEVELOPER + "'");
+            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_DEVELOPER + "\"");
         }
     }
 
@@ -174,7 +174,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
             assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "'" + PLAN_STANDARD + "'");
+            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_STANDARD + "\"");
         }
     }
 
