@@ -15,12 +15,7 @@
         <classes>
             <class name="io.managed.services.test.TestBase"/>
         </classes>
-    </test>    
-    <test name="DeploymentsTest">
-        <classes>
-            <class name="io.managed.services.test.cluster.DeploymentsTest"/>
-        </classes>
-    </test>     
+    </test>      
     <test name="KafkaCLITest">
         <classes>
             <class name="io.managed.services.test.devexp.KafkaCLITest"/>
@@ -69,72 +64,6 @@
     <test name="QuotaKafkaInstanceTest">
         <classes>
             <class name="io.managed.services.test.kafka.QuotaKafkaInstanceTest"/>
-        </classes>
-    </test>
-
-    <test name="KafkaInstanceContext">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.contexts.KafkaInstanceContext"/>
-        </classes>
-    </test>
-    <test name="OpenShiftAPIContext">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.contexts.OpenShiftAPIContext"/>
-        </classes>
-    </test>
-    <test name="ServiceAccountContext">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.contexts.ServiceAccountContext"/>
-        </classes>
-    </test>
-    <test name="UserContext">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.contexts.UserContext"/>
-        </classes>
-    </test>
-    <test name="KafkaAccessSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.KafkaAccessSteps"/>
-        </classes>
-    </test>
-    <test name="KafkaInstanceSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.KafkaInstanceSteps"/>
-        </classes>
-    </test>
-    <test name="KafkaScriptsSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.KafkaScriptsSteps"/>
-        </classes>
-    </test>
-    <test name="KafkaTopicSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.KafkaTopicSteps"/>
-        </classes>
-    </test>
-    <test name="KcatSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.KcatSteps"/>
-        </classes>
-    </test>
-    <test name="LoginSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.LoginSteps"/>
-        </classes>
-    </test>
-    <test name="QuarkusSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.QuarkusSteps"/>
-        </classes>
-    </test>
-    <test name="ServiceAccountSteps">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.ServiceAccountSteps"/>
-        </classes>
-    </test>
-    <test name="TodoStepDefinitions">
-        <classes>
-            <class name="io.managed.services.test.quickstarts.steps.TodoStepDefinitions"/>
         </classes>
     </test>
     <test name="CucumberQuickstartsTest">
