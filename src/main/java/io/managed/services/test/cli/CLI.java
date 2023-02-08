@@ -329,7 +329,7 @@ public class CLI {
         // consume returns inline Jsons separated by newline, therefore string must be firstly split than read as multiple jsons
         var output = retry(() -> exec(cmd)).stdoutAsString();
 
-        if (output.isEmpty()){
+        if (output.isEmpty()) {
             return new ArrayList<Record>();
         }
         
