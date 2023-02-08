@@ -160,7 +160,7 @@ public class KafkaMgmtAPITest extends TestBase {
         }
     }
 
-    @Test(groups = "production")
+    @Test(groups = {"pr-check", "production"})
     @SneakyThrows
     public void testCreateKafkaInstance() {
 
@@ -176,7 +176,7 @@ public class KafkaMgmtAPITest extends TestBase {
         kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
     }
 
-    @Test(groups = "production")
+    @Test(groups = {"pr-check", "production"})
     @SneakyThrows
     public void testCreateServiceAccount() {
 
@@ -187,7 +187,7 @@ public class KafkaMgmtAPITest extends TestBase {
                 .description("E2E test service account"));
     }
 
-    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"}, groups = "production")
+    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"}, groups = {"pr-check", "production"})
     @SneakyThrows
     public void testCreateProducerAndConsumerACLs() {
 
@@ -198,7 +198,7 @@ public class KafkaMgmtAPITest extends TestBase {
         KafkaInstanceApiAccessUtils.createProducerAndConsumerACLs(kafkaInstanceApi, principal);
     }
 
-    @Test(dependsOnMethods = "testCreateKafkaInstance", groups = "production")
+    @Test(dependsOnMethods = "testCreateKafkaInstance", groups = {"pr-check", "production"})
     @SneakyThrows
     public void testCreateTopics() {
 
@@ -369,7 +369,7 @@ public class KafkaMgmtAPITest extends TestBase {
         KafkaMgmtMetricsUtils.testMessageInTotalMetric(kafkaMgmtApi, kafka, serviceAccount, TOPIC_NAME);
     }
 
-    @Test(dependsOnMethods = {"testCreateTopics", "testCreateProducerAndConsumerACLs"}, groups = "production")
+    @Test(dependsOnMethods = {"testCreateTopics", "testCreateProducerAndConsumerACLs"}, groups = {"pr-check", "production"})
     @SneakyThrows
     public void testMessagingKafkaInstanceUsingOAuth() {
 
@@ -408,7 +408,7 @@ public class KafkaMgmtAPITest extends TestBase {
             KafkaAuthMethod.OAUTH)));
     }
 
-    @Test(dependsOnMethods = {"testCreateTopics", "testCreateProducerAndConsumerACLs"}, groups = "production")
+    @Test(dependsOnMethods = {"testCreateTopics", "testCreateProducerAndConsumerACLs"}, groups = {"pr-check", "production"})
     @SneakyThrows
     public void testMessagingKafkaInstanceUsingPlainAuth() {
 
@@ -474,7 +474,7 @@ public class KafkaMgmtAPITest extends TestBase {
         }
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance"}, groups = "production")
+    @Test(dependsOnMethods = {"testCreateKafkaInstance"}, groups = {"pr-check", "production"})
     @SneakyThrows
     public void testListAndSearchKafkaInstance() {
 
@@ -553,7 +553,7 @@ public class KafkaMgmtAPITest extends TestBase {
         waitFor("kafka reauthentication to be disabled", ofSeconds(10), ofMinutes(5), isReauthenticationDisabled);
     }
 
-    @Test(dependsOnMethods = "testCreateTopics", groups = "production")
+    @Test(dependsOnMethods = "testCreateTopics", groups = {"pr-check", "production"})
     @SneakyThrows
     public void testDeleteServiceAccount() {
 
@@ -616,7 +616,7 @@ public class KafkaMgmtAPITest extends TestBase {
         });
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance"}, groups = "production", priority = 2)
+    @Test(dependsOnMethods = {"testCreateKafkaInstance"}, groups = {"pr-check", "production"}, priority = 2)
     @SneakyThrows
     public void testDeleteKafkaInstance() {
         if (Environment.SKIP_KAFKA_TEARDOWN) {

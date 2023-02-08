@@ -44,7 +44,7 @@ public class RegistryMgmtAPITest extends TestBase {
     private RegistryMgmtApi registryMgmtApi;
     private Registry registry;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void bootstrap() throws Throwable {
         assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
@@ -68,7 +68,7 @@ public class RegistryMgmtAPITest extends TestBase {
         }
     }
 
-    @Test
+    @Test(groups = {"pr-check"})
     public void testCreateRegistry() throws Exception {
 
         var registryCreateRest = new RegistryCreate()
@@ -130,7 +130,7 @@ public class RegistryMgmtAPITest extends TestBase {
         assertThrows(() -> registryMgmtApi.createRegistry(registryCreateRest));
     }
 
-    @Test(priority = 1, dependsOnMethods = "testCreateRegistry")
+    @Test(priority = 1, dependsOnMethods = "testCreateRegistry", groups = {"pr-check"})
     public void testDeleteRegistry() throws Throwable {
 
         LOGGER.info("delete registry '{}'", registry.getId());
