@@ -12,7 +12,6 @@
 
         <!-- targeted classes  -->
         <classes>
-            <class name="io.managed.services.test.registry.RegistryMgmtAPITest"/>
             <class name="io.managed.services.test.kafka.KafkaInstanceAPITest"/>
             <class name="io.managed.services.test.kafka.KafkaMgmtAPITest"/>
         </classes>
