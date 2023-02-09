@@ -55,7 +55,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     // Kafka API code errors
     private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
-    private static final String KAFKAS_MGMT_120_REASON = "Insufficient quota: error getting billing model: No available billing model found";
+    private static final String KAFKAS_MGMT_120_REASON = "error getting billing model";
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
     private static final String KAFKAS_MGMT_21_REASON = "unable to detect instance type in plan provided: ";
 
@@ -119,7 +119,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
             assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "'" + PLAN_DEVELOPER + "'");
+            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_DEVELOPER + "\"");
         }
     }
 
@@ -174,7 +174,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
             assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "'" + PLAN_STANDARD + "'");
+            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_STANDARD + "\"");
         }
     }
 

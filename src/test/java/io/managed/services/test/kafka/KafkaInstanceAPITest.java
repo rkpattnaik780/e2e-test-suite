@@ -79,7 +79,7 @@ public class KafkaInstanceAPITest extends TestBase {
 
     // TODO: Test update topic with random values
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     @SneakyThrows
     public void bootstrap() {
         assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
@@ -142,7 +142,7 @@ public class KafkaInstanceAPITest extends TestBase {
         assertThrows(Exception.class, api::getTopics);
     }
 
-    @Test
+    @Test(groups = {"pr-check"})
     @SneakyThrows
     public void testCreateTopic() {
 
@@ -362,7 +362,7 @@ public class KafkaInstanceAPITest extends TestBase {
         }
     }
 
-    @Test(dependsOnMethods = "testCreateTopic")
+    @Test(dependsOnMethods = "testCreateTopic", groups = {"pr-check"})
     @SneakyThrows
     public void testGetTopicByName() {
         var topic = kafkaInstanceApi.getTopic(TEST_TOPIC_NAME);
@@ -398,7 +398,7 @@ public class KafkaInstanceAPITest extends TestBase {
             () -> kafkaInstanceApi.deleteTopic(TEST_NOT_EXISTING_TOPIC_NAME));
     }
 
-    @Test(dependsOnMethods = "testCreateTopic")
+    @Test(dependsOnMethods = "testCreateTopic", groups = {"pr-check"})
     @SneakyThrows
     public void testConsumerGroup() {
         LOGGER.info("create or retrieve service account '{}'", SERVICE_ACCOUNT_NAME);
@@ -424,7 +424,7 @@ public class KafkaInstanceAPITest extends TestBase {
         assertTrue(group.getConsumers().size() > 0);
     }
 
-    @Test(dependsOnMethods = "testConsumerGroup")
+    @Test(dependsOnMethods = "testConsumerGroup", groups = {"pr-check"})
     @SneakyThrows
     public void testGetAllConsumerGroups() {
         var groups = kafkaInstanceApi.getConsumerGroups();
@@ -459,7 +459,7 @@ public class KafkaInstanceAPITest extends TestBase {
             () -> kafkaInstanceApi.deleteConsumerGroupById(TEST_NOT_EXISTING_GROUP_NAME));
     }
 
-    @Test(dependsOnMethods = "testConsumerGroup", priority = 1)
+    @Test(dependsOnMethods = "testConsumerGroup", priority = 1, groups = {"pr-check"})
     public void testDeleteConsumerGroup() throws Throwable {
         LOGGER.info("close kafka consumer");
         bwait(kafkaConsumer.asyncClose());
@@ -473,7 +473,7 @@ public class KafkaInstanceAPITest extends TestBase {
         LOGGER.info("consumer group '{}' not found", TEST_GROUP_NAME);
     }
 
-    @Test(dependsOnMethods = "testCreateTopic", priority = 2)
+    @Test(dependsOnMethods = "testCreateTopic", priority = 2, groups = {"pr-check"})
     public void testDeleteTopic() throws Throwable {
         kafkaInstanceApi.deleteTopic(TEST_TOPIC_NAME);
         LOGGER.info("topic '{}' deleted", TEST_TOPIC_NAME);

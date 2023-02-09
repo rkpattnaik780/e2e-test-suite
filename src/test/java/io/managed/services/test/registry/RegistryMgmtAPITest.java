@@ -44,7 +44,7 @@ public class RegistryMgmtAPITest extends TestBase {
     private RegistryMgmtApi registryMgmtApi;
     private Registry registry;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void bootstrap() throws Throwable {
         assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
@@ -68,7 +68,7 @@ public class RegistryMgmtAPITest extends TestBase {
         }
     }
 
-    @Test
+    @Test()
     public void testCreateRegistry() throws Exception {
 
         var registryCreateRest = new RegistryCreate()

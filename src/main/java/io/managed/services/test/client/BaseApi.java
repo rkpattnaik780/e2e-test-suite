@@ -6,6 +6,7 @@ import io.managed.services.test.RetryUtils;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.ThrowingVoid;
 import io.managed.services.test.client.exception.ApiGenericException;
+import io.managed.services.test.client.exception.ApiUnauthorizedException;
 import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
 import okhttp3.FormBody;
@@ -41,7 +42,6 @@ public abstract class BaseApi {
     protected abstract void setAccessToken(String t);
 
     private <A> A handleException(ThrowingSupplier<A, Exception> f) throws ApiGenericException {
-
         try {
             return f.get();
         } catch (Exception e) {
@@ -93,14 +93,19 @@ public abstract class BaseApi {
 
         try {
             return handleException(f);
-        } catch (RuntimeException e) {
-            log.debug("renew access token");
+        } catch (ApiUnauthorizedException e) {
+            // if exception is not related to expired bearer token rethrow it
+            if (!e.getMessage().contains("Bearer token is expired")) {
+                throw e;
+            }
+            log.debug("expired access token, renew it token");
             // Try to renew the access token
             lastRefreshToken.set(null);
             setAccessToken(newToken());
             // and retry
             return handleException(f);
         }
+
     }
 
     protected <A> A retry(ThrowingSupplier<A, Exception> f) throws ApiGenericException {

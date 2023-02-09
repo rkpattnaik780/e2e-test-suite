@@ -12,6 +12,8 @@ public class ApiGenericException extends Exception {
     private final String responseBody;
 
     public final static String API_ERROR_BILLING_ACCOUNT_INVALID = "43";
+    public final static String API_ERROR_INSUFFICIENT_QUOTA = "120";
+
 
     public ApiGenericException(ApiUnknownException e) {
         super(e.getFullMessage(), e);
