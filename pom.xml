@@ -297,6 +297,7 @@
                         <suiteXmlFile>suites/kafka.xml</suiteXmlFile>
                         <suiteXmlFile>suites/registry.xml</suiteXmlFile>
                         <suiteXmlFile>suites/devexp.xml</suiteXmlFile>
+                        <suiteXmlFile>suites/rhoas-cli.xml</suiteXmlFile>
                         <suiteXmlFile>suites/quickstarts.xml</suiteXmlFile>
                     </suiteXmlFiles>
                 </configuration>

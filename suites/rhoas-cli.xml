@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+
+<suite name="RhoasCli">
+    <test name="KafkaRhoasBasicTests">
+        <classes>
+            <class name="io.managed.services.test.rhoas.KafkaRhoasBasicTests"/>
+        </classes>
+    </test>
+    <test name="KafkaRhoasAclTests">
+        <classes>
+            <class name="io.managed.services.test.rhoas.KafkaRhoasAclTests"/>
+        </classes>
+    </test>
+</suite>

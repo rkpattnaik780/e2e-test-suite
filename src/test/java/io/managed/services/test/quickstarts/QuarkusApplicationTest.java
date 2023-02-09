@@ -3,6 +3,7 @@ package io.managed.services.test.quickstarts;
 import com.openshift.cloud.api.kas.auth.models.NewTopicInput;
 import com.openshift.cloud.api.kas.auth.models.TopicSettings;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
+import com.openshift.cloud.api.serviceaccounts.models.ServiceAccountData;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -385,12 +386,13 @@ public class QuarkusApplicationTest extends TestBase {
         if (encodedClientID == null) {
             throw new Error(message("client-id data not found in secret: {}", secret));
         }
-        var clientID = decodeBase64(encodedClientID);
+        ServiceAccountData svcAcc = new ServiceAccountData();
+        svcAcc.setClientId(decodeBase64(encodedClientID));
 
-        LOGGER.info("service account client-id is: {}", clientID);
+        LOGGER.info("service account client-id is: {}", svcAcc.getClientId());
 
-        LOGGER.info("grant consume and produce access for all topics and groups to the service account: {}", clientID);
-        cli.grantProducerAndConsumerAccess(clientID, "all", "all");
+        LOGGER.info("grant consume and produce access for all topics and groups to the service account: {}", svcAcc.getClientId());
+        cli.grantAccessAcl(svcAcc, "all", "all");
     }
 
     @Test(dependsOnMethods = "testCLIGrantAccess")

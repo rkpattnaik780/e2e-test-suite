@@ -1,4 +1,4 @@
-package io.managed.services.test.devexp;
+package io.managed.services.test.rhoas;
 
 import com.openshift.cloud.api.kas.auth.models.Record;
 import com.openshift.cloud.api.kas.auth.models.Topic;
@@ -55,8 +55,8 @@ import static org.testng.Assert.assertTrue;
  * </ul>
  */
 @Test
-public class KafkaCLITest extends TestBase {
-    private static final Logger LOGGER = LogManager.getLogger(KafkaCLITest.class);
+public class KafkaRhoasBasicTests extends TestBase {
+    private static final Logger LOGGER = LogManager.getLogger(KafkaRhoasBasicTests.class);
 
     private static final String KAFKA_INSTANCE_NAME = "cli-e2e-test-" + Environment.LAUNCH_SUFFIX;
     private static final String SERVICE_ACCOUNT_NAME = "cli-e2e-service-account-"  + Environment.LAUNCH_SUFFIX;
@@ -205,7 +205,7 @@ public class KafkaCLITest extends TestBase {
     @SneakyThrows
     public void testGrantProducerAndConsumerAccess() {
         LOGGER.info("grant producer and consumer access to the account: {}", serviceAccount.getClientId());
-        cli.grantProducerAndConsumerAccess(serviceAccount.getClientId(), "all", "all");
+        cli.grantAccessAcl(serviceAccount, "all", "all");
 
         var acl = cli.listACLs();
         LOGGER.debug(acl);
