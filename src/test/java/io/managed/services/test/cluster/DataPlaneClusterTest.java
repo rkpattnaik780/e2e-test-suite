@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 
@@ -260,7 +261,8 @@ public class DataPlaneClusterTest extends TestBase {
             .region(Environment.DEFAULT_KAFKA_REGION);
 
         try {
-            KafkaMgmtApiUtils.attemptCreatingKafkaInstance(kafkaMgmtApi, payload, Duration.ofSeconds(20), Duration.ofSeconds(20));
+            KafkaRequest kafkaRequest = KafkaMgmtApiUtils.attemptCreatingKafkaInstance(kafkaMgmtApi, payload, Duration.ofSeconds(20), Duration.ofSeconds(20));
+            log.debug(kafkaRequest);
 
             // wait either for new node to be scaled, or kafka instance to be in ready state if there are instances being deleted in the cluster
             TestUtils.waitFor(
@@ -287,12 +289,9 @@ public class DataPlaneClusterTest extends TestBase {
 
                     // if new some of original instances was deleted, we only wait for instance to be at least in ready state
                     // observe if any of newly crated kafka instance really is ready state (node for sure scaled), otherwise continue waiting
-                    return kafkaMgmtApi
-                        .getKafkas(null, null, null, null)
-                        .getItems().stream()
-                        .filter(e -> e.getName().contains(DUMMY_KAFKA_INSTANCE_NAME))
-                        .filter(e -> e.getOwner().equals(Environment.PRIMARY_USERNAME))
-                        .anyMatch(e -> e.getStatus().equals("ready"));
+                    KafkaRequest currentKafka = KafkaMgmtApiUtils.getKafkaByName(kafkaMgmtApi, DUMMY_KAFKA_INSTANCE_NAME).get();
+                    log.debug(currentKafka);
+                    return currentKafka.getStatus().equals("ready");
                 }
             );
 
@@ -307,6 +306,10 @@ public class DataPlaneClusterTest extends TestBase {
         } catch (KafkaClusterCapacityExhaustedException e) {
             log.warn("capacity exhausted at the moment %s", e);
             throw new SkipException("cluster capacity for standard kafka instances in aws data plane cluster reached");
+        } catch (TimeoutException e) {
+            log.warn("kafka not in a ready state");
+            log.warn(KafkaMgmtApiUtils.getKafkaByName(kafkaMgmtApi, DUMMY_KAFKA_INSTANCE_NAME).get());
+            throw e;
         } finally {
             // delete and wait for cleaning of all instances spawned
             KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, DUMMY_KAFKA_INSTANCE_NAME);
