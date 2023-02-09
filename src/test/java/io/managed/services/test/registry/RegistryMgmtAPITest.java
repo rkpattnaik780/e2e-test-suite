@@ -68,7 +68,7 @@ public class RegistryMgmtAPITest extends TestBase {
         }
     }
 
-    @Test(groups = {"pr-check"})
+    @Test()
     public void testCreateRegistry() throws Exception {
 
         var registryCreateRest = new RegistryCreate()
@@ -130,7 +130,7 @@ public class RegistryMgmtAPITest extends TestBase {
         assertThrows(() -> registryMgmtApi.createRegistry(registryCreateRest));
     }
 
-    @Test(priority = 1, dependsOnMethods = "testCreateRegistry", groups = {"pr-check"})
+    @Test(priority = 1, dependsOnMethods = "testCreateRegistry")
     public void testDeleteRegistry() throws Throwable {
 
         LOGGER.info("delete registry '{}'", registry.getId());
