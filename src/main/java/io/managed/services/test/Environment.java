@@ -34,16 +34,16 @@ public class Environment {
 
     private static final String LOG_DIR_ENV = "LOG_DIR";
 
+    // TODO remove PRIMARY_USERNAME and PRIMARY_PASSWORD, kept only as long as cli revokes validity of offline tokens when logging out
     private static final String PRIMARY_USERNAME_ENV = "PRIMARY_USERNAME";
     private static final String PRIMARY_PASSWORD_ENV = "PRIMARY_PASSWORD";
-    private static final String SECONDARY_USERNAME_ENV = "SECONDARY_USERNAME";
-    private static final String SECONDARY_PASSWORD_ENV = "SECONDARY_PASSWORD";
-    private static final String ALIEN_USERNAME_ENV = "ALIEN_USERNAME";
-    private static final String ALIEN_PASSWORD_ENV = "ALIEN_PASSWORD";
-    private static final String DIFF_ORG_PASSWORD_ENV = "DIFF_ORG_PASSWORD";
-    private static final String DIFF_ORG_USERNAME_ENV = "DIFF_ORG_USERNAME";
-    private static final String ADMIN_USERNAME_ENV = "ADMIN_USERNAME";
-    private static final String ADMIN_PASSWORD_ENV = "ADMIN_PASSWORD";
+
+    // OFFLINE_TOKENS of users used in tests
+    private static final String PRIMARY_OFFLINE_TOKEN_ENV = "PRIMARY_OFFLINE_TOKEN";
+    private static final String SECONDARY_OFFLINE_TOKEN_ENV = "SECONDARY_OFFLINE_TOKEN";
+    private static final String ALIEN_OFFLINE_TOKEN_ENV = "ALIEN_OFFLINE_TOKEN";
+    private static final String DIFF_ORG_OFFLINE_TOKEN_ENV = "DIFF_ORG_OFFLINE_TOKEN";
+    private static final String ADMIN_OFFLINE_TOKEN_ENV = "ADMIN_OFFLINE_TOKEN";
 
     private static final String OPENSHIFT_API_URI_ENV = "OPENSHIFT_API_URI";
 
@@ -84,11 +84,10 @@ public class Environment {
 
     private static final String PROMETHEUS_PUSH_GATEWAY_ENV = "PROMETHEUS_PUSH_GATEWAY";
 
-    private static final String STRATOSPHERE_PASSWORD_ENV = "STRATOSPHERE_PASSWORD";
-    private static final String STRATOSPHERE_SCENARIO_1_USER_ENV = "STRATOSPHERE_SCENARIO_1_USER";
-    private static final String STRATOSPHERE_SCENARIO_2_USER_ENV = "STRATOSPHERE_SCENARIO_2_USER";
-    private static final String STRATOSPHERE_SCENARIO_3_USER_ENV = "STRATOSPHERE_SCENARIO_3_USER";
-    private static final String STRATOSPHERE_SCENARIO_4_USER_ENV = "STRATOSPHERE_SCENARIO_4_USER";
+    private static final String STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN_ENV  = "STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN";
+    private static final String STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN_ENV  = "STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN";
+    private static final String STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN_ENV  = "STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN";
+    private static final String STRATOSPHERE_SCENARIO_4_USER_OFFLINE_TOKEN_ENV  = "STRATOSPHERE_SCENARIO_4_USER_OFFLINE_TOKEN";
 
     private static final String STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID_ENV = "STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID";
     private static final String STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID_ENV = "STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID";
@@ -110,24 +109,18 @@ public class Environment {
     public static final String SUITE_ROOT = System.getProperty("user.dir");
     public static final Path LOG_DIR = getOrDefault(LOG_DIR_ENV, Paths::get, Paths.get(SUITE_ROOT, "target", "logs")).resolve("test-run-" + DATE_FORMAT.format(LocalDateTime.now()));
 
-    // sso.redhat.com primary user (See README.md)
+    // TODO PRIMARY USER is the only user who is still logging using browser, can be replaced with offline token as well once: (https://issues.redhat.com/browse/MGDX-332) is done
     public static final String PRIMARY_USERNAME = getOrDefault(PRIMARY_USERNAME_ENV, null);
     public static final String PRIMARY_PASSWORD = getOrDefault(PRIMARY_PASSWORD_ENV, null);
 
-    // sso.redhat.com secondary user (See README.md)
-    public static final String SECONDARY_USERNAME = getOrDefault(SECONDARY_USERNAME_ENV, null);
-    public static final String SECONDARY_PASSWORD = getOrDefault(SECONDARY_PASSWORD_ENV, null);
-
-    // sso.redhat.com alien user (See README.md)
-    public static final String ALIEN_USERNAME = getOrDefault(ALIEN_USERNAME_ENV, null);
-    public static final String ALIEN_PASSWORD = getOrDefault(ALIEN_PASSWORD_ENV, null);
-
+    // sso.redhat.com primary user, secondary user, admin user, alien user diff org user respectively (See README.md)
+    public static final String PRIMARY_OFFLINE_TOKEN = getOrDefault(PRIMARY_OFFLINE_TOKEN_ENV, null);
+    public static final String SECONDARY_OFFLINE_TOKEN = getOrDefault(SECONDARY_OFFLINE_TOKEN_ENV, null);
+    // org admin
+    public static final String ADMIN_OFFLINE_TOKEN = getOrDefault(ADMIN_OFFLINE_TOKEN_ENV, null);
+    public static final String ALIEN_OFFLINE_TOKEN = getOrDefault(ALIEN_OFFLINE_TOKEN_ENV, null);
     // sso.redhat.com different organization user with 1 SKU quota only for stage environment (See README.md)
-    public static final String DIFF_ORG_USERNAME = getOrDefault(DIFF_ORG_USERNAME_ENV, null);
-    public static final String DIFF_ORG_PASSWORD = getOrDefault(DIFF_ORG_PASSWORD_ENV, null);
-
-    public static final String ADMIN_USERNAME = getOrDefault(ADMIN_USERNAME_ENV, null);
-    public static final String ADMIN_PASSWORD = getOrDefault(ADMIN_PASSWORD_ENV, null);
+    public static final String DIFF_ORG_OFFLINE_TOKEN = getOrDefault(DIFF_ORG_OFFLINE_TOKEN_ENV, null);
 
     // app-services APIs base URI
     public static final String OPENSHIFT_API_URI = getOrDefault(OPENSHIFT_API_URI_ENV, "https://api.stage.openshift.com");
@@ -185,11 +178,10 @@ public class Environment {
 
     public static final String PROMETHEUS_PUSH_GATEWAY = getOrDefault(PROMETHEUS_PUSH_GATEWAY_ENV, null);
 
-    public static final String STRATOSPHERE_PASSWORD = getOrDefault(STRATOSPHERE_PASSWORD_ENV, null);
-    public static final String STRATOSPHERE_SCENARIO_1_USER = getOrDefault(STRATOSPHERE_SCENARIO_1_USER_ENV, null);
-    public static final String STRATOSPHERE_SCENARIO_2_USER = getOrDefault(STRATOSPHERE_SCENARIO_2_USER_ENV, null);
-    public static final String STRATOSPHERE_SCENARIO_3_USER = getOrDefault(STRATOSPHERE_SCENARIO_3_USER_ENV, null);
-    public static final String STRATOSPHERE_SCENARIO_4_USER = getOrDefault(STRATOSPHERE_SCENARIO_4_USER_ENV, null);
+    public static final String STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN_ENV, null);
+    public static final String STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN_ENV, null);
+    public static final String STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN_ENV, null);
+    public static final String STRATOSPHERE_SCENARIO_4_USER_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_SCENARIO_4_USER_OFFLINE_TOKEN_ENV, null);
 
     public static final String STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID = getOrDefault(STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID_ENV, null);
     public static final String STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID = getOrDefault(STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID_ENV, null);

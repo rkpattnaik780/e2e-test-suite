@@ -17,6 +17,7 @@ import com.openshift.cloud.api.kas.models.ServiceAccount;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.client.ApplicationServicesApi;
+import io.managed.services.test.client.accountmgmt.AccountMgmtApiUtils;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
@@ -28,7 +29,6 @@ import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiAccessUtils;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
 import io.managed.services.test.wait.ReadyFunction;
 import io.vertx.core.Vertx;
@@ -81,12 +81,9 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
- *     <li> SECONDARY_USERNAME
- *     <li> SECONDARY_PASSWORD
- *     <li> ALIEN_USERNAME
- *     <li> ALIEN_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> SECONDARY_OFFLINE_TOKEN
+ *     <li> ALIEN_OFFLINE_TOKEN
  * </ul>
  */
 public class KafkaAccessMgmtTest extends TestBase {
@@ -126,29 +123,23 @@ public class KafkaAccessMgmtTest extends TestBase {
     private KafkaProducerClient<String, String> primaryKafkaProducer;
     private KafkaConsumerClient<String, String> primaryKafkaConsumer;
 
+    private String secondaryUserUsername = null;
+    private String primaryUserUsername = null;
+    private String adminUserUsername = null;
+
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.ADMIN_USERNAME, "the ADMIN_USERNAME env is null");
-        assertNotNull(Environment.ADMIN_PASSWORD, "the ADMIN_PASSWORD env is null");
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
-        assertNotNull(Environment.SECONDARY_USERNAME, "the SECONDARY_USERNAME env is null");
-        assertNotNull(Environment.SECONDARY_PASSWORD, "the SECONDARY_PASSWORD env is null");
-        assertNotNull(Environment.ALIEN_USERNAME, "the ALIEN_USERNAME env is null");
-        assertNotNull(Environment.ALIEN_PASSWORD, "the ALIEN_PASSWORD env is null");
-
-        // initialize the auth objects for all users
-        var primaryAuth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var secondaryAuth = new KeycloakLoginSession(Environment.SECONDARY_USERNAME, Environment.SECONDARY_PASSWORD);
-        var alienAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
-        var adminAuth = new KeycloakLoginSession(Environment.ADMIN_USERNAME, Environment.ADMIN_PASSWORD);
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.SECONDARY_OFFLINE_TOKEN, "the ADMIN_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ADMIN_OFFLINE_TOKEN, "the ADMIN_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ALIEN_OFFLINE_TOKEN, "the ALIEN_OFFLINE_TOKEN env is null");
 
         // initialize the mgmt APIs client for all users
-        primaryAPI = ApplicationServicesApi.applicationServicesApi(primaryAuth);
-        secondaryAPI = ApplicationServicesApi.applicationServicesApi(secondaryAuth);
-        alienAPI = ApplicationServicesApi.applicationServicesApi(alienAuth);
-        adminAPI = ApplicationServicesApi.applicationServicesApi(adminAuth);
+        primaryAPI = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
+        secondaryAPI = ApplicationServicesApi.applicationServicesApi(Environment.SECONDARY_OFFLINE_TOKEN);
+        alienAPI = ApplicationServicesApi.applicationServicesApi(Environment.ALIEN_OFFLINE_TOKEN);
+        adminAPI = ApplicationServicesApi.applicationServicesApi(Environment.ADMIN_OFFLINE_TOKEN);
 
         // create a kafka instance owned by the primary user
         LOGGER.info("create kafka instance '{}'", KAFKA_INSTANCE_NAME);
@@ -166,9 +157,23 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.info("kafka admin api initialized for instance: {}", kafka.getBootstrapServerHost());
 
         // initialize the Kafka Instance API (rest) clients for all users
-        primaryKafkaInstanceAPI = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(primaryAuth, kafka));
-        secondaryKafkaInstanceAPI = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(secondaryAuth, kafka));
-        adminKafkaInstanceAPI = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(adminAuth, kafka));
+        primaryKafkaInstanceAPI = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
+        secondaryKafkaInstanceAPI = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.SECONDARY_OFFLINE_TOKEN);
+        adminKafkaInstanceAPI = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.ADMIN_OFFLINE_TOKEN);
+
+        // obtain usernames
+        try {
+            primaryUserUsername =  AccountMgmtApiUtils.getPrimaryUserUsername();
+            secondaryUserUsername =  AccountMgmtApiUtils.getSecondaryUserUsername();
+            adminUserUsername =  AccountMgmtApiUtils.getAdminUserUsername();
+            LOGGER.debug("primary user: {}", primaryUserUsername);
+            LOGGER.debug("secondary user: {}", secondaryUserUsername);
+            LOGGER.debug("admin user: {}", adminUserUsername);
+        } catch (Exception e) {
+            LOGGER.error("failed while using experimental API SDK (obtaining username)");
+            LOGGER.error(e);
+            throw e;
+        }
 
         // get the default ACLs for the Kafka instance
         // (the current ACLs of an unmodified Kafka instance are the default ACLs)
@@ -199,7 +204,8 @@ public class KafkaAccessMgmtTest extends TestBase {
         if (Environment.SKIP_KAFKA_TEARDOWN) {
             // Try to swap the owner back
             try {
-                KafkaMgmtApiUtils.changeKafkaInstanceOwner(adminAPI.kafkaMgmt(), kafka, Environment.PRIMARY_USERNAME);
+
+                KafkaMgmtApiUtils.changeKafkaInstanceOwner(adminAPI.kafkaMgmt(), kafka, primaryUserUsername);
                 KafkaMgmtApiUtils.waitUntilOwnerIsChanged(primaryKafkaInstanceAPI);
             } catch (Throwable t) {
                 LOGGER.warn("switching back owner error: {}", t.getMessage());
@@ -680,7 +686,7 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Grant Topics All to the Admin user");
         var acl = new AclBinding()
-            .principal(KafkaInstanceApiAccessUtils.toPrincipal(Environment.ADMIN_USERNAME))
+            .principal(KafkaInstanceApiAccessUtils.toPrincipal(adminUserUsername))
             .resourceType(AclResourceType.TOPIC)
             .patternType(AclPatternType.LITERAL)
             .resourceName("*")
@@ -716,7 +722,7 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Test that the admin user can not create ACLs");
         var acl = new AclBinding()
-            .principal(KafkaInstanceApiAccessUtils.toPrincipal(Environment.SECONDARY_USERNAME))
+            .principal(KafkaInstanceApiAccessUtils.toPrincipal(secondaryUserUsername))
             .resourceType(AclResourceType.TOPIC)
             .patternType(AclPatternType.LITERAL)
             .resourceName("xyz")
@@ -741,10 +747,10 @@ public class KafkaAccessMgmtTest extends TestBase {
         String otherUser = UUID.randomUUID().toString();
         String topicB = UUID.randomUUID().toString();
         LOGGER.info("Primary user creates an arbitrary ACL binding for secondary user");
-        givenPrimaryUserCreatesDenyTopicAclBindingForUser(Environment.SECONDARY_USERNAME, topicA);
+        givenPrimaryUserCreatesDenyTopicAclBindingForUser(secondaryUserUsername, topicA);
         givenPrimaryUserCreatesDenyTopicAclBindingForUser(otherUser, topicB);
         LOGGER.info("Switch the owner of kafka instance from the primary user to secondary user");
-        kafka = KafkaMgmtApiUtils.changeKafkaInstanceOwner(adminAPI.kafkaMgmt(), kafka, Environment.SECONDARY_USERNAME);
+        kafka = KafkaMgmtApiUtils.changeKafkaInstanceOwner(adminAPI.kafkaMgmt(), kafka, secondaryUserUsername);
         LOGGER.info("wait until owner is changed (waiting for Rollout on Brokers)");
         KafkaMgmtApiUtils.waitUntilOwnerIsChanged(secondaryKafkaInstanceAPI);
         LOGGER.info("Wait for broker to clean new owners Acl Bindings from kafka control plane");
@@ -768,7 +774,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         //polling because orphan-deletion is a fire-and-forget async task that is initiated during broker start
         waitFor("new owners ACLs should be cleaned from the dataplane", Duration.ofSeconds(1), Duration.ofSeconds(30), (ReadyFunction<Boolean>) (lastAttempt, reference) -> {
             try {
-                String principal = KafkaInstanceApiAccessUtils.toPrincipal(Environment.SECONDARY_USERNAME);
+                String principal = KafkaInstanceApiAccessUtils.toPrincipal(secondaryUserUsername);
                 AclBindingListPage acls = secondaryKafkaInstanceAPI.getAcls(AclResourceTypeFilter.TOPIC, topicName, AclPatternTypeFilter.LITERAL, principal, null, null, null, null, null, null);
                 boolean empty = acls.getItems().isEmpty();
                 reference.set(empty);

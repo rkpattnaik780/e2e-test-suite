@@ -22,7 +22,6 @@ import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.oauth.KeycloakUser;
 import io.managed.services.test.client.sample.QuarkusSample;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtApi;
@@ -45,6 +44,7 @@ import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import io.managed.services.test.client.oauth.KeycloakLoginSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -110,6 +110,7 @@ public class QuarkusApplicationTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
+        LOGGER.debug("assert necessary environment variables");
         assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
         assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
         assertNotNull(Environment.DEV_CLUSTER_SERVER, "the DEV_CLUSTER_SERVER env is null");
@@ -118,13 +119,14 @@ public class QuarkusApplicationTest extends TestBase {
         // OC
         LOGGER.info("initialize openshift client");
         var config = new ConfigBuilder()
-                .withMasterUrl(Environment.DEV_CLUSTER_SERVER)
-                .withOauthToken(Environment.DEV_CLUSTER_TOKEN)
-                .withNamespace(Environment.DEV_CLUSTER_NAMESPACE)
-                .withTrustCerts(true)
-                .build();
+            .withMasterUrl(Environment.DEV_CLUSTER_SERVER)
+            .withOauthToken(Environment.DEV_CLUSTER_TOKEN)
+            .withNamespace(Environment.DEV_CLUSTER_NAMESPACE)
+            .withTrustCerts(true)
+            .build();
         oc = new DefaultOpenShiftClient(config);
 
+        var offlineToken = Environment.PRIMARY_OFFLINE_TOKEN;
         var auth = new KeycloakLoginSession(vertx, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
 
         // CLI
@@ -133,18 +135,14 @@ public class QuarkusApplicationTest extends TestBase {
         var cliBinary = downloader.downloadCLIInTempDir();
         LOGGER.info("cli downloaded successfully to: {}", cliBinary);
 
-        LOGGER.info("login the cli");
+        LOGGER.info("login to RHOAS CLI (insecure) with authorization based on logging to the console");
         cli = new CLI(cliBinary);
         // insecure login
         CLIUtils.login(vertx, cli, auth, false).get();
 
-        // User
-        LOGGER.info("authenticate user '{}' against RH SSO", auth.getUsername());
-        user = bwait(auth.loginToRedHatSSO());
-
         // APIs
         LOGGER.info("initialize kafka and security mgmt apis");
-        var apis = new ApplicationServicesApi(Environment.OPENSHIFT_API_URI, user);
+        var apis = new ApplicationServicesApi(Environment.OPENSHIFT_API_URI, offlineToken);
         kafkaMgmtApi = apis.kafkaMgmt();
         securityMgmtApi = apis.securityMgmt();
 
@@ -154,7 +152,7 @@ public class QuarkusApplicationTest extends TestBase {
 
         // Topic
         LOGGER.info("create topic '{}'", TOPIC_NAME);
-        var kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(auth, kafka));
+        var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, offlineToken);
 
         var topicPayload = new NewTopicInput()
             .name(TOPIC_NAME)
@@ -349,7 +347,8 @@ public class QuarkusApplicationTest extends TestBase {
         bwait(vertx.close());
     }
 
-    @Test
+    // TODO test disabled until problem with deactivated offline tokens resolved.
+    @Test(enabled = false)
     public void testCLIConnectCluster() throws Throwable {
         cleanAccessTokenSecret();
         cleanKafkaConnection();
@@ -368,7 +367,7 @@ public class QuarkusApplicationTest extends TestBase {
         cli.useKafka(kafka.getId());
 
         LOGGER.info("cli cluster connect using kubeconfig: {}", kubeconfgipath);
-        cli.connectCluster(user.getRefreshToken(), kubeconfgipath, "kafka");
+        cli.connectCluster(Environment.PRIMARY_OFFLINE_TOKEN, kubeconfgipath, "kafka");
     }
 
     @Test(dependsOnMethods = "testCLIConnectCluster")

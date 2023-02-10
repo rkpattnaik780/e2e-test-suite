@@ -5,7 +5,6 @@ import io.managed.services.test.Environment;
 import io.managed.services.test.cli.CLI;
 import io.managed.services.test.cli.CLIDownloader;
 import io.managed.services.test.cli.CLIUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
@@ -31,8 +30,7 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 @Test
@@ -57,18 +55,14 @@ public class RegistryCLITest {
         var binary = downloader.downloadCLIInTempDir();
         this.cli = new CLI(binary);
 
-        LOGGER.info("login to RHOAS");
+        LOGGER.info("login to RHOAS CLI with help of logging to the browser");
         CLIUtils.login(vertx, cli, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD).get();
     }
 
     @AfterClass(alwaysRun = true)
     @SneakyThrows
     public void clean() {
-
-
-        var auth = new KeycloakLoginSession(Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD);
-        var user = bwait(auth.loginToRedHatSSO());
-        var registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, user);
+        var registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
 
         try {
             RegistryMgmtApiUtils.deleteRegistryByNameIfExists(registryMgmtApi, SERVICE_REGISTRY_NAME);

@@ -7,7 +7,6 @@ import io.managed.services.test.TestBase;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +17,6 @@ import org.testng.annotations.Test;
 import java.nio.charset.StandardCharsets;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
-import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.TestUtils.message;
 import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
@@ -33,8 +31,7 @@ import static org.testng.Assert.assertTrue;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  * </ul>
  */
 public class RegistryMgmtAPITest extends TestBase {
@@ -47,14 +44,11 @@ public class RegistryMgmtAPITest extends TestBase {
     private RegistryMgmtApi registryMgmtApi;
     private Registry registry;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void bootstrap() throws Throwable {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
-        registryMgmtApi = bwait(RegistryMgmtApiUtils.registryMgmtApi(
-            Environment.PRIMARY_USERNAME,
-            Environment.PRIMARY_PASSWORD));
+        registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.PRIMARY_OFFLINE_TOKEN);
     }
 
     @AfterClass(alwaysRun = true)
@@ -74,7 +68,7 @@ public class RegistryMgmtAPITest extends TestBase {
         }
     }
 
-    @Test
+    @Test()
     public void testCreateRegistry() throws Exception {
 
         var registryCreateRest = new RegistryCreate()
@@ -94,8 +88,7 @@ public class RegistryMgmtAPITest extends TestBase {
 
     @Test(dependsOnMethods = "testCreateRegistry")
     public void testCreateArtifact() throws Throwable {
-        var registryClient = bwait(registryClient(Vertx.vertx(), registry.getRegistryUrl(),
-            Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD));
+        var registryClient = registryClient(registry.getRegistryUrl(), Environment.PRIMARY_OFFLINE_TOKEN);
 
         LOGGER.info("create artifact on registry");
         var artifactMetaData = registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8));

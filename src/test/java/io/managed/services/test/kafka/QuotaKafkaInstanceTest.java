@@ -5,12 +5,11 @@ import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
+import io.managed.services.test.client.accountmgmt.AccountMgmtApi;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
-import io.managed.services.test.client.oauth.KeycloakLoginSession;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import lombok.SneakyThrows;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +19,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.json.JSONObject;
 
-import static io.managed.services.test.TestUtils.bwait;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -40,10 +38,8 @@ import static org.testng.Assert.fail;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> DIFF_ORG_USERNAME
- *     <li> DIFF_ORG_PASSWORD
- *     <li> ALIEN_USERNAME
- *     <li> ALIEN_PASSWORD
+ *     <li> DIFF_ORG_OFFLINE_TOKEN
+ *     <li> ALIEN_OFFLINE_TOKEN
  * </ul>
  */
 public class QuotaKafkaInstanceTest extends TestBase {
@@ -59,7 +55,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     // Kafka API code errors
     private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
-    private static final String KAFKAS_MGMT_120_REASON = "Insufficient quota: error getting billing model: No available billing model found";
+    private static final String KAFKAS_MGMT_120_REASON = "error getting billing model";
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
     private static final String KAFKAS_MGMT_21_REASON = "unable to detect instance type in plan provided: ";
 
@@ -69,19 +65,15 @@ public class QuotaKafkaInstanceTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.DIFF_ORG_USERNAME, "the DIFF_ORG_USERNAME env is null");
-        assertNotNull(Environment.DIFF_ORG_PASSWORD, "the DIFF_ORG_PASSWORD env is null");
-        assertNotNull(Environment.ALIEN_USERNAME, "the ALIENUSERNAME env is null");
-        assertNotNull(Environment.ALIEN_PASSWORD, "the ALIENPASSWORD env is null");
+        assertNotNull(Environment.DIFF_ORG_OFFLINE_TOKEN, "the DIFF_ORG_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ALIEN_OFFLINE_TOKEN, "the ALIEN_OFFLINE_TOKEN env is null");
 
-        KeycloakLoginSession quotaUserAuth = new KeycloakLoginSession(Environment.DIFF_ORG_USERNAME, Environment.DIFF_ORG_PASSWORD);
-        KeycloakLoginSession noQuotaUserAuth = new KeycloakLoginSession(Environment.ALIEN_USERNAME, Environment.ALIEN_PASSWORD);
+        quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.DIFF_ORG_OFFLINE_TOKEN);
+        noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.ALIEN_OFFLINE_TOKEN);
 
-        KeycloakUser quotaUser = bwait(quotaUserAuth.loginToRedHatSSO());
-        KeycloakUser noQuotaUser = bwait(noQuotaUserAuth.loginToRedHatSSO());
 
-        quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, quotaUser);
-        noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, noQuotaUser);
+
+
 
         LOGGER.info("Preparing environment by deleting existing Kafka instances");
         deleteAllKafkaInstances();  
@@ -95,13 +87,17 @@ public class QuotaKafkaInstanceTest extends TestBase {
     
     private void deleteAllKafkaInstances() {
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, Environment.ALIEN_USERNAME);
+            String noQuotaUserUsername = new AccountMgmtApi(Environment.OPENSHIFT_API_URI, Environment.ALIEN_OFFLINE_TOKEN).getAccountUsername();
+            LOGGER.debug("try to delete all instances owned by user with name '{}'", noQuotaUserUsername);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(noQuotaUserKafkaMgmtApi, noQuotaUserUsername);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instance for ALIEN user: ", t);
         }
 
         try {
-            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, Environment.DIFF_ORG_USERNAME);
+            String quotaUserUsername = new AccountMgmtApi(Environment.OPENSHIFT_API_URI, Environment.DIFF_ORG_OFFLINE_TOKEN).getAccountUsername();
+            LOGGER.debug("try to delete all instances owned by user with name '{}'", quotaUserUsername);
+            KafkaMgmtApiUtils.cleanKafkaInstanceByOwner(quotaUserKafkaMgmtApi, quotaUserUsername);
         } catch (Throwable t) {
             LOGGER.error("failed to clean kafka instances for DIFF_ORG user: ", t);
         }
@@ -123,7 +119,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
             assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "'" + PLAN_DEVELOPER + "'");
+            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_DEVELOPER + "\"");
         }
     }
 
@@ -178,7 +174,7 @@ public class QuotaKafkaInstanceTest extends TestBase {
             assertEquals(e.getCode(), 400, "HTTP Status Response");
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
             assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "'" + PLAN_STANDARD + "'");
+            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_STANDARD + "\"");
         }
     }
 

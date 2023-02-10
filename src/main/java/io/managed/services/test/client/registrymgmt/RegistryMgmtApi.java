@@ -10,15 +10,14 @@ import com.openshift.cloud.api.srs.models.RegistryList;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
-import io.managed.services.test.client.oauth.KeycloakUser;
 
 public class RegistryMgmtApi extends BaseApi {
 
     private final ApiClient apiClient;
     private final RegistriesApi registriesApi;
 
-    public RegistryMgmtApi(ApiClient apiClient, KeycloakUser user) {
-        super(user);
+    public RegistryMgmtApi(ApiClient apiClient, String offlineToken) {
+        super(offlineToken);
         this.apiClient = apiClient;
         this.registriesApi = new RegistriesApi(apiClient);
     }
@@ -33,8 +32,8 @@ public class RegistryMgmtApi extends BaseApi {
     }
 
     @Override
-    protected void setAccessToken(String t) {
-        ((HttpBearerAuth) apiClient.getAuthentication("Bearer")).setBearerToken(t);
+    protected void setAccessToken(String accessToken) {
+        ((HttpBearerAuth) this.apiClient.getAuthentication("Bearer")).setBearerToken(accessToken);
     }
 
     public Registry createRegistry(RegistryCreate registryCreateRest) throws ApiGenericException {

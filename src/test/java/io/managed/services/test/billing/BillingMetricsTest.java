@@ -50,8 +50,7 @@ import static org.testng.Assert.fail;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
  *     <li> PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN
  * </ul>
  */
@@ -89,13 +88,10 @@ public class BillingMetricsTest extends TestBase {
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
         assertNotNull(Environment.PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN, "the PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN env is null");
 
-        var apps = ApplicationServicesApi.applicationServicesApi(
-            Environment.PRIMARY_USERNAME,
-            Environment.PRIMARY_PASSWORD);
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
 
         KafkaMgmtApi kafkaMgmtApi = apps.kafkaMgmt();
         SecurityMgmtApi securityMgmtApi = apps.securityMgmt();
@@ -122,8 +118,7 @@ public class BillingMetricsTest extends TestBase {
             fail(message("the billing metric can be applied only on existing kafka instance, '{}' did not exist", KAFKA_INSTANCE_NAME));
         }
 
-        this.kafkaInstanceApi = bwait(KafkaInstanceApiUtils.kafkaInstanceApi(kafka,
-            Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD));
+        this.kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.PRIMARY_OFFLINE_TOKEN);
 
         var optionalServiceAccount = SecurityMgmtAPIUtils.getServiceAccountByName(securityMgmtApi, SERVICE_ACCOUNT_NAME);
         if (optionalServiceAccount.isPresent()) {

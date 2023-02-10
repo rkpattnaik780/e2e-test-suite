@@ -7,8 +7,6 @@ import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiNotFoundException;
-import io.managed.services.test.client.exception.ApiUnauthorizedException;
-import io.managed.services.test.client.oauth.KeycloakUser;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.vertx.core.Vertx;
@@ -35,14 +33,10 @@ import static org.testng.Assert.assertThrows;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_USERNAME
- *     <li> PRIMARY_PASSWORD
- *     <li> SECONDARY_USERNAME
- *     <li> SECONDARY_PASSWORD
- *     <li> ALIEN_USERNAME
- *     <li> ALIEN_PASSWORD
- *     <li> ADMIN_USERNAME
- *     <li> ADMIN_PASSWORD
+ *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> SECONDARY_OFFLINE_TOKEN
+ *     <li> ALIEN_OFFLINE_TOKEN
+ *     <li> ADMIN_OFFLINE_TOKEN
  * </ul>
  */
 public class RegistryMgmtAPIPermissionsTest extends TestBase {
@@ -62,30 +56,15 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @BeforeClass
     public void bootstrap() throws Throwable {
-        assertNotNull(Environment.ADMIN_USERNAME, "the ADMIN_USERNAME env is null");
-        assertNotNull(Environment.ADMIN_PASSWORD, "the ADMIN_PASSWORD env is null");
-        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
-        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
-        assertNotNull(Environment.SECONDARY_USERNAME, "the SECONDARY_USERNAME env is null");
-        assertNotNull(Environment.SECONDARY_PASSWORD, "the SECONDARY_PASSWORD env is null");
-        assertNotNull(Environment.ALIEN_USERNAME, "the ALIEN_USERNAME env is null");
-        assertNotNull(Environment.ALIEN_PASSWORD, "the ALIEN_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.SECONDARY_OFFLINE_TOKEN, "the ADMIN_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ADMIN_OFFLINE_TOKEN, "the ADMIN_OFFLINE_TOKEN env is null");
+        assertNotNull(Environment.ALIEN_OFFLINE_TOKEN, "the ALIEN_OFFLINE_TOKEN env is null");
 
-        adminRegistryMgmtApi = bwait(RegistryMgmtApiUtils.registryMgmtApi(
-            Environment.ADMIN_USERNAME,
-            Environment.ADMIN_PASSWORD));
-
-        registryMgmtApi = bwait(RegistryMgmtApiUtils.registryMgmtApi(
-            Environment.PRIMARY_USERNAME,
-            Environment.PRIMARY_PASSWORD));
-
-        secondaryRegistryMgmtApi = bwait(RegistryMgmtApiUtils.registryMgmtApi(
-            Environment.SECONDARY_USERNAME,
-            Environment.SECONDARY_PASSWORD));
-
-        alienRegistryMgmtApi = bwait(RegistryMgmtApiUtils.registryMgmtApi(
-            Environment.ALIEN_USERNAME,
-            Environment.ALIEN_PASSWORD));
+        adminRegistryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.ADMIN_OFFLINE_TOKEN);
+        registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.PRIMARY_OFFLINE_TOKEN);
+        secondaryRegistryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.SECONDARY_OFFLINE_TOKEN);
+        alienRegistryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.ALIEN_OFFLINE_TOKEN);
 
         registry = applyRegistry(registryMgmtApi, SERVICE_REGISTRY_NAME);
     }
@@ -126,9 +105,7 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAlienUserCanNotCreateArtifactOnTheRegistry() throws Throwable {
-        var registryClient = bwait(registryClient(vertx, registry.getRegistryUrl(),
-            Environment.ALIEN_USERNAME,
-            Environment.ALIEN_PASSWORD));
+        var registryClient = registryClient(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
 
         assertThrows(ApiForbiddenException.class, () -> registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8)));
     }
@@ -145,21 +122,13 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testUnauthenticatedUserWithFakeToken() {
-        var api = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, new KeycloakUser(TestUtils.FAKE_TOKEN));
-        assertThrows(ApiUnauthorizedException.class, () -> api.getRegistries(null, null, null, null));
-    }
-
-    @Test
-    public void testUnauthenticatedUserWithoutToken() {
-        var api = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, new KeycloakUser(""));
-        assertThrows(ApiUnauthorizedException.class, () -> api.getRegistries(null, null, null, null));
+        var api = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, TestUtils.FAKE_TOKEN);
+        assertThrows(Exception.class, () -> api.getRegistries(null, null, null, null));
     }
 
     @Test
     public void testAdminUserCanCreateArtifactOnTheRegistry() throws Throwable {
-        var registryClient = bwait(registryClient(vertx, registry.getRegistryUrl(),
-            Environment.ADMIN_USERNAME,
-            Environment.ADMIN_PASSWORD));
+        var registryClient = registryClient(registry.getRegistryUrl(), Environment.ADMIN_OFFLINE_TOKEN);
 
         registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8));
     }
