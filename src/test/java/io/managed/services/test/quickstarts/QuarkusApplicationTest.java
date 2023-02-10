@@ -3,7 +3,6 @@ package io.managed.services.test.quickstarts;
 import com.openshift.cloud.api.kas.auth.models.NewTopicInput;
 import com.openshift.cloud.api.kas.auth.models.TopicSettings;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
-import com.openshift.cloud.api.serviceaccounts.models.ServiceAccountData;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.ConfigBuilder;
