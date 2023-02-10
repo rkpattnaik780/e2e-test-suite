@@ -11,4 +11,9 @@
             <class name="io.managed.services.test.rhoas.KafkaRhoasAclTests"/>
         </classes>
     </test>
+    <test name="KafkaRhoasRegistryTests">
+        <classes>
+            <class name="io.managed.services.test.rhoas.KafkaRhoasRegistryTests"/>
+        </classes>
+    </test>
 </suite>

@@ -12,6 +12,7 @@ import io.managed.services.test.cli.CLIUtils;
 import io.managed.services.test.cli.CliGenericException;
 import io.managed.services.test.cli.CliNotFoundException;
 import io.managed.services.test.cli.ServiceAccountSecret;
+import io.managed.services.test.cli.CLI.ACLEntityType;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
@@ -51,18 +52,19 @@ import static org.testng.Assert.assertTrue;
  * <b>Requires:</b>
  * <ul>
  *     <li> PRIMARY_OFFLINE_TOKEN
- *     <li> GITHUB_TOKEN
+ *     <li> PRIMARY_USERNAME
+ *     <li> PRIMARY_PASSWORD
  * </ul>
  */
 @Test
 public class KafkaRhoasBasicTests extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaRhoasBasicTests.class);
 
-    private static final String KAFKA_INSTANCE_NAME = "cli-e2e-test-" + Environment.LAUNCH_SUFFIX;
-    private static final String SERVICE_ACCOUNT_NAME = "cli-e2e-service-account-"  + Environment.LAUNCH_SUFFIX;
-    private static final String TOPIC_NAME = "cli-e2e-test-topic";
+    private static final String KAFKA_INSTANCE_NAME = "e2e-cli-test-" + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_ACCOUNT_NAME = "e2e-cli-svc-acc-"  + Environment.LAUNCH_SUFFIX;
+    private static final String TOPIC_NAME = "e2e-cli-topic" + Environment.LAUNCH_SUFFIX;
     // used for testing quickstart for data production and consumption
-    private static final String TOPIC_NAME_PRODUCE_CONSUME = "produce-consume-test-topic";
+    private static final String TOPIC_NAME_PRODUCE_CONSUME = "produce-consume-test-topic" + Environment.LAUNCH_SUFFIX;
     private static final int DEFAULT_PARTITIONS = 1;
     private static final String CONSUMER_GROUP_NAME = "consumer-group-1";
 
@@ -80,6 +82,8 @@ public class KafkaRhoasBasicTests extends TestBase {
 
     @BeforeClass
     public void bootstrap() {
+        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
+        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
         assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
     }
 
@@ -92,6 +96,11 @@ public class KafkaRhoasBasicTests extends TestBase {
         var kafkaMgmtApi =  KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
         var securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
 
+        if (Environment.SKIP_KAFKA_TEARDOWN) {
+            LOGGER.warn("skip kafka instance clean up");
+            return;
+        }
+        
         try {
             KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
         } catch (Throwable t) {
@@ -205,7 +214,7 @@ public class KafkaRhoasBasicTests extends TestBase {
     @SneakyThrows
     public void testGrantProducerAndConsumerAccess() {
         LOGGER.info("grant producer and consumer access to the account: {}", serviceAccount.getClientId());
-        cli.grantAccessAcl(serviceAccount, "all", "all");
+        cli.grantAccessAcl(ACLEntityType.SERVICE_ACCOUNT, serviceAccount.getClientId(), "all", "all");
 
         var acl = cli.listACLs();
         LOGGER.debug(acl);

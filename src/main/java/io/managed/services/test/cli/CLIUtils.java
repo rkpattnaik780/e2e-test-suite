@@ -260,24 +260,15 @@ public class CLIUtils {
     }
 
     //// kafka acl search
-    public static Optional<AclBinding> searchAcl(AclBindingListPage aclList, String username, AclOperation operation, AclPermissionType permission, AclResourceType resourceType, String resourceName) {
-        String principal = "User:".concat(username);
-        return filterAcl(aclList, operation, permission, resourceType, resourceName, principal);
-    }
-
-    public static Optional<AclBinding> searchAcl(AclBindingListPage aclList, ServiceAccountData serviceAccount, AclOperation operation, AclPermissionType permission, AclResourceType resourceType, String resourceName) {
-        String principal = "User:".concat(serviceAccount.getClientId());
-        return filterAcl(aclList, operation, permission, resourceType, resourceName, principal);
-    }
-
-    private static Optional<AclBinding> filterAcl(AclBindingListPage aclList, AclOperation operation, AclPermissionType permission, AclResourceType resourceType, String resourceName, String principal) {
+    public static Optional<AclBinding> searchAcl(AclBindingListPage aclList, String principal, AclOperation operation, AclPermissionType permission, AclResourceType resourceType, String resourceName) {
+        String userPrincipal = "User:".concat(principal);
         return Objects.requireNonNull(aclList.getItems())
             .stream()
-            .filter(acl -> principal.equals(acl.getPrincipal()))
+            .filter(acl -> userPrincipal.equals(acl.getPrincipal()))
             .filter(acl -> permission.equals(acl.getPermission()))
             .filter(acl -> operation.equals(acl.getOperation()))
             .filter(acl -> resourceType.equals(acl.getResourceType()))
             .filter(acl -> resourceName.equals(acl.getResourceName()))
-            .findAny();
+        .findAny();
     }
 }

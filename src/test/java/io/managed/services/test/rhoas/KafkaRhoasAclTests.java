@@ -6,14 +6,12 @@ import com.openshift.cloud.api.kas.auth.models.AclOperation;
 import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
 import com.openshift.cloud.api.kas.auth.models.AclResourceType;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
-import com.openshift.cloud.api.serviceaccounts.models.ServiceAccountData;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.cli.CLI;
 import io.managed.services.test.cli.CLIDownloader;
 import io.managed.services.test.cli.CLIUtils;
-import io.managed.services.test.cli.CliGenericException;
-import io.managed.services.test.cli.ServiceAccountSecret;
+import io.managed.services.test.cli.CLI.ACLEntityType;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
 import io.vertx.core.Vertx;
@@ -23,17 +21,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.util.Optional;
 
 import static io.managed.services.test.TestUtils.bwait;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.assertTrue;
-
 
 /**
  * Test the application services CLI[1] kafka commands.
@@ -50,55 +46,64 @@ import static org.testng.Assert.assertTrue;
  * <b>Requires:</b>
  * <ul>
  *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> PRIMARY_USERNAME
+ *     <li> PRIMARY_PASSWORD
  * </ul>
  */
 @Test
 public class KafkaRhoasAclTests extends TestBase {
+
+    
     private static final Logger LOGGER = LogManager.getLogger(KafkaRhoasAclTests.class);
+    
+    private static final String KAFKA_INSTANCE_NAME = "e2e-cli-acl-" + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_ACCOUNT_NAME = "e2e-cli-acl-svc-acc-"  + Environment.LAUNCH_SUFFIX;
+    private static final String TOPIC_NAME = "e2e-cli-acl-topic" + Environment.LAUNCH_SUFFIX;
+    private static final String EXTERNAL_USER = "external-user";
 
-    private static final String KAFKA_INSTANCE_NAME = "cli-e2e-test-" + Environment.LAUNCH_SUFFIX;
-    private static final String SERVICE_ACCOUNT_NAME = "cli-e2e-service-account-"  + Environment.LAUNCH_SUFFIX;
-    private static final String TOPIC_NAME = "cli-e2e-test-topic";
-    private static final String DIFF_USER = "external-user";
-
-    private final Vertx vertx = Vertx.vertx();
+    private static final String ALL_RESOURCES = "*";
+    private static final String KAFKA_CLUSTER = "kafka-cluster";
 
     private CLI cli;
 
-    private KafkaRequest kafka;
-    private ServiceAccountSecret serviceAccountSecret;
-    private ServiceAccountData serviceAccount;
-
+    private final Vertx vertx = Vertx.vertx();
+    
     @BeforeClass
     @SneakyThrows
     public void bootstrap() {
+        assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
+        assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
         assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
-        downloadCLI();
-        login();
-        createServiceAccount();
-        createKafkaInstance();
+        // download CLI
+        var downloader = CLIDownloader.defaultDownloader();
+        var binary = downloader.downloadCLIInTempDir();
+        this.cli = new CLI(binary);
+        LOGGER.debug(cli.help());
+
+        // login
+        LOGGER.info("login the CLI");
+        CLIUtils.login(vertx, cli, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD).get();
+        cli.listKafka();
+
+        // create kafka instance
+        LOGGER.info("create kafka instance with name {}", KAFKA_INSTANCE_NAME);
+        var k = cli.createKafka(KAFKA_INSTANCE_NAME);
+        LOGGER.debug(k);
+        LOGGER.info("wait for kafka instance: {}", k.getId());
+        KafkaRequest kafka = CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
+        LOGGER.debug(kafka);
     }
 
     @AfterClass(alwaysRun = true)
     @SneakyThrows
     public void clean() {
-
-        var offlineToken = Environment.PRIMARY_OFFLINE_TOKEN;
-
-        var kafkaMgmtApi =  KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
-        var securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
-
-        try {
-            cli.deleteAllAcls(DIFF_USER);
-        } catch (Throwable t) {
-            LOGGER.error("delete ACLs error: ", t);
-        }
-
-        try {
-            cli.deleteAllAcls(serviceAccount);
-        } catch (Throwable t) {
-            LOGGER.error("delete ACLs error: ", t);
+        var kafkaMgmtApi =  KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
+        var securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
+        
+        if (Environment.SKIP_KAFKA_TEARDOWN) {
+            LOGGER.warn("skip kafka instance clean up");
+            return;
         }
 
         try {
@@ -129,239 +134,112 @@ public class KafkaRhoasAclTests extends TestBase {
 
         bwait(vertx.close());
     }
-
-    @SneakyThrows
-    public void downloadCLI() {
-
-        var downloader = CLIDownloader.defaultDownloader();
-
-        // download the cli
-        var binary = downloader.downloadCLIInTempDir();
-
-        this.cli = new CLI(binary);
-
-        LOGGER.info("validate cli");
-        LOGGER.debug(cli.help());
+    
+    @DataProvider(name = "aclEntityPairs")
+    public Object[][] aclEntityPairsDataProvider() {
+        return new Object[][]{
+            {ACLEntityType.USER, EXTERNAL_USER},
+            {ACLEntityType.SERVICE_ACCOUNT, SERVICE_ACCOUNT_NAME}
+        };
     }
 
+    // Primary user creates specific ACL (details not important) which allows entity to perform all operation upon specific topic
+    // Outcome: ACL assigned to entity is created and can be found once it is searched for based on entity
     @SneakyThrows
-    public void login() {
-
-        // make sure you are logout while developing locally.
-        LOGGER.info("verify that we aren't logged-in");
-        assertThrows(CliGenericException.class, () -> cli.listKafka());
-
-        LOGGER.info("login the CLI");
-        CLIUtils.login(vertx, cli, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD).get();
-
-        LOGGER.info("verify that we are logged-in");
-        cli.listKafka();
+    @Test(dataProvider = "aclEntityPairs", priority = 1)
+    public void testCreateAllAllowAcl(ACLEntityType entityType, String entityIdentificator) {
+        LOGGER.info("Create ACL for {}", entityType.name);
+        cli.createAcl(entityType, entityIdentificator, AclOperation.ALL, AclPermissionType.ALLOW, TOPIC_NAME);
+        var aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> aclFiltered = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.ALL, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        assertTrue(aclFiltered.isPresent(), "ACL created must exist");
     }
 
+    // Primary user deleted specific ACL (details not important) upon specific topic
+    // Outcome: ACL assigned to entity is remove and can NOT be found once it is searched for based on entity
     @SneakyThrows
-    public void createServiceAccount() {
-
-        LOGGER.info("create a service account");
-        serviceAccountSecret = CLIUtils.createServiceAccount(cli, SERVICE_ACCOUNT_NAME);
-
-        LOGGER.info("get the service account");
-        var sa = CLIUtils.getServiceAccountByName(cli, SERVICE_ACCOUNT_NAME);
-        LOGGER.debug(sa);
-
-        assertTrue(sa.isPresent());
-        assertEquals(sa.get().getName(), SERVICE_ACCOUNT_NAME);
-        assertEquals(sa.get().getClientId(), serviceAccountSecret.getClientID());
-
-        serviceAccount = sa.get();
-        serviceAccount.setSecret(serviceAccountSecret.getClientSecret());
+    @Test(dataProvider = "aclEntityPairs", dependsOnMethods = "testCreateAllAllowAcl", enabled = true)
+    public void testDeleteAllAllowAcl(ACLEntityType entityType, String entityIdentificator) {
+        LOGGER.info("Delete ACL for {}", entityType.name);
+        cli.deleteAcl(entityType, entityIdentificator, AclOperation.ALL, AclPermissionType.ALLOW);
+        var aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> aclFiltered = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.ALL, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        assertTrue(aclFiltered.isEmpty(), "ACL deleted must be removed");
     }
 
+    // Primary user creates six ACLs using grant-access permission to produce and consume records on a topic
+    // Outcome: Six ACLs assigned to entity are created and can be found once it is searched for based on entity
     @SneakyThrows
-    public void createKafkaInstance() {
-
-        LOGGER.info("create kafka instance with name {}", KAFKA_INSTANCE_NAME);
-        var k = cli.createKafka(KAFKA_INSTANCE_NAME);
-        LOGGER.debug(k);
-
-        LOGGER.info("wait for kafka instance: {}", k.getId());
-        kafka = CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
-        LOGGER.debug(kafka);
+    @Test(dataProvider = "aclEntityPairs", priority = 2)
+    public void testCreateAclGrantAccess(ACLEntityType entityType, String entityIdentificator) {
+        LOGGER.info("Create grant-access ACL for {}", entityType.name);
+        cli.grantAccessAcl(entityType, entityIdentificator, TOPIC_NAME, "all");
+        var aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> acl1 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.GROUP, ALL_RESOURCES);
+        Optional<AclBinding> acl2 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.CREATE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        Optional<AclBinding> acl3 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        Optional<AclBinding> acl4 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        Optional<AclBinding> acl5 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.WRITE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        Optional<AclBinding> acl6 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TRANSACTIONAL_ID, ALL_RESOURCES);
+        assertTrue(acl1.isPresent(), "ACL created must exist");
+        assertTrue(acl2.isPresent(), "ACL created must exist");
+        assertTrue(acl3.isPresent(), "ACL created must exist");
+        assertTrue(acl4.isPresent(), "ACL created must exist");
+        assertTrue(acl5.isPresent(), "ACL created must exist");
+        assertTrue(acl6.isPresent(), "ACL created must exist");
     }
 
+    // Primary user deletes six ACLs to remove grant-access permission to produce and consume records on a topic
+    // Outcome: Six ACLs assigned to entity are deleted and can NOT be found once it is searched for based on entity
     @SneakyThrows
-
-    @Test(priority = 1)
-    public void testCreateAclForUser() {
-        LOGGER.info("Create ACL for secondary user");
-        cli.createAcl(DIFF_USER, AclOperation.ALL, AclPermissionType.ALLOW, TOPIC_NAME);
-        var aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> aclFiltered = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.ALL, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(aclFiltered.isPresent());
-    }
-
-    @SneakyThrows
-    @Test(dependsOnMethods = "testCreateAclForUser", enabled = true)
-    public void testDeleteAclForUser() {
-        LOGGER.info("Create ACL for secondary user");
-        cli.deleteAcl(DIFF_USER, AclOperation.ALL, AclPermissionType.ALLOW);
-        var aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> aclFiltered = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.ALL, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(aclFiltered.isEmpty());
-    }
-
-    @SneakyThrows
-    @Test(priority = 2)
-    public void testCreateAclForServiceAccount() {
-        LOGGER.info("Create ACL for service account");
-        cli.createAcl(serviceAccount, AclOperation.ALL, AclPermissionType.ALLOW, TOPIC_NAME);
-        var aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> aclFiltered = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.ALL, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(aclFiltered.isPresent());
-    }
-
-    @SneakyThrows
-    @Test(dependsOnMethods = "testCreateAclForServiceAccount", enabled = true)
-    public void testDeleteAclForServiceAccount() {
-        LOGGER.info("Delete ACL for service account");
-        cli.deleteAcl(serviceAccount, AclOperation.ALL, AclPermissionType.ALLOW);
-        var aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> aclFiltered = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.ALL, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(aclFiltered.isEmpty());
-    }
-
-    @SneakyThrows
-    @Test(priority = 3)
-    public void testCreateAclGrantAccessForUser() {
-        LOGGER.info("Create grant-access ACL for secondary user");
-        cli.grantAccessAcl(DIFF_USER, TOPIC_NAME, "all");
-        var aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> acl1 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.GROUP, "*");
-        Optional<AclBinding> acl2 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.CREATE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl3 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl4 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl5 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.WRITE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl6 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TRANSACTIONAL_ID, "*");
-        assertTrue(acl1.isPresent());
-        assertTrue(acl2.isPresent());
-        assertTrue(acl3.isPresent());
-        assertTrue(acl4.isPresent());
-        assertTrue(acl5.isPresent());
-        assertTrue(acl6.isPresent());
-    }
-
-    @SneakyThrows
-    @Test(dependsOnMethods = "testCreateAclGrantAccessForUser", enabled = true)
-    public void testDeleteAclGrantAccessForUser() {
-        LOGGER.info("Delete grant-access ACL for secondary user");
+    @Test(dataProvider = "aclEntityPairs", dependsOnMethods = "testCreateAclGrantAccess", enabled = true)
+    public void testDeleteAclGrantAccess(ACLEntityType entityType, String entityIdentificator) {
+        LOGGER.info("Delete grant-access ACL for {}", entityType.name);
         AclBindingListPage aclList;
 
-        cli.deleteAcl(DIFF_USER, AclOperation.READ, AclPermissionType.ALLOW);
-        aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> acl1 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.GROUP, "*");
-        Optional<AclBinding> acl2 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(acl1.isEmpty());
-        assertTrue(acl2.isEmpty());
+        cli.deleteAcl(entityType, entityIdentificator, AclOperation.READ, AclPermissionType.ALLOW);
+        aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> acl1 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.GROUP, ALL_RESOURCES);
+        Optional<AclBinding> acl2 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        assertTrue(acl1.isEmpty(), "ACL deleted must be removed");
+        assertTrue(acl2.isEmpty(), "ACL deleted must be removed");
 
-        cli.deleteAcl(DIFF_USER, AclOperation.DESCRIBE, AclPermissionType.ALLOW);
-        aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> acl3 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl4 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TRANSACTIONAL_ID, "*");
-        assertTrue(acl3.isEmpty());
-        assertTrue(acl4.isEmpty());
+        cli.deleteAcl(entityType, entityIdentificator, AclOperation.DESCRIBE, AclPermissionType.ALLOW);
+        aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> acl3 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        Optional<AclBinding> acl4 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TRANSACTIONAL_ID, ALL_RESOURCES);
+        assertTrue(acl3.isEmpty(), "ACL deleted must be removed");
+        assertTrue(acl4.isEmpty(), "ACL deleted must be removed");
 
-        cli.deleteAllAcls(DIFF_USER);
-        aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> acl5 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.CREATE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl6 = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.WRITE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(acl5.isEmpty());
-        assertTrue(acl6.isEmpty());
+        cli.deleteAllAcls(entityType, entityIdentificator);
+        aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> acl5 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.CREATE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        Optional<AclBinding> acl6 = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.WRITE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
+        assertTrue(acl5.isEmpty(), "ACL deleted must be removed");
+        assertTrue(acl6.isEmpty(), "ACL deleted must be removed");
     }
 
+    // Primary user creates one specific ACL using grant-admin permission
+    // Outcome: One ACL assigned to entity is created and can be found once it is searched for based on entity
     @SneakyThrows
-    @Test(priority = 4)
-    public void testCreateAclGrantAccessForServiceAccount() {
-        LOGGER.info("Create grant-access ACL for secondary service-account");
-        cli.grantAccessAcl(serviceAccount, TOPIC_NAME, "all");
-        var aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> acl1 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.GROUP, "*");
-        Optional<AclBinding> acl2 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.CREATE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl3 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl4 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl5 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.WRITE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl6 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TRANSACTIONAL_ID, "*");
-        assertTrue(acl1.isPresent());
-        assertTrue(acl2.isPresent());
-        assertTrue(acl3.isPresent());
-        assertTrue(acl4.isPresent());
-        assertTrue(acl5.isPresent());
-        assertTrue(acl6.isPresent());
+    @Test(dataProvider = "aclEntityPairs", priority = 3)
+    public void testCreateAclGrantAdmin(ACLEntityType entityType, String entityIdentificator) {
+        LOGGER.info("Create grant-access ACL for {}", entityType.name);
+        cli.grantAdminAcl(entityType, entityIdentificator);
+        var aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> acl = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.ALTER, AclPermissionType.ALLOW, AclResourceType.CLUSTER, KAFKA_CLUSTER);
+        assertTrue(acl.isPresent(), "ACL created must exist");
     }
 
+    // Primary user deletes one specific ACL to remove ALTER permission
+    // Outcome: One ACL assigned to entity is removed and can NOT be found once it is searched for based on entity
     @SneakyThrows
-    @Test(dependsOnMethods = "testCreateAclGrantAccessForServiceAccount", enabled = true)
-    public void testDeleteAclGrantAccessForServiceAccount() {
-        LOGGER.info("Delete grant-access ACL for secondary service-account");
-        AclBindingListPage aclList;
-        
-        cli.deleteAcl(serviceAccount, AclOperation.READ, AclPermissionType.ALLOW);
-        aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> acl1 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.GROUP, "*");
-        Optional<AclBinding> acl2 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.READ, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(acl1.isEmpty());
-        assertTrue(acl2.isEmpty());
-        
-        cli.deleteAcl(serviceAccount, AclOperation.DESCRIBE, AclPermissionType.ALLOW);
-        aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> acl3 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl4 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.DESCRIBE, AclPermissionType.ALLOW, AclResourceType.TRANSACTIONAL_ID, "*");
-        assertTrue(acl3.isEmpty());
-        assertTrue(acl4.isEmpty());
-
-        cli.deleteAllAcls(serviceAccount);
-        aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> acl5 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.CREATE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        Optional<AclBinding> acl6 = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.WRITE, AclPermissionType.ALLOW, AclResourceType.TOPIC, TOPIC_NAME);
-        assertTrue(acl5.isEmpty());
-        assertTrue(acl6.isEmpty());
-    }
-
-    @SneakyThrows
-    @Test(priority = 5)
-    public void testCreateAclGrantAdminForUser() {
-        LOGGER.info("Create grant-access ACL for secondary user");
-        cli.grantAdminAcl(DIFF_USER);
-        var aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> acl = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.ALTER, AclPermissionType.ALLOW, AclResourceType.CLUSTER, "kafka-cluster");
-        assertTrue(acl.isPresent());
-    }
-
-    @SneakyThrows
-    @Test(dependsOnMethods = "testCreateAclGrantAdminForUser", enabled = true)
-    public void testDeleteAclGrantAdminForUser() {
-        LOGGER.info("Delete grant-access ACL for secondary user");
-        cli.deleteAcl(DIFF_USER, AclOperation.ALTER, AclPermissionType.ALLOW);
-        var aclList = cli.listACLs(DIFF_USER);
-        Optional<AclBinding> acl = CLIUtils.searchAcl(aclList, DIFF_USER, AclOperation.ALTER, AclPermissionType.ALLOW, AclResourceType.CLUSTER, "kafka-cluster");
-        assertTrue(acl.isEmpty());
-    }
-
-    @SneakyThrows
-    @Test(priority = 6)
-    public void testCreateAclGrantAdminForServiceAccount() {
-        LOGGER.info("Create grant-access ACL for secondary service-account");
-        cli.grantAdminAcl(serviceAccount);
-        var aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> acl = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.ALTER, AclPermissionType.ALLOW, AclResourceType.CLUSTER, "kafka-cluster");
-        assertTrue(acl.isPresent());
-    }
-
-    @SneakyThrows
-    @Test(dependsOnMethods = "testCreateAclGrantAdminForServiceAccount", enabled = true)
-    public void testDeleteAclGrantAdminForServiceAccount() {
-        LOGGER.info("Delete grant-access ACL for secondary service-account");
-        cli.deleteAcl(serviceAccount, AclOperation.ALTER, AclPermissionType.ALLOW);
-        var aclList = cli.listACLs(serviceAccount);
-        Optional<AclBinding> acl = CLIUtils.searchAcl(aclList, serviceAccount, AclOperation.ALTER, AclPermissionType.ALLOW, AclResourceType.CLUSTER, "kafka-cluster");
-        assertTrue(acl.isEmpty());
+    @Test(dataProvider = "aclEntityPairs", dependsOnMethods = "testCreateAclGrantAdmin", enabled = true)
+    public void testDeleteAclGrantAdmin(ACLEntityType entityType, String entityIdentificator) {
+        LOGGER.info("Delete grant-access ACL for {}", entityType.name);
+        cli.deleteAcl(entityType, entityIdentificator, AclOperation.ALTER, AclPermissionType.ALLOW);
+        var aclList = cli.listACLs(entityType, entityIdentificator);
+        Optional<AclBinding> acl = CLIUtils.searchAcl(aclList, entityIdentificator, AclOperation.ALTER, AclPermissionType.ALLOW, AclResourceType.CLUSTER, KAFKA_CLUSTER);
+        assertTrue(acl.isEmpty(), "ACL deleted must be removed");
     }
 }

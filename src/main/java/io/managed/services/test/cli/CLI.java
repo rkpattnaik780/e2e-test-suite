@@ -228,13 +228,21 @@ public class CLI {
     }
 
     // kafka acl
-    //// kafka acl create
-    public void createAcl(String username, AclOperation operation, AclPermissionType permission, String topic) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "create", "-y", "--user", username, "--topic", topic, "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
-    }
+    public enum ACLEntityType {
+        USER("user", "--user"),
+        SERVICE_ACCOUNT("service account", "--service-account");
 
-    public void createAcl(ServiceAccountData serviceAccount, AclOperation operation, AclPermissionType permission, String topic) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "create", "-y", "--service-account", serviceAccount.getClientId(), "--topic", topic, "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
+        public final String name;
+        public final String flag;
+
+        private ACLEntityType(String name, String flag) {
+            this.name = name;
+            this.flag = flag;
+        }
+    }
+    //// kafka acl create
+    public void createAcl(ACLEntityType aclEntityType, String entityIdentificator, AclOperation operation, AclPermissionType permission, String topic) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "create", "-y", aclEntityType.flag, entityIdentificator, "--topic", topic, "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
     }
 
     //// kafka acl list
@@ -243,49 +251,28 @@ public class CLI {
             .asJson(AclBindingListPage.class);
     }
 
-    public AclBindingListPage listACLs(String username) throws CliGenericException {
-        return retry(() -> exec("kafka", "acl", "list", "--user", username, "-o", "json"))
-            .asJson(AclBindingListPage.class);
-    }
-
-    public AclBindingListPage listACLs(ServiceAccountData serviceAccount) throws CliGenericException {
-        return retry(() -> exec("kafka", "acl", "list", "--service-account", serviceAccount.getClientId(), "-o", "json"))
+    public AclBindingListPage listACLs(ACLEntityType aclEntityType, String entityIdentificator) throws CliGenericException {
+        return retry(() -> exec("kafka", "acl", "list", aclEntityType.flag, entityIdentificator, "-o", "json"))
             .asJson(AclBindingListPage.class);
     }
 
     //// kafka acl delete
-    public void deleteAcl(String username, AclOperation operation, AclPermissionType permission) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "delete", "-y", "--user", username, "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
+    public void deleteAcl(ACLEntityType aclEntityType, String entityIdentificator, AclOperation operation, AclPermissionType permission) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "delete", "-y", aclEntityType.flag, entityIdentificator, "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
     }
 
-    public void deleteAcl(ServiceAccountData serviceAccount, AclOperation operation, AclPermissionType permission) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "delete", "-y", "--service-account", serviceAccount.getClientId(), "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
-    }
-
-    public void deleteAllAcls(String username) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "delete", "-y", "--user", username));
-    }
-
-    public void deleteAllAcls(ServiceAccountData serviceAccount) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "delete", "-y", "--service-account", serviceAccount.getClientId()));
+    public void deleteAllAcls(ACLEntityType aclEntityType, String entityIdentificator) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "delete", "-y", aclEntityType.flag, entityIdentificator));
     }
 
     //// kafka acl grant-access
-    public void grantAccessAcl(String username, String topic, String group) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "grant-access", "-y", "--producer", "--consumer", "--user", username, "--topic", topic, "--group", group));
-    }
-
-    public void grantAccessAcl(ServiceAccountData serviceAccount, String topic, String group) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "grant-access", "-y", "--producer", "--consumer", "--service-account", serviceAccount.getClientId(), "--topic", topic, "--group", group));
+    public void grantAccessAcl(ACLEntityType aclEntityType, String entityIdentificator, String topic, String group) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "grant-access", "-y", "--producer", "--consumer", aclEntityType.flag, entityIdentificator, "--topic", topic, "--group", group));
     }
 
     //// kafka acl grant-admin
-    public void grantAdminAcl(String username) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "grant-admin", "-y", "--user", username));
-    }
-
-    public void grantAdminAcl(ServiceAccountData serviceAccount) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "grant-admin", "-y", "--service-account", serviceAccount.getClientId()));
+    public void grantAdminAcl(ACLEntityType aclEntityType, String entityIdentificator) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "grant-admin", "-y", aclEntityType.flag, entityIdentificator));
     }
 
     /**

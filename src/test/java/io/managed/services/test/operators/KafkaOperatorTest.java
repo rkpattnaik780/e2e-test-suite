@@ -1,23 +1,20 @@
-package io.managed.services.test.devexp;
+package io.managed.services.test.operators;
 
 
 import com.redhat.rhoas.v1alpha1.CloudServiceAccountRequest;
 import com.redhat.rhoas.v1alpha1.CloudServiceAccountRequestSpec;
 import com.redhat.rhoas.v1alpha1.CloudServicesRequest;
 import com.redhat.rhoas.v1alpha1.CloudServicesRequestSpec;
-import com.redhat.rhoas.v1alpha1.ServiceRegistryConnection;
-import com.redhat.rhoas.v1alpha1.ServiceRegistryConnectionBuilder;
-import com.redhat.rhoas.v1alpha1.serviceregistryconnectionspec.CredentialsBuilder;
+import com.redhat.rhoas.v1alpha1.KafkaConnectionBuilder;
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
-import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
-import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
+import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
+import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtApi;
 import io.managed.services.test.framework.LogCollector;
@@ -40,13 +37,13 @@ import java.util.HashMap;
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.message;
 import static io.managed.services.test.TestUtils.waitFor;
-import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 import static org.testng.Assert.assertNotNull;
 
 
 /**
+ * Test the application services operator[1] kafka operations.
  * <p>
  * The tests expect the operator to be already installed on the dev cluster, the dev cluster is given by
  * the DEV_CLUSTER_SERVER env. The tested CRs will be created in the DEV_CLUSTER_NAMESPACE set namespace.
@@ -63,23 +60,22 @@ import static org.testng.Assert.assertNotNull;
  *     <li> DEV_CLUSTER_TOKEN
  * </ul>
  */
-public class ServiceRegistryOperatorTest extends TestBase {
+public class KafkaOperatorTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaOperatorTest.class);
 
+    private KafkaMgmtApi kafkaMgmtApi;
     private SecurityMgmtApi securityMgmtApi;
     private OpenShiftClient oc;
 
     private CloudServicesRequest cloudServicesRequest;
 
+    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ko-"  + Environment.LAUNCH_SUFFIX;
     private final static String ACCESS_TOKEN_SECRET_NAME = "mk-e2e-api-accesstoken";
     private final static String CLOUD_SERVICE_ACCOUNT_REQUEST_NAME = "mk-e2e-service-account-request";
     private final static String SERVICE_ACCOUNT_NAME = "mk-e2e-bo-sa-"  + Environment.LAUNCH_SUFFIX;
     private final static String SERVICE_ACCOUNT_SECRET_NAME = "mk-e2e-service-account-secret";
     private final static String CLOUD_SERVICES_REQUEST_NAME = "mk-e2e-kafka-request";
-    private final static String SERVICE_REGISTRY_CONNECTION_NAME = "mk-e2e-registry-connection";
-
-    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-operator-sr-"  + Environment.LAUNCH_SUFFIX;
-    private RegistryMgmtApi registryMgmtApi;
+    private final static String KAFKA_CONNECTION_NAME = "mk-e2e-kafka-connection";
 
     @BeforeClass
     @SneakyThrows
@@ -88,22 +84,22 @@ public class ServiceRegistryOperatorTest extends TestBase {
         assertNotNull(Environment.DEV_CLUSTER_SERVER, "the DEV_CLUSTER_SERVER env is null");
         assertNotNull(Environment.DEV_CLUSTER_TOKEN, "the DEV_CLUSTER_TOKEN env is null");
 
-        LOGGER.info("initialize security and register apis");
+        LOGGER.info("initialize kafka and security apis");
+        kafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
         securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
-        registryMgmtApi = RegistryMgmtApiUtils.registryMgmtApi(Environment.OPENSHIFT_API_URI, Environment.PRIMARY_OFFLINE_TOKEN);
+
 
         LOGGER.info("initialize openshift client");
-        Config config = new ConfigBuilder()
-                .withMasterUrl(Environment.DEV_CLUSTER_SERVER)
-                .withOauthToken(Environment.DEV_CLUSTER_TOKEN)
-                .withNamespace(Environment.DEV_CLUSTER_NAMESPACE)
-                // certificates for authentication over TLS (in order to prevent PKIX fails when checking signature)
-                .withTrustCerts(true)
-                .build();
+        var config = new ConfigBuilder()
+            .withMasterUrl(Environment.DEV_CLUSTER_SERVER)
+            .withOauthToken(Environment.DEV_CLUSTER_TOKEN)
+            .withNamespace(Environment.DEV_CLUSTER_NAMESPACE)
+            .withTrustCerts(true)
+            .build();
         oc = new DefaultOpenShiftClient(config);
 
-        LOGGER.info("apply service registry '{}'", SERVICE_REGISTRY_NAME);
-        RegistryMgmtApiUtils.applyRegistry(registryMgmtApi, SERVICE_REGISTRY_NAME);
+        LOGGER.info("create kafka instance '{}'", KAFKA_INSTANCE_NAME);
+        KafkaMgmtApiUtils.applyKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
 
         try {
             OperatorUtils.patchTheOperatorCloudServiceAPIEnv(oc);
@@ -136,20 +132,20 @@ public class ServiceRegistryOperatorTest extends TestBase {
         }
     }
 
-    private void cleanServiceRegistryConnection() {
-        ServiceRegistryConnection c = OperatorUtils.serviceRegistryConnection(oc).withName(SERVICE_REGISTRY_CONNECTION_NAME).get();
+    private void cleanKafkaConnection() {
+        var c = OperatorUtils.kafkaConnection(oc).withName(KAFKA_CONNECTION_NAME).get();
         if (c != null) {
-            LOGGER.info("clean ServiceRegistryConnection: {}", c.getMetadata().getName());
-            OperatorUtils.serviceRegistryConnection(oc).delete(c);
+            LOGGER.info("clean ManagedKafkaConnection: {}", c.getMetadata().getName());
+            OperatorUtils.kafkaConnection(oc).delete(c);
         }
     }
 
     private void collectOperatorLogs(ITestContext context) throws IOException {
         LogCollector.saveDeploymentLog(
-                TestUtils.getLogPath(Environment.LOG_DIR.resolve("test-logs").toString(), context),
-                oc,
-                "openshift-operators",
-                "service-binding-operator");
+            TestUtils.getLogPath(Environment.LOG_DIR.resolve("test-logs").toString(), context),
+            oc,
+            "openshift-operators",
+            "service-binding-operator");
 
     }
 
@@ -158,7 +154,7 @@ public class ServiceRegistryOperatorTest extends TestBase {
         assumeTeardown();
 
         try {
-            cleanServiceRegistryConnection();
+            cleanKafkaConnection();
         } catch (Exception e) {
             LOGGER.error("clean kafka connection error: ", e);
         }
@@ -195,11 +191,10 @@ public class ServiceRegistryOperatorTest extends TestBase {
         }
 
         try {
-            cleanRegistry(registryMgmtApi, SERVICE_REGISTRY_NAME);
+            KafkaMgmtApiUtils.cleanKafkaInstance(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
         } catch (Throwable t) {
-            LOGGER.error("clean service registry error: ", t);
+            LOGGER.error("cleanKafkaInstance error: ", t);
         }
-
     }
 
     @Test
@@ -255,58 +250,56 @@ public class ServiceRegistryOperatorTest extends TestBase {
             LOGGER.debug(r);
 
             if (r.getStatus() != null
-                    && r.getStatus().getServiceRegistries() != null
-                    && !r.getStatus().getServiceRegistries().isEmpty()) {
+                && r.getStatus().getUserKafkas() != null
+                && !r.getStatus().getUserKafkas().isEmpty()) {
 
                 atom.set(r);
                 return true;
             }
             return false;
         };
-        cloudServicesRequest = waitFor("CloudServicesRequest to complete", ofSeconds(10), ofMinutes(5), ready);
+        cloudServicesRequest = waitFor("CloudServicesRequest to complete", ofSeconds(10), ofMinutes(3), ready);
         LOGGER.info("CloudServicesRequest is completed");
     }
 
     @Test(dependsOnMethods = {"testCreateCloudServiceAccountRequest", "testCreateCloudServicesRequest"})
-    public void testCreateServiceRegistryConnection() throws Throwable {
+    public void testCreateManagedKafkaConnection() throws Throwable {
 
-        var serviceRegistry = cloudServicesRequest.getStatus().getServiceRegistries().stream()
-                .filter(r -> r.getName().equals(SERVICE_REGISTRY_NAME))
-                .findFirst();
+        var userKafka = cloudServicesRequest.getStatus().getUserKafkas().stream()
+            .filter(k -> k.getName().equals(KAFKA_INSTANCE_NAME))
+            .findFirst();
 
-        if (serviceRegistry.isEmpty()) {
+        if (userKafka.isEmpty()) {
             LOGGER.info("CloudServicesRequest: {}", Json.encode(cloudServicesRequest));
-            throw new TestException(message("failed to find the user service registry {} in the CloudServicesRequest {}", SERVICE_REGISTRY_NAME, CLOUD_SERVICES_REQUEST_NAME));
+            throw new TestException(message("failed to find the user kafka instance {} in the CloudServicesRequest {}", KAFKA_INSTANCE_NAME, CLOUD_SERVICES_REQUEST_NAME));
         }
 
-        var c = new ServiceRegistryConnectionBuilder()
+        var c = new KafkaConnectionBuilder()
             .withNewMetadata()
-                .withName(SERVICE_REGISTRY_CONNECTION_NAME)
+                    .withName(KAFKA_CONNECTION_NAME)
             .endMetadata()
             .withNewSpec()
                 .withAccessTokenSecretName(ACCESS_TOKEN_SECRET_NAME)
-                .withServiceRegistryId(serviceRegistry.orElseThrow().getId())
-                .withCredentials(
-                    new CredentialsBuilder()
-                        .withServiceAccountSecretName(SERVICE_ACCOUNT_SECRET_NAME)
-                        .build()
-                )
+                .withKafkaId(userKafka.orElseThrow().getId())
+                .withNewCredentials()
+                    .withServiceAccountSecretName(SERVICE_ACCOUNT_SECRET_NAME)
+                .endCredentials()
             .endSpec()
             .build();
 
-        LOGGER.info("create ManagedServiceRegistryConnection with name: {}", SERVICE_REGISTRY_CONNECTION_NAME);
-        c = OperatorUtils.serviceRegistryConnection(oc).create(c);
-        LOGGER.info("created ManagedServiceRegistryConnection: {}", Json.encode(c));
+        LOGGER.info("create ManagedKafkaConnection with name: {}", KAFKA_CONNECTION_NAME);
+        c = OperatorUtils.kafkaConnection(oc).create(c);
+        LOGGER.info("created ManagedKafkaConnection: {}", Json.encode(c));
 
         ReadyFunction<Void> ready = (__, ___) -> {
-            var r = OperatorUtils.serviceRegistryConnection(oc).withName(SERVICE_REGISTRY_CONNECTION_NAME).get();
+            var r = OperatorUtils.kafkaConnection(oc).withName(KAFKA_CONNECTION_NAME).get();
             LOGGER.debug(r);
 
             return r.getStatus() != null
-                    && r.getStatus().getMessage() != null
-                    && r.getStatus().getMessage().equals("Created");
+                && r.getStatus().getMessage() != null
+                && r.getStatus().getMessage().equals("Created");
         };
-        waitFor("ManagedServiceRegistryConnection to be created", ofSeconds(10), ofMinutes(2), ready);
-        LOGGER.info("ManagedServiceRegistryConnection is created");
+        waitFor("ManagedKafkaConnection to be created", ofSeconds(10), ofMinutes(2), ready);
+        LOGGER.info("ManagedKafkaConnection is created");
     }
 }
