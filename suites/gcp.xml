@@ -10,12 +10,7 @@
         <classes>
             <class name="io.managed.services.test.SSOAuthTest"/>
         </classes>
-    </test>
-    <test name="TestBase">
-        <classes>
-            <class name="io.managed.services.test.TestBase"/>
-        </classes>
-    </test>      
+    </test>     
     <test name="KafkaCLITest">
         <classes>
             <class name="io.managed.services.test.devexp.KafkaCLITest"/>
@@ -61,11 +56,12 @@
             <class name="io.managed.services.test.kafka.LongLiveKafkaInstanceTest"/>
         </classes>
     </test>
-    <test name="QuotaKafkaInstanceTest">
+    <!-- QuotaKafkaInstanceTest will be enabled when devExp team resolve issue with token invalidation -->
+    <!-- <test name="QuotaKafkaInstanceTest">
         <classes>
             <class name="io.managed.services.test.kafka.QuotaKafkaInstanceTest"/>
         </classes>
-    </test>
+    </test> -->
     <test name="CucumberQuickstartsTest">
         <classes>
             <class name="io.managed.services.test.quickstarts.CucumberQuickstartsTest"/>
