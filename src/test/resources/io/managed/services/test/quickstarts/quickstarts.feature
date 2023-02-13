@@ -28,7 +28,7 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
   Scenario: Java test
 
     Given you have a Red Hat account
-    * you are logged in to the OpenShift Streams for Apache Kafka web console
+    * you are logged in to the OpenShift Streams for Apache Kafka
     * you have a running Kafka instance in OpenShift Streams for Apache Kafka
 
      # 1. Importing the Python sample code
