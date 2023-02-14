@@ -10,20 +10,15 @@
         <classes>
             <class name="io.managed.services.test.SSOAuthTest"/>
         </classes>
-    </test>     
-    <test name="KafkaCLITest">
-        <classes>
-            <class name="io.managed.services.test.devexp.KafkaCLITest"/>
-        </classes>
-    </test>    
+    </test>
     <test name="KafkaOperatorTest">
         <classes>
-            <class name="io.managed.services.test.devexp.KafkaOperatorTest"/>
+            <class name="io.managed.services.test.operators.KafkaOperatorTest"/>
         </classes>
     </test> 
     <test name="ServiceRegistryOperatorTest">
         <classes>
-            <class name="io.managed.services.test.devexp.ServiceRegistryOperatorTest"/>
+            <class name="io.managed.services.test.operators.ServiceRegistryOperatorTest"/>
         </classes>
     </test> 
     <test name="KafkaAccessMgmtTest">
@@ -61,11 +56,6 @@
             <class name="io.managed.services.test.quickstarts.CucumberQuickstartsTest"/>
         </classes>
     </test>
-    <test name="RegistryCLITest">
-        <classes>
-            <class name="io.managed.services.test.registry.RegistryCLITest"/>
-        </classes>
-    </test>
     <test name="RegistryKafkaIntegrationTest">
         <classes>
             <class name="io.managed.services.test.registry.RegistryKafkaIntegrationTest"/>
@@ -79,6 +69,21 @@
     <test name="RegistryMgmtAPITest">
         <classes>
             <class name="io.managed.services.test.registry.RegistryMgmtAPITest"/>
+        </classes>
+    </test>
+    <test name="KafkaRhoasBasicTests">
+        <classes>
+            <class name="io.managed.services.test.rhoas.KafkaRhoasBasicTests"/>
+        </classes>
+    </test>
+    <test name="KafkaRhoasAclTests">
+        <classes>
+            <class name="io.managed.services.test.rhoas.KafkaRhoasAclTests"/>
+        </classes>
+    </test>
+    <test name="KafkaRhoasRegistryTests">
+        <classes>
+            <class name="io.managed.services.test.rhoas.KafkaRhoasRegistryTests"/>
         </classes>
     </test>
 </suite>
