@@ -1,4 +1,4 @@
-package io.managed.services.test.registry;
+package io.managed.services.test.rhoas;
 
 import com.openshift.cloud.api.srs.models.Registry;
 import io.managed.services.test.Environment;
@@ -31,13 +31,15 @@ import static org.testng.Assert.assertTrue;
  * <b>Requires:</b>
  * <ul>
  *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> PRIMARY_USERNAME
+ *     <li> PRIMARY_PASSWORD
  * </ul>
  */
 @Test
-public class RegistryCLITest {
-    private static final Logger LOGGER = LogManager.getLogger(RegistryCLITest.class);
+public class KafkaRhoasRegistryTests {
+    private static final Logger LOGGER = LogManager.getLogger(KafkaRhoasRegistryTests.class);
 
-    private static final String SERVICE_REGISTRY_NAME = "cli-e2e-test-registry-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_REGISTRY_NAME = "e2e-cli-registry-"  + Environment.LAUNCH_SUFFIX;
 
     private final Vertx vertx = Vertx.vertx();
 
@@ -49,6 +51,7 @@ public class RegistryCLITest {
     public void bootstrap() throws Throwable {
         assertNotNull(Environment.PRIMARY_USERNAME, "the PRIMARY_USERNAME env is null");
         assertNotNull(Environment.PRIMARY_PASSWORD, "the PRIMARY_PASSWORD env is null");
+        assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
 
         LOGGER.info("download cli");
         var downloader = CLIDownloader.defaultDownloader();

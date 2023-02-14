@@ -1,5 +1,10 @@
 package io.managed.services.test.cli;
 
+import com.openshift.cloud.api.kas.auth.models.AclBinding;
+import com.openshift.cloud.api.kas.auth.models.AclBindingListPage;
+import com.openshift.cloud.api.kas.auth.models.AclOperation;
+import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
+import com.openshift.cloud.api.kas.auth.models.AclResourceType;
 import com.openshift.cloud.api.kas.auth.models.ConsumerGroup;
 import com.openshift.cloud.api.kas.auth.models.Topic;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
@@ -26,6 +31,7 @@ import io.managed.services.test.client.registrymgmt.RegistryNotReadyException;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
+
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -253,4 +259,16 @@ public class CLIUtils {
         return c;
     }
 
+    //// kafka acl search
+    public static Optional<AclBinding> searchAcl(AclBindingListPage aclList, String principal, AclOperation operation, AclPermissionType permission, AclResourceType resourceType, String resourceName) {
+        String userPrincipal = "User:".concat(principal);
+        return Objects.requireNonNull(aclList.getItems())
+            .stream()
+            .filter(acl -> userPrincipal.equals(acl.getPrincipal()))
+            .filter(acl -> permission.equals(acl.getPermission()))
+            .filter(acl -> operation.equals(acl.getOperation()))
+            .filter(acl -> resourceType.equals(acl.getResourceType()))
+            .filter(acl -> resourceName.equals(acl.getResourceName()))
+        .findAny();
+    }
 }

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.openshift.cloud.api.kas.auth.models.AclBindingListPage;
+import com.openshift.cloud.api.kas.auth.models.AclOperation;
+import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
 import com.openshift.cloud.api.kas.auth.models.ConsumerGroup;
 import com.openshift.cloud.api.kas.auth.models.ConsumerGroupList;
 import com.openshift.cloud.api.kas.auth.models.Topic;
@@ -31,11 +33,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static java.time.Duration.ofMinutes;
 import static lombok.Lombok.sneakyThrow;
+
 
 @Log4j2
 public class CLI {
@@ -43,6 +47,8 @@ public class CLI {
     private static final Duration DEFAULT_TIMEOUT = ofMinutes(3);
 
     private static final String CLUSTER_CAPACITY_EXHAUSTED_CODE = "KAFKAS-MGMT-24";
+    
+    private static final Locale LOCALE_EN = Locale.ENGLISH;
 
     private final String workdir;
     private final String cmd;
@@ -221,15 +227,57 @@ public class CLI {
         retry(() -> exec("cluster", "connect", "--token", token, "--kubeconfig", kubeconfig, "--service-type", serviceType, "-y"));
     }
 
-    public void grantProducerAndConsumerAccess(String userName, String topic, String group) throws CliGenericException {
-        retry(() -> exec("kafka", "acl", "grant-access", "-y", "--producer", "--consumer", "--user", userName, "--topic", topic, "--group", group));
+    // kafka acl
+    public enum ACLEntityType {
+        USER("user", "--user"),
+        SERVICE_ACCOUNT("service account", "--service-account");
+
+        public final String name;
+        public final String flag;
+
+        private ACLEntityType(String name, String flag) {
+            this.name = name;
+            this.flag = flag;
+        }
+    }
+    //// kafka acl create
+    public void createAcl(ACLEntityType aclEntityType, String entityIdentificator, AclOperation operation, AclPermissionType permission, String topic) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "create", "-y", aclEntityType.flag, entityIdentificator, "--topic", topic, "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
     }
 
+    //// kafka acl list
     public AclBindingListPage listACLs() throws CliGenericException {
         return retry(() -> exec("kafka", "acl", "list", "-o", "json"))
             .asJson(AclBindingListPage.class);
     }
 
+    public AclBindingListPage listACLs(ACLEntityType aclEntityType, String entityIdentificator) throws CliGenericException {
+        return retry(() -> exec("kafka", "acl", "list", aclEntityType.flag, entityIdentificator, "-o", "json"))
+            .asJson(AclBindingListPage.class);
+    }
+
+    //// kafka acl delete
+    public void deleteAcl(ACLEntityType aclEntityType, String entityIdentificator, AclOperation operation, AclPermissionType permission) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "delete", "-y", aclEntityType.flag, entityIdentificator, "--permission", permission.toString().toLowerCase(LOCALE_EN), "--operation", operation.toString().toLowerCase(LOCALE_EN)));
+    }
+
+    public void deleteAllAcls(ACLEntityType aclEntityType, String entityIdentificator) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "delete", "-y", aclEntityType.flag, entityIdentificator));
+    }
+
+    //// kafka acl grant-access
+    public void grantAccessAcl(ACLEntityType aclEntityType, String entityIdentificator, String topic, String group) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "grant-access", "-y", "--producer", "--consumer", aclEntityType.flag, entityIdentificator, "--topic", topic, "--group", group));
+    }
+
+    //// kafka acl grant-admin
+    public void grantAdminAcl(ACLEntityType aclEntityType, String entityIdentificator) throws CliGenericException {
+        retry(() -> exec("kafka", "acl", "grant-admin", "-y", aclEntityType.flag, entityIdentificator));
+    }
+
+    /**
+     * Return the Registry in use from the CLI
+     */
     public Registry createServiceRegistry(String name) throws CliGenericException {
         return retry(() -> exec("service-registry", "create", "--name", name))
                 .asJson(Registry.class);
@@ -240,9 +288,6 @@ public class CLI {
                 .asJson(Registry.class);
     }
 
-    /**
-     * Return the Registry in use from the CLI
-     */
     public Registry describeServiceRegistry() throws CliGenericException {
         return retry(() -> exec("service-registry", "describe"))
                 .asJson(Registry.class);

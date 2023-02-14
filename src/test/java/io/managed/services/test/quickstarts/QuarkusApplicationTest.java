@@ -18,6 +18,7 @@ import io.managed.services.test.WriteStreamConsumer;
 import io.managed.services.test.cli.CLI;
 import io.managed.services.test.cli.CLIDownloader;
 import io.managed.services.test.cli.CLIUtils;
+import io.managed.services.test.cli.CLI.ACLEntityType;
 import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApi;
@@ -386,11 +387,10 @@ public class QuarkusApplicationTest extends TestBase {
             throw new Error(message("client-id data not found in secret: {}", secret));
         }
         var clientID = decodeBase64(encodedClientID);
-
         LOGGER.info("service account client-id is: {}", clientID);
 
         LOGGER.info("grant consume and produce access for all topics and groups to the service account: {}", clientID);
-        cli.grantProducerAndConsumerAccess(clientID, "all", "all");
+        cli.grantAccessAcl(ACLEntityType.SERVICE_ACCOUNT, clientID, "all", "all");
     }
 
     @Test(dependsOnMethods = "testCLIGrantAccess")
