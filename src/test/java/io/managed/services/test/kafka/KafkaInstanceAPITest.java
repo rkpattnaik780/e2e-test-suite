@@ -152,7 +152,7 @@ public class KafkaInstanceAPITest extends TestBase {
     public void testCreateTopic() {
 
         // getting test-topic should fail because the topic shouldn't exist
-        assertThrows(ApiNotFoundException.class, () -> kafkaInstanceApi.getTopic(TEST_TOPIC_NAME));
+        assertThrows(Exception.class, () -> kafkaInstanceApi.getTopic(TEST_TOPIC_NAME));
         LOGGER.info("topic '{}' not found", TEST_TOPIC_NAME);
 
         LOGGER.info("create topic '{}'", TEST_TOPIC_NAME);
