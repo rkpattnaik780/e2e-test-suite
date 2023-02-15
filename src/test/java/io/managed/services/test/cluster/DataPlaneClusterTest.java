@@ -69,6 +69,7 @@ public class DataPlaneClusterTest extends TestBase {
     private static int maxStandardStreamingUnitsInCluster;
     private static int maxDeveloperStreamingUnitsInCluster;
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
+    private static final String KAFKAS_MGMT_24_CODE = "KAFKAS-MGMT-24";
     private static final String PLAN_STANDARD = "standard.x1";
     private static final String DUMMY_KAFKA_INSTANCE_NAME = "cl-e2e-placeholder-" + Environment.LAUNCH_KEY;
     private KafkaMgmtApi kafkaMgmtApi;
@@ -218,6 +219,8 @@ public class DataPlaneClusterTest extends TestBase {
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());
             if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
+            if (KAFKAS_MGMT_24_CODE.equals(jsonResponse.get("code")))
+                throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw  e;
         } finally {
@@ -375,6 +378,8 @@ public class DataPlaneClusterTest extends TestBase {
             JSONObject jsonResponse = new JSONObject(e.getResponseBody());
             if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
+            if (KAFKAS_MGMT_24_CODE.equals(jsonResponse.get("code")))
+                throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw  e;
         } finally {
