@@ -40,6 +40,18 @@ public abstract class BaseApi {
             if (ex != null) {
                 throw ApiGenericException.apiException(ex);
             }
+            if (e.getCause() != null) {
+                // TODO: remove this debugging code
+                if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
+                    var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
+                    
+                    System.out.println("com.openshift.cloud.api.kas.models.Error:");
+                    System.out.println(err.getCode());
+                    System.out.println(err.getKind());
+                    System.out.println(err.getReason());
+                    System.out.println(err.getMessage());
+                }
+            }
             throw new RuntimeException(e);
         }
     }

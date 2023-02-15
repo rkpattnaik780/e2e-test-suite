@@ -39,7 +39,7 @@ public class KafkaInstanceApi extends BaseApi {
 
     public Topic updateTopic(String name, TopicSettings ts) throws ApiGenericException {
         //return getTopics(null, null, null, null, null);
-        return retry(() -> v1.topics(name).patch(ts).get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.topics(name).patch(ts).get(10, TimeUnit.SECONDS));
     }
 
     public TopicsList getTopics() throws ApiGenericException {
@@ -53,15 +53,15 @@ public class KafkaInstanceApi extends BaseApi {
             config.queryParameters.filter = filter;
             config.queryParameters.order = order;
             config.queryParameters.orderKey = orderKey;
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public Topic getTopic(String topicName) throws ApiGenericException {
-        return retry(() -> v1.topics(topicName).get().get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.topics(topicName).get().get(10, TimeUnit.SECONDS));
     }
 
     public Topic createTopic(NewTopicInput newTopicInput) throws ApiGenericException {
-        return retry(() -> v1.topics().post(newTopicInput).get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.topics().post(newTopicInput).get(10, TimeUnit.SECONDS));
     }
 
     public void deleteTopic(String topicName) throws ApiGenericException {
@@ -79,7 +79,7 @@ public class KafkaInstanceApi extends BaseApi {
             config.queryParameters.groupIdFilter = groupIdFilter;
             config.queryParameters.order = order;
             config.queryParameters.orderKey = orderKey;
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public ConsumerGroup getConsumerGroupById(String consumerGroupId) throws ApiGenericException {
@@ -92,11 +92,11 @@ public class KafkaInstanceApi extends BaseApi {
             config.queryParameters.orderKey = orderKey;
             config.queryParameters.partitionFilter = partitionFilter;
             config.queryParameters.topic = topic;
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public void deleteConsumerGroupById(String consumerGroupId) throws ApiGenericException {
-        retry(() -> v1.consumerGroups(consumerGroupId).delete().get(1, TimeUnit.SECONDS));
+        retry(() -> v1.consumerGroups(consumerGroupId).delete().get(10, TimeUnit.SECONDS));
     }
 
     public AclBindingListPage getAcls(String resourceType, String resourceName, String patternType, String principal, String operation, String permission, Integer page, Integer size, String order, String orderKey) throws ApiGenericException {
@@ -111,11 +111,11 @@ public class KafkaInstanceApi extends BaseApi {
             config.queryParameters.size = size;
             config.queryParameters.order = order;
             config.queryParameters.orderKey = orderKey;
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public void createAcl(AclBinding aclBinding) throws ApiGenericException {
-        retry(() -> v1.acls().post(aclBinding).get(1, TimeUnit.SECONDS));
+        retry(() -> v1.acls().post(aclBinding).get(10, TimeUnit.SECONDS));
     }
 
     public AclBindingListPage deleteAcls(AclResourceType resourceType, String resourceName, AclPatternType patternType, String principal, AclOperation operation, AclPermissionType permission) throws ApiGenericException {
@@ -126,6 +126,6 @@ public class KafkaInstanceApi extends BaseApi {
             config.queryParameters.principal = principal;
             config.queryParameters.operation = operation.name();
             config.queryParameters.permission = permission.name();
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 }

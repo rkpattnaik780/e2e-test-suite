@@ -24,24 +24,24 @@ public class SecurityMgmtApi extends BaseApi {
 
     @SuppressWarnings("unused")
     public ServiceAccount getServiceAccountById(String id) throws ApiGenericException {
-        return retry(() -> v1.service_accounts(id).get().get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.service_accounts(id).get().get(10, TimeUnit.SECONDS));
     }
 
     public ServiceAccountListResponse getServiceAccounts() throws ApiGenericException {
-        return retry(() -> v1.service_accounts().get().get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.service_accounts().get().get(10, TimeUnit.SECONDS));
     }
 
     public ServiceAccount createServiceAccount(ServiceAccountRequest serviceAccountRequest) throws ApiGenericException {
-        return retry(() -> v1.service_accounts().post(serviceAccountRequest).get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.service_accounts().post(serviceAccountRequest).get(10, TimeUnit.SECONDS));
     }
 
     public void deleteServiceAccountById(String id) throws ApiGenericException {
         // TODO: why does it return Error
-        retry(() -> v1.service_accounts(id).delete().get(1, TimeUnit.SECONDS));
+        retry(() -> v1.service_accounts(id).delete().get(10, TimeUnit.SECONDS));
     }
 
     public ServiceAccount resetServiceAccountCreds(String id) throws ApiGenericException {
-        return retry(() -> v1.service_accounts(id).reset_credentials().post().get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.service_accounts(id).reset_credentials().post().get(10, TimeUnit.SECONDS));
     }
 
     @Override

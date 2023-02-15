@@ -28,11 +28,11 @@ public class RegistryMgmtApi extends BaseApi {
     }
 
     public RootTypeForRegistry createRegistry(RegistryCreate registryCreateRest) throws ApiGenericException {
-        return retry(() -> v1.registries().post(registryCreateRest).get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.registries().post(registryCreateRest).get(10, TimeUnit.SECONDS));
     }
 
     public RootTypeForRegistry getRegistry(String id) throws ApiGenericException {
-        return retry(() -> v1.registries(id).get().get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.registries(id).get().get(10, TimeUnit.SECONDS));
     }
 
     public RegistryList getRegistries(Integer page, Integer size, String orderBy, String search) throws ApiGenericException {
@@ -41,10 +41,10 @@ public class RegistryMgmtApi extends BaseApi {
             config.queryParameters.size = size;
             config.queryParameters.orderBy = orderBy;
             config.queryParameters.search = search;
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public void deleteRegistry(String id) throws ApiGenericException {
-        retry(() -> v1.registries(id).delete().get(1, TimeUnit.SECONDS));
+        retry(() -> v1.registries(id).delete().get(10, TimeUnit.SECONDS));
     }
 }

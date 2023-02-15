@@ -34,7 +34,7 @@ public class KafkaMgmtApi extends BaseApi {
     }
 
     public KafkaRequest getKafkaById(String id) throws ApiGenericException {
-        return retry(() -> v1.kafkas(id).get().get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.kafkas(id).get().get(10, TimeUnit.SECONDS));
     }
 
     public KafkaRequestList getKafkas(String page, String size, String orderBy, String search) throws ApiGenericException {
@@ -43,30 +43,30 @@ public class KafkaMgmtApi extends BaseApi {
             config.queryParameters.size = size;
             config.queryParameters.orderBy = orderBy;
             config.queryParameters.search = search;
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public KafkaRequest createKafka(Boolean async, KafkaRequestPayload kafkaRequestPayload) throws ApiGenericException {
         return retry(() -> v1.kafkas()
-                        .post(kafkaRequestPayload, config -> config.queryParameters.async = async).get(1, TimeUnit.SECONDS));
+                        .post(kafkaRequestPayload, config -> config.queryParameters.async = async).get(10, TimeUnit.SECONDS));
     }
 
     public void deleteKafkaById(String id, Boolean async) throws ApiGenericException {
         // TODO: why does it return Error
-        retry(() -> v1.kafkas(id).delete(config -> config.queryParameters.async = async).get(1, TimeUnit.SECONDS));
+        retry(() -> v1.kafkas(id).delete(config -> config.queryParameters.async = async).get(10, TimeUnit.SECONDS));
     }
 
     public MetricsInstantQueryListResponse getMetricsByInstantQuery(String id, List<String> filters) throws ApiGenericException {
         return retry(() -> v1.kafkas(id).metrics().query().get(config -> {
             config.queryParameters.filters = filters.toArray(new String[0]);
-        }).get(1, TimeUnit.SECONDS));
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public String federateMetrics(String id) throws ApiGenericException {
-        return retry(() -> v1.kafkas(id).metrics().federate().get().get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.kafkas(id).metrics().federate().get().get(10, TimeUnit.SECONDS));
     }
 
     public KafkaRequest updateKafka(String instanceId, KafkaUpdateRequest kafkaUpdateRequest) throws ApiGenericException {
-        return retry(() -> v1.kafkas(instanceId).patch(kafkaUpdateRequest).get(1, TimeUnit.SECONDS));
+        return retry(() -> v1.kafkas(instanceId).patch(kafkaUpdateRequest).get(10, TimeUnit.SECONDS));
     }
 }
