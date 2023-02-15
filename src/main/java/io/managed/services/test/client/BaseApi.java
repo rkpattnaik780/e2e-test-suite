@@ -40,8 +40,8 @@ public abstract class BaseApi {
             if (ex != null) {
                 throw ApiGenericException.apiException(ex);
             }
+            // TODO: remove this debugging code
             if (e.getCause() != null) {
-                // TODO: remove this debugging code
                 if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
                     var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
                     
