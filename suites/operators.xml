@@ -3,12 +3,12 @@
 <suite name="Operators">
     <test name="KafkaOperatorTest">
         <classes>
-            <class name="io.managed.services.test.devexp.KafkaOperatorTest"/>
+            <class name="io.managed.services.test.operators.KafkaOperatorTest"/>
         </classes>
     </test>
     <test name="ServiceRegistryOperatorTest">
         <classes>
-            <class name="io.managed.services.test.devexp.ServiceRegistryOperatorTest"/>
+            <class name="io.managed.services.test.operators.ServiceRegistryOperatorTest"/>
         </classes>
     </test>
 </suite>
