@@ -17,7 +17,6 @@ import io.managed.services.test.ThrowingFunction;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import lombok.extern.log4j.Log4j2;
