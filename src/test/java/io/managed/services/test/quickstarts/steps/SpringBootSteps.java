@@ -69,19 +69,6 @@ public class SpringBootSteps {
         System.out.println();
     }
 
-    @When("you set the Kafka instance bootstrap server endpoint, service account credentials, and OAUTHBEARER token endpoint as environment variables for Java")
-    public void you_set_the_kafka_instance_bootstrap_server_endpoint_service_account_credentials_and_oauthbearer_token_endpoint_as_environment_variables_for_java() {
-        // Write code here that turns the phrase above into concrete actions
-        log.info("setting up map of all environment variables for quarkus application");
-        envsMap.put("KAFKA_HOST", kafkaInstanceContext.requireKafkaInstance().getBootstrapServerHost());
-        envsMap.put("RHOAS_SERVICE_ACCOUNT_CLIENT_ID", serviceAccountContext.requireServiceAccount().getClientId());
-        envsMap.put("RHOAS_SERVICE_ACCOUNT_CLIENT_SECRET",
-                serviceAccountContext.requireServiceAccount().getClientSecret());
-        envsMap.put("RHOAS_SERVICE_ACCOUNT_OAUTH_TOKEN_URL", String.format("%s/auth/realms/%s/protocol/openid-connect/token", Environment.REDHAT_SSO_URI,
-                Environment.REDHAT_SSO_REALM));
-        log.debug(envsMap);
-    }
-
     @Then("you run Springboot client example producer")
     public void youRunSpringbootClientExampleProducer() throws IOException {
 
@@ -89,8 +76,6 @@ public class SpringBootSteps {
 
         // set path to root of quickstart
         String quickstartRoot = this.repository.getAbsolutePath() + "/kafka-producer-spring";
-
-
 
         // mvn compile exec:java -Dexec.mainClass="com.example.kafkademo.KafkaProducerExample"
         ProcessBuilder builder = new ProcessBuilder("mvn", "compile", "exec:java", "-Pproducer");
