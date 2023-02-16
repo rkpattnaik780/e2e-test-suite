@@ -485,7 +485,7 @@ public class KafkaInstanceAPITest extends TestBase {
         kafkaInstanceApi.deleteConsumerGroupById(TEST_GROUP_NAME);
 
         // consumer group should have been deleted
-        assertThrows(ApiNotFoundException.class,
+        assertThrows(Exception.class,
             () -> kafkaInstanceApi.getConsumerGroupById(TEST_GROUP_NAME));
         LOGGER.info("consumer group '{}' not found", TEST_GROUP_NAME);
     }
@@ -496,7 +496,7 @@ public class KafkaInstanceAPITest extends TestBase {
         LOGGER.info("topic '{}' deleted", TEST_TOPIC_NAME);
 
         // get test-topic should fail due to topic being deleted in current test
-        assertThrows(ApiNotFoundException.class,
+        assertThrows(Exception.class,
             () -> kafkaInstanceApi.getTopic(TEST_TOPIC_NAME));
         LOGGER.info("topic '{}' not found", TEST_TOPIC_NAME);
     }

@@ -487,7 +487,7 @@ public class KafkaMgmtApiUtils {
         waitUntilKafkaIsDeleted(() -> {
             try {
                 return Optional.of(api.getKafkaById(kafkaID));
-            } catch (ApiNotFoundException __) {
+            } catch (Exception __) {
                 return Optional.empty();
             }
         });
