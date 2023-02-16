@@ -36,21 +36,31 @@ public abstract class BaseApi {
         try {
             return f.get();
         } catch (Exception e) {
-            var ex = toApiException(e);
-            if (ex != null) {
-                throw ApiGenericException.apiException(ex);
-            }
             // TODO: remove this debugging code
             if (e.getCause() != null) {
-                if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
-                    var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
-                    
-                    System.out.println("com.openshift.cloud.api.kas.models.Error:");
+                if (e.getCause() instanceof com.openshift.cloud.api.kas.auth.models.Error) {
+                    var err = (com.openshift.cloud.api.kas.auth.models.Error) e.getCause();
+
+                    System.out.println("DEBUG -> com.openshift.cloud.api.kas.auth.models.Error:");
                     System.out.println(err.getCode());
                     System.out.println(err.getKind());
                     System.out.println(err.getReason());
                     System.out.println(err.getMessage());
                 }
+                if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
+                    var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
+
+                    System.out.println("DEBUG -> com.openshift.cloud.api.kas.models.Error:");
+                    System.out.println(err.getCode());
+                    System.out.println(err.getKind());
+                    System.out.println(err.getReason());
+                    System.out.println(err.getMessage());
+                }
+            }
+
+            var ex = toApiException(e);
+            if (ex != null) {
+                throw ApiGenericException.apiException(ex);
             }
             throw new RuntimeException(e);
         }
