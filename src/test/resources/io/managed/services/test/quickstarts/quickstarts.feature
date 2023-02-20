@@ -60,7 +60,7 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
   Scenario: Python test
 
     Given you have a Red Hat account
-    * you are logged in to the OpenShift Streams for Apache Kafka web console
+    * you are logged in to the OpenShift Streams for Apache Kafka
     * you have a running Kafka instance in OpenShift Streams for Apache Kafka
 
      # 1. Importing the Python sample code
@@ -86,7 +86,8 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
 
     # 4. Running the Python example consumer
     Given the Kafka instance is in Ready state
-    Then Python example consumer should print the produced message
+    When you run Python client consumer
+    Then Python example consumer should print proper message
 
   Scenario: Using Quarkus applications with Kafka instances in Red Hat OpenShift Streams for Apache Kafka
     Given you have a Red Hat account

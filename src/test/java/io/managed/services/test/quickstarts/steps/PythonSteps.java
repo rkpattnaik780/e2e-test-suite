@@ -32,6 +32,8 @@ public class PythonSteps {
     private final KafkaInstanceContext kafkaInstanceContext;
     private final ServiceAccountContext serviceAccountContext;
 
+    public static String stdOutput = null;
+
     private Map<String, String> envsMap = new HashMap<>();
 
     public PythonSteps(KafkaInstanceContext kafkaInstanceContext, ServiceAccountContext serviceAccountContext) {
@@ -104,8 +106,8 @@ public class PythonSteps {
 
     }
 
-    @When("Python example consumer should print the produced message")
-    public void python_example_consumer_should_print_the_produced_message() throws IOException {
+    @When("you run Python client consumer")
+    public void youRunPythonClientConsumer() throws IOException {
 
         log.info("package run Python example consumer application");
 
@@ -125,16 +127,17 @@ public class PythonSteps {
 
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-        String s = null;
         String output = "";
-        while ((s = stdInput.readLine()) != null) {
-            output += s;
-            System.out.println(s);
+        while ((output = stdInput.readLine()) != null) {
+            stdOutput += output;
+            System.out.println(output);
         }
+    }
 
-        if (!output.contains("Shore")) {
+    @Then("Python example consumer should print proper message")
+    public void pythonExampleConsumerShouldPrintProperMessage() throws Exception {
+        if (!stdOutput.contains("Shore")) {
             throw new IOException("Not able to find the produced message");
         }
-
     }
 }
