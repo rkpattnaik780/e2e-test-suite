@@ -7,6 +7,7 @@ import com.openshift.cloud.api.kas.models.KafkaRequest;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
+import io.managed.services.test.TestGroups;
 import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.exception.ApiConflictException;
@@ -128,21 +129,21 @@ public class KafkaInstanceAPITest extends TestBase {
         }
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testFailToCallAPIIfUserBelongsToADifferentOrganization() {
         var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.ALIEN_OFFLINE_TOKEN);
         assertThrows(ApiUnauthorizedException.class, () -> kafkaInstanceApi.getTopics());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testFailToCallAPIIfTokenIsInvalid() {
         var api = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, TestUtils.FAKE_TOKEN);
         assertThrows(Exception.class, api::getTopics);
     }
 
-    @Test(groups = {"pr-check"})
+    @Test(groups = {"pr-check", TestGroups.INTEGRATION})
     @SneakyThrows
     public void testCreateTopic() {
 
@@ -158,7 +159,7 @@ public class KafkaInstanceAPITest extends TestBase {
         LOGGER.debug(topic);
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testMaxMessageSizeLimit() {
 
@@ -187,7 +188,7 @@ public class KafkaInstanceAPITest extends TestBase {
 
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testFailToProduceMessageAboveSizeLimit() {
 
@@ -216,7 +217,7 @@ public class KafkaInstanceAPITest extends TestBase {
 
     }
 
-    @Test(dependsOnMethods = "testCreateTopic")
+    @Test(dependsOnMethods = "testCreateTopic", groups = TestGroups.INTEGRATION)
     public void testFailToCreateTopicIfItAlreadyExist() {
         // create existing topic should fail
         var payload = new NewTopicInput()
@@ -362,7 +363,7 @@ public class KafkaInstanceAPITest extends TestBase {
         }
     }
 
-    @Test(dependsOnMethods = "testCreateTopic", groups = {"pr-check"})
+    @Test(dependsOnMethods = "testCreateTopic", groups = {"pr-check", TestGroups.INTEGRATION})
     @SneakyThrows
     public void testGetTopicByName() {
         var topic = kafkaInstanceApi.getTopic(TEST_TOPIC_NAME);
@@ -370,14 +371,14 @@ public class KafkaInstanceAPITest extends TestBase {
         assertEquals(topic.getName(), TEST_TOPIC_NAME);
     }
 
-    @Test(dependsOnMethods = "testCreateTopic")
+    @Test(dependsOnMethods = "testCreateTopic", groups = TestGroups.INTEGRATION)
     public void testFailToGetTopicIfItDoesNotExist() {
         // get none existing topic should fail
         assertThrows(ApiNotFoundException.class,
             () -> kafkaInstanceApi.getTopic(TEST_NOT_EXISTING_TOPIC_NAME));
     }
 
-    @Test(dependsOnMethods = "testCreateTopic")
+    @Test(dependsOnMethods = "testCreateTopic", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void tetGetAllTopics() {
         var topics = kafkaInstanceApi.getTopics();
@@ -391,14 +392,14 @@ public class KafkaInstanceAPITest extends TestBase {
         assertTrue(filteredTopics.isPresent());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     public void testFailToDeleteTopicIfItDoesNotExist() {
         // deleting not existing topic should fail
         assertThrows(ApiNotFoundException.class,
             () -> kafkaInstanceApi.deleteTopic(TEST_NOT_EXISTING_TOPIC_NAME));
     }
 
-    @Test(dependsOnMethods = "testCreateTopic", groups = {"pr-check"})
+    @Test(dependsOnMethods = "testCreateTopic", groups = {"pr-check", TestGroups.INTEGRATION})
     @SneakyThrows
     public void testConsumerGroup() {
         LOGGER.info("create or retrieve service account '{}'", SERVICE_ACCOUNT_NAME);
@@ -424,7 +425,7 @@ public class KafkaInstanceAPITest extends TestBase {
         assertTrue(group.getConsumers().size() > 0);
     }
 
-    @Test(dependsOnMethods = "testConsumerGroup", groups = {"pr-check"})
+    @Test(dependsOnMethods = "testConsumerGroup", groups = {"pr-check", TestGroups.INTEGRATION})
     @SneakyThrows
     public void testGetAllConsumerGroups() {
         var groups = kafkaInstanceApi.getConsumerGroups();
@@ -438,28 +439,28 @@ public class KafkaInstanceAPITest extends TestBase {
         assertTrue(filteredGroup.isPresent());
     }
 
-    @Test(dependsOnMethods = "testConsumerGroup")
+    @Test(dependsOnMethods = "testConsumerGroup", groups = TestGroups.INTEGRATION)
     public void testFailToGetConsumerGroupIfItDoesNotExist() {
         // get consumer group non-existing consumer group should fail
         assertThrows(ApiNotFoundException.class,
             () -> kafkaInstanceApi.getConsumerGroupById(TEST_NOT_EXISTING_GROUP_NAME));
     }
 
-    @Test(dependsOnMethods = "testConsumerGroup")
+    @Test(dependsOnMethods = "testConsumerGroup", groups = TestGroups.INTEGRATION)
     public void testFailToDeleteConsumerGroupIfItIsActive() {
         // deleting active consumer group should fail
         assertThrows(ApiLockedException.class,
             () -> kafkaInstanceApi.deleteConsumerGroupById(TEST_GROUP_NAME));
     }
 
-    @Test(dependsOnMethods = "testConsumerGroup")
+    @Test(dependsOnMethods = "testConsumerGroup", groups = TestGroups.INTEGRATION)
     public void testFailToDeleteConsumerGroupIfItDoesNotExist() {
         // deleting not existing consumer group should fail
         assertThrows(ApiNotFoundException.class,
             () -> kafkaInstanceApi.deleteConsumerGroupById(TEST_NOT_EXISTING_GROUP_NAME));
     }
 
-    @Test(dependsOnMethods = "testConsumerGroup", priority = 1, groups = {"pr-check"})
+    @Test(dependsOnMethods = "testConsumerGroup", priority = 1, groups = {"pr-check", TestGroups.INTEGRATION})
     public void testDeleteConsumerGroup() throws Throwable {
         LOGGER.info("close kafka consumer");
         bwait(kafkaConsumer.asyncClose());
@@ -473,7 +474,7 @@ public class KafkaInstanceAPITest extends TestBase {
         LOGGER.info("consumer group '{}' not found", TEST_GROUP_NAME);
     }
 
-    @Test(dependsOnMethods = "testCreateTopic", priority = 2, groups = {"pr-check"})
+    @Test(dependsOnMethods = "testCreateTopic", priority = 2, groups = {"pr-check", TestGroups.INTEGRATION})
     public void testDeleteTopic() throws Throwable {
         kafkaInstanceApi.deleteTopic(TEST_TOPIC_NAME);
         LOGGER.info("topic '{}' deleted", TEST_TOPIC_NAME);

@@ -109,6 +109,8 @@ public class Environment {
     public static final String SUITE_ROOT = System.getProperty("user.dir");
     public static final Path LOG_DIR = getOrDefault(LOG_DIR_ENV, Paths::get, Paths.get(SUITE_ROOT, "target", "logs")).resolve("test-run-" + DATE_FORMAT.format(LocalDateTime.now()));
 
+    public static final String EXECUTION_PROFILE = System.getProperty("execution.profile");
+
     // TODO PRIMARY USER is the only user who is still logging using browser, can be replaced with offline token as well once: (https://issues.redhat.com/browse/MGDX-332) is done
     public static final String PRIMARY_USERNAME = getOrDefault(PRIMARY_USERNAME_ENV, null);
     public static final String PRIMARY_PASSWORD = getOrDefault(PRIMARY_PASSWORD_ENV, null);

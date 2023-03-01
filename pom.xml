@@ -428,6 +428,9 @@
                             <suiteXmlFiles>
                                 <suiteXmlFile>suites/integration.xml</suiteXmlFile>
                             </suiteXmlFiles>
+                            <systemPropertyVariables>
+                                <execution.profile>integration</execution.profile>
+                            </systemPropertyVariables>
                         </configuration>
                     </plugin>
                 </plugins>
