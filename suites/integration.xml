@@ -1,12 +1,24 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
 
 <suite name="Integration">
-        <test name="SmokeTest">
+
+    <test name="IntegrationKafkaTest">
+
+        <!-- targeted group  -->
+        <groups>
+            <run>
+                <include name = "integration"></include>
+            </run>
+        </groups>
+
         <classes>
-            <class name="io.managed.services.test.SmokeTest"/>
+            <class name="io.managed.services.test.kafka.KafkaInstanceAPITest"/>
+            <class name="io.managed.services.test.kafka.KafkaMgmtAPITest"/>
+            <class name="io.managed.services.test.kafka.KafkaAccessMgmtTest"/>
         </classes>
     </test>
-    <test name="SSOAuthTest">
+
+    <test name="IntegrationAuthTest">
         <classes>
             <class name="io.managed.services.test.SSOAuthTest"/>
         </classes>

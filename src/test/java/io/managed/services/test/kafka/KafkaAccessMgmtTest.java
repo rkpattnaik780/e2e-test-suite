@@ -16,6 +16,7 @@ import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
+import io.managed.services.test.TestGroups;
 import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.accountmgmt.AccountMgmtApiUtils;
 import io.managed.services.test.client.exception.ApiForbiddenException;
@@ -127,7 +128,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     private String primaryUserUsername = null;
     private String adminUserUsername = null;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     @SneakyThrows
     public void bootstrap() {
         assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
@@ -247,7 +248,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testUserCanCreateTopicWithUnderscorePrefix() {
 
@@ -268,7 +269,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         }
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testUserCannotCreateTopicWithRedhatUnderscorePrefix() {
 
@@ -290,7 +291,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testUserCannotAccessSystemTopics() {
 
@@ -302,7 +303,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertTrue(o.isEmpty());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultSecondaryUserCanReadTheKafkaInstance() {
 
@@ -319,7 +320,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertTrue(o.isPresent());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultAlienUserCanNotReadTheKafkaInstance() {
 
@@ -336,21 +337,21 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertTrue(o.isEmpty());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     public void testAlwaysForbiddenToCreateDelegationToken() {
 
         LOGGER.info("kafka-delegation-tokens.sh create <forbidden>, script representation test");
         assertThrows(DelegationTokenDisabledException.class, () -> primaryApacheKafkaAdmin.createDelegationToken());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     public void testAlwaysForbiddenToDescribeDelegationToken() {
 
         LOGGER.info("kafka-delegation-tokens.sh describe <forbidden>, script representation test");
         assertThrows(DelegationTokenDisabledException.class, () -> primaryApacheKafkaAdmin.describeDelegationToken());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     public void testAlwaysForbiddenToUncleanLeaderElection() {
 
         LOGGER.info("kafka-leader-election.sh <forbidden>, script representation test");
@@ -364,21 +365,21 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertThrows(ClusterAuthorizationException.class, () -> primaryApacheKafkaAdmin.logDirs());
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     public void testAlwaysForbiddenToAlterPreferredReplicaElection() {
 
         LOGGER.info("kafka-preferred-replica-election.sh <forbidden>, script representation test");
         assertThrows(ClusterAuthorizationException.class, () -> primaryApacheKafkaAdmin.electLeader(ElectionType.PREFERRED, TEST_TOPIC_NAME));
     }
 
-    @Test
+    @Test(groups = TestGroups.INTEGRATION)
     public void testAlwaysForbiddenToReassignPartitions() {
 
         LOGGER.info("kafka-reassign-partitions.sh <forbidden>, script representation test");
         assertThrows(ClusterAuthorizationException.class, () -> primaryApacheKafkaAdmin.reassignPartitions(TEST_TOPIC_NAME));
     }
 
-    @Test(priority = 1)
+    @Test(priority = 1, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultPermissionsServiceAccountCanListTopic() {
 
@@ -386,7 +387,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         primaryApacheKafkaAdmin.listTopics();
     }
 
-    @Test(priority = 1)
+    @Test(priority = 1, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultPermissionsServiceAccountCanNotProduceAndConsumeMessages() {
 
@@ -403,7 +404,7 @@ public class KafkaAccessMgmtTest extends TestBase {
             KafkaAuthMethod.PLAIN)));
     }
 
-    @Test(priority = 1)
+    @Test(priority = 1, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultPermissionsServiceAccountCannotCreateACLs() {
 
@@ -411,7 +412,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertThrows(ClusterAuthorizationException.class, () -> primaryApacheKafkaAdmin.addAclResource(ResourceType.TOPIC));
     }
 
-    @Test(priority = 2)
+    @Test(priority = 2, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testGrantTopicAllTransactionIDAllConsumerGroupAllACLs() {
         LOGGER.info("Grant Topic All, Transaction ID All and Consumer group All operations to the service account");
@@ -437,7 +438,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         }
     }
 
-    @Test(priority = 2, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs")
+    @Test(priority = 2, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanProduceMessages() {
 
@@ -466,7 +467,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.debug(records);
     }
 
-    @Test(priority = 2, dependsOnMethods = "testServiceAccountCanProduceMessages")
+    @Test(priority = 2, dependsOnMethods = "testServiceAccountCanProduceMessages", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanConsumeMessages() {
         LOGGER.info("Test that the service account can consume messages from the topic '{}'", TEST_TOPIC_NAME);
@@ -476,7 +477,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.debug(records);
     }
 
-    @Test(priority = 2, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs")
+    @Test(priority = 2, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanListConsumerGroups() {
 
@@ -497,7 +498,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
 
-    @Test(priority = 2, dependsOnMethods = "testServiceAccountCanListConsumerGroups")
+    @Test(priority = 2, dependsOnMethods = "testServiceAccountCanListConsumerGroups", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanDeleteConsumerGroups() {
         LOGGER.info("Test that the service account can delete consumer groups");
@@ -505,7 +506,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
 
-    @Test(priority = 3, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs")
+    @Test(priority = 3, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDenyTopicReadACL() {
 
@@ -523,7 +524,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
     }
 
-    @Test(priority = 3, dependsOnMethods = "testDenyTopicReadACL")
+    @Test(priority = 3, dependsOnMethods = "testDenyTopicReadACL", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanStillProduceMessages() {
 
@@ -535,7 +536,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         primaryKafkaProducer.close();
     }
 
-    @Test(priority = 3, dependsOnMethods = "testServiceAccountCanStillProduceMessages")
+    @Test(priority = 3, dependsOnMethods = "testServiceAccountCanStillProduceMessages", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanNotConsumeMessages() {
 
@@ -546,7 +547,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         primaryKafkaConsumer.close();
     }
 
-    @Test(priority = 4, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs")
+    @Test(priority = 4, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDenyTopicDeletionWithPrefixToAllUsersACLs() {
 
@@ -563,7 +564,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
     }
 
-    @Test(priority = 4, dependsOnMethods = "testDenyTopicDeletionWithPrefixToAllUsersACLs")
+    @Test(priority = 4, dependsOnMethods = "testDenyTopicDeletionWithPrefixToAllUsersACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanCreateTopicWithAndWithoutPrefix() {
 
@@ -574,7 +575,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         primaryApacheKafkaAdmin.createTopic(TEST_TOPIC_WITH_PREFIX_NAME, 1, (short) 3);
     }
 
-    @Test(priority = 4, dependsOnMethods = "testServiceAccountCanCreateTopicWithAndWithoutPrefix")
+    @Test(priority = 4, dependsOnMethods = "testServiceAccountCanCreateTopicWithAndWithoutPrefix", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanDeleteTopicWithoutPrefix() {
 
@@ -582,7 +583,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         primaryApacheKafkaAdmin.deleteTopic(TEST_TOPIC_WITHOUT_PREFIX_NAME);
     }
 
-    @Test(priority = 4, dependsOnMethods = "testServiceAccountCanCreateTopicWithAndWithoutPrefix")
+    @Test(priority = 4, dependsOnMethods = "testServiceAccountCanCreateTopicWithAndWithoutPrefix", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanNotDeleteTopicWithPrefix() {
 
@@ -597,7 +598,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         }
     }
 
-    @Test(priority = 5, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs")
+    @Test(priority = 5, dependsOnMethods = "testGrantTopicAllTransactionIDAllConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDenyTopicDescribeConsumerGroupAllACLs() {
 
@@ -627,7 +628,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
     }
 
-    @Test(priority = 5, dependsOnMethods = "testDenyTopicDescribeConsumerGroupAllACLs")
+    @Test(priority = 5, dependsOnMethods = "testDenyTopicDescribeConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanNotListTopics() {
 
@@ -636,7 +637,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
 
-    @Test(priority = 5, dependsOnMethods = "testDenyTopicDescribeConsumerGroupAllACLs")
+    @Test(priority = 5, dependsOnMethods = "testDenyTopicDescribeConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanNotListConsumerGroups() {
 
@@ -644,7 +645,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertTrue(primaryApacheKafkaAdmin.listConsumerGroups().isEmpty(), "Unauthorized account should receive an empty list of consumer groups");
     }
 
-    @Test(priority = 5, dependsOnMethods = "testDenyTopicDescribeConsumerGroupAllACLs")
+    @Test(priority = 5, dependsOnMethods = "testDenyTopicDescribeConsumerGroupAllACLs", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testServiceAccountCanNotDeleteConsumerGroups() {
 
@@ -652,7 +653,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertThrows(AuthorizationException.class, () -> primaryApacheKafkaAdmin.deleteConsumerGroups(TEST_CONSUMER_GROUP_NAME_01));
     }
 
-    @Test(priority = 6)
+    @Test(priority = 6, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultSecondaryUserCanListACLs() {
 
@@ -660,7 +661,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         secondaryKafkaInstanceAPI.getAcls(null, null, null, null, null, null, null, null, null, null);
     }
 
-    @Test(priority = 6)
+    @Test(priority = 6, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultSecondaryUserCanNotDeleteACLs() {
 
@@ -669,7 +670,7 @@ public class KafkaAccessMgmtTest extends TestBase {
             secondaryKafkaInstanceAPI.deleteAcls(null, null, null, null, null, null));
     }
 
-    @Test(priority = 6)
+    @Test(priority = 6, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultAdminUserCanNotCreateTopics() {
 
@@ -680,7 +681,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertThrows(ApiForbiddenException.class, () -> adminKafkaInstanceAPI.createTopic(payload));
     }
 
-    @Test(priority = 7)
+    @Test(priority = 7, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testGrantTopicsAllowAllToTheAdminUser() {
 
@@ -697,7 +698,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
     }
 
-    @Test(priority = 7, dependsOnMethods = "testGrantTopicsAllowAllToTheAdminUser")
+    @Test(priority = 7, dependsOnMethods = "testGrantTopicsAllowAllToTheAdminUser", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testAdminUserCanCreateTopics() {
 
@@ -708,7 +709,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         adminKafkaInstanceAPI.createTopic(payload);
     }
 
-    @Test(priority = 7, dependsOnMethods = "testAdminUserCanCreateTopics")
+    @Test(priority = 7, dependsOnMethods = "testAdminUserCanCreateTopics", groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testAdminUserCanDeleteTopics() {
 
@@ -716,7 +717,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         adminKafkaInstanceAPI.deleteTopic(TEST_TOPIC_03_NAME);
     }
 
-    @Test(priority = 8)
+    @Test(priority = 8, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultAdminUserCanNotCreateACLs() {
 
@@ -731,7 +732,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertThrows(ApiForbiddenException.class, () -> adminKafkaInstanceAPI.createAcl(acl));
     }
 
-    @Test(priority = 8)
+    @Test(priority = 8, groups = TestGroups.INTEGRATION)
     @SneakyThrows
     public void testDefaultAdminUserCanNotDeleteACLs() {
 
@@ -741,7 +742,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
     @SneakyThrows
-    @Test(priority = 10)
+    @Test(priority = 10, groups = TestGroups.INTEGRATION)
     public void testAdminUserCanChangeTheKafkaInstanceOwner() {
         String topicA = UUID.randomUUID().toString();
         String otherUser = UUID.randomUUID().toString();
@@ -797,7 +798,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
     @SneakyThrows
-    @Test(priority = 10, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner")
+    @Test(priority = 10, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner", groups = TestGroups.INTEGRATION)
     public void testSecondaryUserCanCreateACLs() {
 
         LOGGER.info("Test that the secondary user can create ACLs");
@@ -813,7 +814,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
     @SneakyThrows
-    @Test(priority = 10, dependsOnMethods = "testSecondaryUserCanCreateACLs")
+    @Test(priority = 10, dependsOnMethods = "testSecondaryUserCanCreateACLs", groups = TestGroups.INTEGRATION)
     public void testSecondaryUserCanDeleteACLs() {
 
         LOGGER.info("Test that the secondary user can delete ACLs");
@@ -827,7 +828,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
     @SneakyThrows
-    @Test(priority = 10, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner")
+    @Test(priority = 10, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner", groups = TestGroups.INTEGRATION)
     public void testPrimaryUserCanListACLs() {
 
         LOGGER.info("Test that the primary user can list ACLs");
@@ -836,7 +837,7 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
     @SneakyThrows
-    @Test(priority = 10, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner")
+    @Test(priority = 10, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner", groups = TestGroups.INTEGRATION)
     public void testPrimaryUserCanNotDeleteACLs() {
 
         LOGGER.info("Test that the primary user can not create ACLs");
@@ -857,14 +858,14 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertThrows(ApiNotFoundException.class, () -> primaryAPI.kafkaMgmt().deleteKafkaById(kafka.getId(), true));
     }
 
-    @Test(priority = 11, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner")
+    @Test(priority = 11, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner", groups = TestGroups.INTEGRATION)
     public void testAlienUserCanNotDeleteTheKafkaInstance() {
         LOGGER.info("Test that the aline user can not delete the Kafka instance");
         assertThrows(ApiNotFoundException.class, () -> alienAPI.kafkaMgmt().deleteKafkaById(kafka.getId(), true));
     }
 
     @SneakyThrows
-    @Test(priority = 12, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner")
+    @Test(priority = 12, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner", groups = TestGroups.INTEGRATION)
     public void testSecondaryUserCanDeleteTheKafkaInstance() {
         LOGGER.info("Test that the secondary user can delete the Kafka instance");
         KafkaMgmtApiUtils.cleanKafkaInstance(secondaryAPI.kafkaMgmt(), KAFKA_INSTANCE_NAME);
