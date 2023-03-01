@@ -176,8 +176,6 @@ public class Environment {
     public static final boolean KAFKA_INSECURE_TLS = getOrDefault(KAFKA_INSECURE_TLS_ENV, Boolean::parseBoolean, false);
     public static final String KAFKA_INSTANCE_API_TEMPLATE = getOrDefault(KAFKA_INSTANCE_API_TEMPLATE_ENV, "https://admin-server-%s");
 
-    public static final String PROMETHEUS_PUSH_GATEWAY = getOrDefault(PROMETHEUS_PUSH_GATEWAY_ENV, null);
-
     public static final String STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN_ENV, null);
     public static final String STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_SCENARIO_2_USER_OFFLINE_TOKEN_ENV, null);
     public static final String STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN = getOrDefault(STRATOSPHERE_SCENARIO_3_USER_OFFLINE_TOKEN_ENV, null);

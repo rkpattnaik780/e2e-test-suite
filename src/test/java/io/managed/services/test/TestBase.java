@@ -2,18 +2,13 @@ package io.managed.services.test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.managed.services.test.framework.PrometheusSuiteListener;
-import io.managed.services.test.framework.PrometheusTestListener;
 import io.managed.services.test.framework.TestListener;
 import io.vertx.core.json.jackson.DatabindCodec;
 import lombok.extern.log4j.Log4j2;
 import org.testng.annotations.Listeners;
 
 @Log4j2
-@Listeners({
-    TestListener.class,
-    PrometheusTestListener.class,
-    PrometheusSuiteListener.class})
+@Listeners({TestListener.class})
 public abstract class TestBase {
 
     static {
