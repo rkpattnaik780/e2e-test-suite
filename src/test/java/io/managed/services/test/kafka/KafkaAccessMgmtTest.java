@@ -573,10 +573,10 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.info("replicas to be applied {}", replicaNumber);
 
         LOGGER.info("Test that the service account can create the topic '{}'", TEST_TOPIC_WITHOUT_PREFIX_NAME);
-        primaryApacheKafkaAdmin.createTopic(TEST_TOPIC_WITHOUT_PREFIX_NAME, 1, (short) 3);
+        primaryApacheKafkaAdmin.createTopic(TEST_TOPIC_WITHOUT_PREFIX_NAME, 1, (short) replicaNumber);
 
         LOGGER.info("Test that the service account can create the topic '{}'", TEST_TOPIC_WITH_PREFIX_NAME);
-        primaryApacheKafkaAdmin.createTopic(TEST_TOPIC_WITH_PREFIX_NAME, 1, (short) 3);
+        primaryApacheKafkaAdmin.createTopic(TEST_TOPIC_WITH_PREFIX_NAME, 1, (short) replicaNumber);
     }
 
     @Test(priority = 4, dependsOnMethods = "testServiceAccountCanCreateTopicWithAndWithoutPrefix", groups = TestGroups.INTEGRATION)
