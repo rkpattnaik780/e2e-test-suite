@@ -164,9 +164,19 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         // obtain usernames
         try {
-            primaryUserUsername =  AccountMgmtApiUtils.getPrimaryUserUsername();
-            secondaryUserUsername =  AccountMgmtApiUtils.getSecondaryUserUsername();
-            adminUserUsername =  AccountMgmtApiUtils.getAdminUserUsername();
+            // TODO remove if else and keep only else part once stage only env allows whoami calls
+            // if integration profile is used we are using stage only environment where we cannot call api equivalent of
+            // ocm whoami, tjerefore we pass names from environment variables
+            if (TestGroups.INTEGRATION.equals(Environment.EXECUTION_PROFILE)) {
+                primaryUserUsername = Environment.PRIMARY_USERNAME;
+                secondaryUserUsername = Environment.SECONDARY_USERNAME;
+                adminUserUsername = Environment.ADMIN_USERNAME;
+            } else {
+                primaryUserUsername =  AccountMgmtApiUtils.getPrimaryUserUsername();
+                secondaryUserUsername =  AccountMgmtApiUtils.getSecondaryUserUsername();
+                adminUserUsername =  AccountMgmtApiUtils.getAdminUserUsername();
+            }
+
             LOGGER.debug("primary user: {}", primaryUserUsername);
             LOGGER.debug("secondary user: {}", secondaryUserUsername);
             LOGGER.debug("admin user: {}", adminUserUsername);
