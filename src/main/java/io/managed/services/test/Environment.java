@@ -38,6 +38,9 @@ public class Environment {
     private static final String PRIMARY_USERNAME_ENV = "PRIMARY_USERNAME";
     private static final String PRIMARY_PASSWORD_ENV = "PRIMARY_PASSWORD";
 
+    private static final String SECONDARY_USERNAME_ENV = "SECONDARY_USERNAME";
+    private static final String ADMIN_USERNAME_ENV = "ADMIN_USERNAME";
+
     // OFFLINE_TOKENS of users used in tests
     private static final String PRIMARY_OFFLINE_TOKEN_ENV = "PRIMARY_OFFLINE_TOKEN";
     private static final String SECONDARY_OFFLINE_TOKEN_ENV = "SECONDARY_OFFLINE_TOKEN";
@@ -114,6 +117,9 @@ public class Environment {
     // TODO PRIMARY USER is the only user who is still logging using browser, can be replaced with offline token as well once: (https://issues.redhat.com/browse/MGDX-332) is done
     public static final String PRIMARY_USERNAME = getOrDefault(PRIMARY_USERNAME_ENV, null);
     public static final String PRIMARY_PASSWORD = getOrDefault(PRIMARY_PASSWORD_ENV, null);
+
+    public static final String SECONDARY_USERNAME = getOrDefault(SECONDARY_USERNAME_ENV, null);
+    public static final String ADMIN_USERNAME = getOrDefault(ADMIN_USERNAME_ENV, null);
 
     // sso.redhat.com primary user, secondary user, admin user, alien user diff org user respectively (See README.md)
     public static final String PRIMARY_OFFLINE_TOKEN = getOrDefault(PRIMARY_OFFLINE_TOKEN_ENV, null);
