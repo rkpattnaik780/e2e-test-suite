@@ -32,9 +32,12 @@ fi
 
 SECRET_NAME=$(oc get serviceaccount "${SERVICE_ACCOUNT_NAME}" \
   --namespace "${NAMESPACE_NAME}" \
-  -o json | jq -r '.secrets[] | select(.name | contains("token")) | .name')
+  -o json | jq -r '.secrets[0].name')
 
-TOKEN_DATA=$(oc get secret "${SECRET_NAME}" \
+# Extract the value of openshift.io/token-secret.name which holds name of actual secret token
+TOKEN_SECRET_NAME=$(oc get secret ${SECRET_NAME} -n ${NAMESPACE_NAME} -o json | jq -r '.metadata.annotations."openshift.io/token-secret.name"')
+
+TOKEN_DATA=$(oc get secret "${TOKEN_SECRET_NAME}" \
   --namespace "${NAMESPACE_NAME}" \
   -o jsonpath='{.data.token}')
 
