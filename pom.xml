@@ -34,10 +34,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <!-- TODO: check the prev version -->
-            <version>2.1.1</version>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>5.0.1.Final</version>
         </dependency>
         
         <dependency>
