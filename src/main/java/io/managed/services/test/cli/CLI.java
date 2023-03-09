@@ -141,9 +141,14 @@ public class CLI {
         retry(() -> exec("kafka", "delete", "--id", id, "-y"));
     }
 
-    public KafkaRequest describeKafka(String id) throws CliGenericException {
+    public KafkaRequest describeKafkaById(String id) throws CliGenericException {
         return retry(() -> exec("kafka", "describe", "--id", id))
             .asJson(KafkaRequest.class);
+    }
+
+    public KafkaRequest describeKafkaByName(String name) throws CliGenericException {
+        return retry(() -> exec("kafka", "describe", "--name", name))
+                .asJson(KafkaRequest.class);
     }
 
     public void useKafka(String id) throws CliGenericException {

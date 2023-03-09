@@ -12,7 +12,6 @@ import io.managed.services.test.cli.CLIUtils;
 import io.managed.services.test.cli.CliGenericException;
 import io.managed.services.test.cli.CliNotFoundException;
 import io.managed.services.test.cli.ServiceAccountSecret;
-import io.managed.services.test.cli.CLI.ACLEntityType;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import io.managed.services.test.client.kafkamgmt.KafkaMgmtApiUtils;
 import io.managed.services.test.client.securitymgmt.SecurityMgmtAPIUtils;
@@ -21,6 +20,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.client.kafka.KafkaMessagingUtils.testTopic;
@@ -60,7 +61,8 @@ import static org.testng.Assert.assertTrue;
 public class KafkaRhoasBasicTests extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaRhoasBasicTests.class);
 
-    private static final String KAFKA_INSTANCE_NAME = "e2e-cli-test-" + Environment.LAUNCH_SUFFIX;
+    // TODO enterprise: change logic of name assignment back once we have quota for more than 1 enterprise kafka instance
+    private static final String KAFKA_INSTANCE_NAME = Environment.IS_ENTERPRISE ? "enterprise-test" : "e2e-cli-test-" + Environment.LAUNCH_SUFFIX;
     private static final String SERVICE_ACCOUNT_NAME = "e2e-cli-svc-acc-"  + Environment.LAUNCH_SUFFIX;
     private static final String TOPIC_NAME = "e2e-cli-topic" + Environment.LAUNCH_SUFFIX;
     // used for testing quickstart for data production and consumption
@@ -95,9 +97,29 @@ public class KafkaRhoasBasicTests extends TestBase {
 
         var kafkaMgmtApi =  KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
         var securityMgmtApi = SecurityMgmtAPIUtils.securityMgmtApi(Environment.OPENSHIFT_API_URI, offlineToken);
+        var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(Environment.OPENSHIFT_API_URI, offlineToken);
 
-        if (Environment.SKIP_KAFKA_TEARDOWN) {
+        // kafka instance is not to b deleted
+        if (Environment.SKIP_KAFKA_TEARDOWN || Environment.IS_ENTERPRISE) {
             LOGGER.warn("skip kafka instance clean up");
+
+            // delete topic used in production messages
+            try {
+                kafkaInstanceApi.deleteTopic(TOPIC_NAME_PRODUCE_CONSUME);
+            } catch (Throwable t) {
+                LOGGER.error("delete topic error: ", t);
+            }
+
+            // logout
+            try {
+                LOGGER.info("logout user from rhoas");
+                cli.logout();
+            } catch (Throwable t) {
+                LOGGER.error("CLI logout error: ", t);
+            }
+
+            bwait(vertx.close());
+
             return;
         }
         
@@ -111,13 +133,6 @@ public class KafkaRhoasBasicTests extends TestBase {
             SecurityMgmtAPIUtils.cleanServiceAccount(securityMgmtApi, SERVICE_ACCOUNT_NAME);
         } catch (Throwable t) {
             LOGGER.error("delete service account error: ", t);
-        }
-
-        // delete topic used in quickstart
-        try {
-            cli.deleteTopic(TOPIC_NAME_PRODUCE_CONSUME);
-        } catch (Throwable t) {
-            LOGGER.error("delete topic error: ", t);
         }
 
         try {
@@ -153,14 +168,10 @@ public class KafkaRhoasBasicTests extends TestBase {
     }
 
 
-    @Test(dependsOnMethods = "testDownloadCLI", enabled = true)
+    @Test(dependsOnMethods = "testDownloadCLI")
     @SneakyThrows
     public void testLogin() {
-
-        // make sure you are logout while developing locally.
-        LOGGER.info("verify that we aren't logged-in");
-        assertThrows(CliGenericException.class, () -> cli.listKafka());
-
+        
         LOGGER.info("login the CLI");
         CLIUtils.login(vertx, cli, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD).get();
 
@@ -168,10 +179,10 @@ public class KafkaRhoasBasicTests extends TestBase {
         cli.listKafka();
     }
 
-    @Test(dependsOnMethods = "testLogin", enabled = true)
+    @Test(dependsOnMethods = "testLogin")
     @SneakyThrows
     public void testCreateServiceAccount() {
-
+        
         LOGGER.info("create a service account");
         serviceAccountSecret = CLIUtils.createServiceAccount(cli, SERVICE_ACCOUNT_NAME);
 
@@ -186,7 +197,7 @@ public class KafkaRhoasBasicTests extends TestBase {
         serviceAccount = sa.get();
     }
 
-    @Test(dependsOnMethods = "testCreateServiceAccount", enabled = true)
+    @Test(dependsOnMethods = {"testLogin"})
     @SneakyThrows
     public void testDescribeServiceAccount() {
 
@@ -196,31 +207,39 @@ public class KafkaRhoasBasicTests extends TestBase {
 
         assertEquals(sa.getName(), SERVICE_ACCOUNT_NAME);
     }
-
-    @Test(dependsOnMethods = "testLogin", enabled = true)
+    
+    @Test(dependsOnMethods = "testLogin")
     @SneakyThrows
-    public void testCreateKafkaInstance() {
+    public void testApplyKafkaInstance() {
+        LOGGER.info("apply kafka instance with name {}", KAFKA_INSTANCE_NAME);
 
-        LOGGER.info("create kafka instance with name {}", KAFKA_INSTANCE_NAME);
-        var k = cli.createKafka(KAFKA_INSTANCE_NAME);
-        LOGGER.debug(k);
+        Optional<KafkaRequest> optionalKafka = cli.listKafka().getItems().stream().filter(e -> KAFKA_INSTANCE_NAME.equals(e.getName())).findAny();
+        if (optionalKafka.isPresent()) {
+            LOGGER.info("kafka instance with name {} is present", KAFKA_INSTANCE_NAME);
+            kafka = optionalKafka.get();
+        } else {
+            LOGGER.info("kafka instance with name {} is not present, it will be created now", KAFKA_INSTANCE_NAME);
+            var k = cli.createKafka(KAFKA_INSTANCE_NAME);
+            LOGGER.debug(k);
 
-        LOGGER.info("wait for kafka instance: {}", k.getId());
-        kafka = CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
+            LOGGER.info("wait for kafka instance: {}", k.getId());
+            kafka = CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
+        }
+
+        cli.useKafka(kafka.getId());
         LOGGER.debug(kafka);
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance", "testCreateServiceAccount"}, enabled = true)
+    @Test(dependsOnMethods = {"testApplyKafkaInstance", "testCreateServiceAccount"}, enabled = true)
     @SneakyThrows
     public void testGrantProducerAndConsumerAccess() {
         LOGGER.info("grant producer and consumer access to the account: {}", serviceAccount.getClientId());
-        cli.grantAccessAcl(ACLEntityType.SERVICE_ACCOUNT, serviceAccount.getClientId(), "all", "all");
-
+        cli.grantAccessAcl(CLI.ACLEntityType.SERVICE_ACCOUNT, serviceAccount.getClientId(), "all", "all");
         var acl = cli.listACLs();
         LOGGER.debug(acl);
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance", "testGrantProducerAndConsumerAccess"}, enabled = true)
+    @Test(dependsOnMethods = {"testApplyKafkaInstance"})
     @SneakyThrows
     public void testProducePlainMessages() {
         LOGGER.info("create topic '{}' with 2 partitions and other default configuration", TOPIC_NAME_PRODUCE_CONSUME);
@@ -243,7 +262,7 @@ public class KafkaRhoasBasicTests extends TestBase {
         }
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance", "testGrantProducerAndConsumerAccess"}, enabled = true)
+    @Test(dependsOnMethods = {"testApplyKafkaInstance", "testGrantProducerAndConsumerAccess"}, enabled = true)
     @SneakyThrows
     public void testProduceCustomMessage() {
         LOGGER.info("create topic '{}' with 2 partitions and other default configuration", TOPIC_NAME_PRODUCE_CONSUME);
@@ -298,18 +317,18 @@ public class KafkaRhoasBasicTests extends TestBase {
         assertEquals(consumedRecord.getKey(), customRecordKey, "failed to obtain expected key");
     }
 
-    @Test(dependsOnMethods = "testCreateKafkaInstance", enabled = true)
+    @Test(dependsOnMethods = "testApplyKafkaInstance", enabled = true)
     @SneakyThrows
     public void testDescribeKafkaInstance() {
 
         LOGGER.info("get kafka instance with name {}", KAFKA_INSTANCE_NAME);
-        var k = cli.describeKafka(kafka.getId());
+        var k = cli.describeKafkaById(kafka.getId());
         LOGGER.debug(k);
 
         assertEquals("ready", k.getStatus());
     }
 
-    @Test(dependsOnMethods = "testCreateKafkaInstance", enabled = true)
+    @Test(dependsOnMethods = "testApplyKafkaInstance", enabled = true)
     @SneakyThrows
     public void testListKafkaInstances() {
 
@@ -322,7 +341,7 @@ public class KafkaRhoasBasicTests extends TestBase {
         assertTrue(exists.isPresent());
     }
 
-    @Test(dependsOnMethods = "testCreateKafkaInstance", enabled = true)
+    @Test(dependsOnMethods = "testApplyKafkaInstance", enabled = true)
     @SneakyThrows
     public void testSearchKafkaByName() {
 
@@ -334,7 +353,7 @@ public class KafkaRhoasBasicTests extends TestBase {
         assertEquals(exists.get().getName(), KAFKA_INSTANCE_NAME);
     }
 
-    @Test(dependsOnMethods = "testCreateKafkaInstance", enabled = true)
+    @Test(dependsOnMethods = "testApplyKafkaInstance", enabled = true)
     @SneakyThrows
     public void testCreateTopic() {
 
@@ -511,9 +530,14 @@ public class KafkaRhoasBasicTests extends TestBase {
             () -> cli.describeServiceAccount(serviceAccount.getClientId()));
     }
 
-    @Test(dependsOnMethods = "testCreateKafkaInstance", priority = 3, enabled = true)
+    @Test(dependsOnMethods = "testApplyKafkaInstance", priority = 3, enabled = true)
     @SneakyThrows
     public void testDeleteKafkaInstance() {
+
+        // TODO enterprise skip kafka instance due to keeping this 1 instance alive in all tests
+        if (Environment.IS_ENTERPRISE || Environment.SKIP_KAFKA_TEARDOWN) {
+            throw  new SkipException("Skip kafka deletion if enterprise is tested or kafka teardown is skipped");
+        }
 
         LOGGER.info("delete kafka instance '{}'", kafka.getId());
         cli.deleteKafka(kafka.getId());

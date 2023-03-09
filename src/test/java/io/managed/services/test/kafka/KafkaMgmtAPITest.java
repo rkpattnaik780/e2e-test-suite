@@ -71,7 +71,9 @@ import static org.testng.Assert.assertTrue;
 public class KafkaMgmtAPITest extends TestBase {
 
     static final String SERVICE_ACCOUNT_NAME_FOR_DELETION = "mk-e2e-sa-delete"  + Environment.LAUNCH_SUFFIX;
-    static final String KAFKA_INSTANCE_NAME = "mk-e2e-"  + Environment.LAUNCH_SUFFIX;
+
+    // TODO enterprise: change logic of name assignment back once we have quota for more than 1 enterprise kafka instance
+    static final String KAFKA_INSTANCE_NAME = Environment.IS_ENTERPRISE ? "enterprise-test" : "mk-e2e-" + Environment.LAUNCH_SUFFIX;
     static final String SERVICE_ACCOUNT_NAME = "mk-e2e-sa-"  + Environment.LAUNCH_SUFFIX;
     static final String TOPIC_NAME = "test-topic";
     static final String METRIC_TOPIC_NAME = "metric-test-topic";
@@ -162,9 +164,10 @@ public class KafkaMgmtAPITest extends TestBase {
 
     @Test(groups = {"pr-check", "production"})
     @SneakyThrows
-    public void testCreateKafkaInstance() {
+    public void testApplyKafkaInstance() {
 
         // Create Kafka Instance
+        // TODO enterprise: with new SDK create enteprise kafka instance by specifying clusterId, marketplace fields.
         var payload = new KafkaRequestPayload()
             .name(KAFKA_INSTANCE_NAME)
             .cloudProvider(Environment.CLOUD_PROVIDER)
@@ -187,7 +190,7 @@ public class KafkaMgmtAPITest extends TestBase {
                 .description("E2E test service account"));
     }
 
-    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"}, groups = {"pr-check", "production"})
+    @Test(dependsOnMethods = {"testCreateServiceAccount", "testApplyKafkaInstance"}, groups = {"pr-check", "production"})
     @SneakyThrows
     public void testCreateProducerAndConsumerACLs() {
 
@@ -198,7 +201,7 @@ public class KafkaMgmtAPITest extends TestBase {
         KafkaInstanceApiAccessUtils.createProducerAndConsumerACLs(kafkaInstanceApi, principal);
     }
 
-    @Test(dependsOnMethods = "testCreateKafkaInstance", groups = {"pr-check", "production"})
+    @Test(dependsOnMethods = "testApplyKafkaInstance", groups = {"pr-check", "production"})
     @SneakyThrows
     public void testCreateTopics() {
 
@@ -216,7 +219,7 @@ public class KafkaMgmtAPITest extends TestBase {
     }
 
     // ADMIN API can check that requesting creation of topic to have more partition than is max limit on given instance could not be satisfied in any case
-    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"})
+    @Test(dependsOnMethods = {"testCreateServiceAccount", "testApplyKafkaInstance"})
     @SneakyThrows
     public void testForbiddenToExceedPartitionLimitOnTopicCreation() {
 
@@ -233,7 +236,7 @@ public class KafkaMgmtAPITest extends TestBase {
     }
 
     // ADMIN API can check that requesting to change configuration of a topic to have more partition than is max limit on given instance could not be satisfied in any case
-    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"})
+    @Test(dependsOnMethods = {"testCreateServiceAccount", "testApplyKafkaInstance"})
     @SneakyThrows
     public void testForbiddenToExceedParitionLimitOnTopicConfiguration() {
 
@@ -246,7 +249,7 @@ public class KafkaMgmtAPITest extends TestBase {
     }
 
     // Requesting valid number of partition in created topic, but breaching the limit by Sum of partitions with all of existing Topic (i.e. topic visible to user)
-    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"})
+    @Test(dependsOnMethods = {"testCreateServiceAccount", "testApplyKafkaInstance"})
     @SneakyThrows
     public void testTotalPartitionLimitByTopicCreation() {
 
@@ -304,7 +307,7 @@ public class KafkaMgmtAPITest extends TestBase {
         Thread.sleep(ofSeconds(20).toMillis());
     }
 
-    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"})
+    @Test(dependsOnMethods = {"testCreateServiceAccount", "testApplyKafkaInstance"})
     @SneakyThrows
     public void testTotalPartitionLimitByTopicConfiguration() {
 
@@ -447,7 +450,7 @@ public class KafkaMgmtAPITest extends TestBase {
             KafkaAuthMethod.PLAIN)));
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance"})
+    @Test(dependsOnMethods = {"testApplyKafkaInstance"})
     @SneakyThrows
     public <T extends Throwable> void testFederateMetrics() {
         // Verify all expected user facing Kafka metrics retrieved from Observatorium are included in the response in a Prometheus Text Format
@@ -474,7 +477,7 @@ public class KafkaMgmtAPITest extends TestBase {
         }
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance"}, groups = {"pr-check", "production"})
+    @Test(dependsOnMethods = {"testApplyKafkaInstance"}, groups = {"pr-check", "production"})
     @SneakyThrows
     public void testListAndSearchKafkaInstance() {
 
@@ -503,7 +506,7 @@ public class KafkaMgmtAPITest extends TestBase {
         assertEquals(kafkaOptional.get().getName(), KAFKA_INSTANCE_NAME);
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance"})
+    @Test(dependsOnMethods = {"testApplyKafkaInstance"})
     public void testFailToCreateKafkaInstanceIfItAlreadyExist() {
 
         // Create Kafka Instance with existing name
@@ -518,7 +521,7 @@ public class KafkaMgmtAPITest extends TestBase {
 
     // TODO change implementation so that there is no endless trying to reauth, (8 times/sec for rest of rests)
     @Ignore
-    @Test(dependsOnMethods = {"testCreateServiceAccount", "testCreateKafkaInstance"}, priority = 1)
+    @Test(dependsOnMethods = {"testCreateServiceAccount", "testApplyKafkaInstance"}, priority = 1)
     @SneakyThrows
     public void testReauthentication() {
 
@@ -616,10 +619,10 @@ public class KafkaMgmtAPITest extends TestBase {
         });
     }
 
-    @Test(dependsOnMethods = {"testCreateKafkaInstance"}, groups = {"pr-check", "production"}, priority = 2)
+    @Test(dependsOnMethods = {"testApplyKafkaInstance"}, groups = {"pr-check", "production"}, priority = 2)
     @SneakyThrows
     public void testDeleteKafkaInstance() {
-        if (Environment.SKIP_KAFKA_TEARDOWN) {
+        if (Environment.SKIP_KAFKA_TEARDOWN || Environment.IS_ENTERPRISE) {
             throw new SkipException("Skip kafka delete");
         }
 
