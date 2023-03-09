@@ -154,7 +154,7 @@ public class CLIUtils {
     public static KafkaRequest waitUntilKafkaIsReady(CLI cli, String id)
         throws KafkaUnknownHostsException, KafkaNotReadyException, InterruptedException, CliGenericException {
 
-        return KafkaMgmtApiUtils.waitUntilKafkaIsReady(() -> cli.describeKafka(id));
+        return KafkaMgmtApiUtils.waitUntilKafkaIsReady(() -> cli.describeKafkaById(id));
     }
 
     public static void waitUntilKafkaIsDeleted(CLI cli, String id)
@@ -162,7 +162,7 @@ public class CLIUtils {
 
         KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(() -> {
             try {
-                return Optional.of(cli.describeKafka(id));
+                return Optional.of(cli.describeKafkaById(id));
             } catch (CliNotFoundException e) {
                 return Optional.empty();
             }

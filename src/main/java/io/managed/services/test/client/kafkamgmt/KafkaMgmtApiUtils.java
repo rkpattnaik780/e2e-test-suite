@@ -77,6 +77,7 @@ public class KafkaMgmtApiUtils {
     public static KafkaRequestPayload defaultKafkaInstance(String name) {
         return new KafkaRequestPayload()
             .name(name)
+            // TODO enterprise provide .clusterId(Environment.CLUSTER_ID) and .marketplace(Environment.IS_ENTERPRISE ? "enterprise" : null) with new SDK
             .cloudProvider(Environment.CLOUD_PROVIDER)
             .region(Environment.DEFAULT_KAFKA_REGION);
     }
@@ -110,7 +111,7 @@ public class KafkaMgmtApiUtils {
         KafkaRequest kafka;
         if (existing.isPresent()) {
             kafka = existing.get();
-            LOGGER.warn("kafka instance '{}' already exists", kafka.getName());
+            LOGGER.warn("kafka instance with name '{}' already exists", kafka.getName());
             LOGGER.debug(kafka);
         } else {
             LOGGER.info("create kafka instance '{}'", payload.getName());
@@ -188,7 +189,8 @@ public class KafkaMgmtApiUtils {
      * @param name Kafka Instance name
      */
     public static void cleanKafkaInstance(KafkaMgmtApi api, String name) throws ApiGenericException {
-        if (Environment.SKIP_KAFKA_TEARDOWN) {
+        // TODO remove Environment.IS_ENTERPRISE check once enough quota is available.
+        if (Environment.SKIP_KAFKA_TEARDOWN || Environment.IS_ENTERPRISE) {
             LOGGER.warn("skip kafka instance clean up");
             return;
         }

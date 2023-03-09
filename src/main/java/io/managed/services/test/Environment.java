@@ -104,6 +104,9 @@ public class Environment {
     private static final String STAGE_DATA_PLANE_ADMIN_CLIENT_ID_ENV = "STAGE_DATA_PLANE_ADMIN_CLIENT_ID";
     private static final String STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET_ENV = "STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET";
 
+    private static final String CLUSTER_ID_ENV = "CLUSTER_ID";
+    private static final String IS_ENTERPRISE_ENV = "IS_ENTERPRISE";
+
     /*
      * Setup constants from env variables or set default
      */
@@ -202,6 +205,9 @@ public class Environment {
     // admin endpoint credentials (vault-key: clientid, secret) https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/jenkins/managed-services/secrets.yaml#L228-235
     public static final String STAGE_DATA_PLANE_ADMIN_CLIENT_ID = getOrDefault(STAGE_DATA_PLANE_ADMIN_CLIENT_ID_ENV, null);
     public static final String STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET = getOrDefault(STAGE_DATA_PLANE_ADMIN_CLIENT_SECRET_ENV, null);
+
+    public static final String CLUSTER_ID = getOrDefault(CLUSTER_ID_ENV, null);
+    public static final boolean IS_ENTERPRISE = getOrDefault(IS_ENTERPRISE_ENV, Boolean::parseBoolean, false);
 
     private Environment() {
     }

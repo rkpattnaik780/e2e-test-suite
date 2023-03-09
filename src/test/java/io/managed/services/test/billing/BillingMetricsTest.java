@@ -57,7 +57,6 @@ import static org.testng.Assert.fail;
 @Log4j2
 public class BillingMetricsTest extends TestBase {
 
-
     // class uses long live kafka instance, as waiting for metrics to be available and stable in newly created instance can take too long.
     public static final String KAFKA_INSTANCE_NAME = "mk-e2e-ll-"  + Environment.LAUNCH_SUFFIX;
     public static final String SERVICE_ACCOUNT_NAME = "mk-billing-sa-"  + Environment.LAUNCH_SUFFIX;
