@@ -622,7 +622,7 @@ public class KafkaMgmtAPITest extends TestBase {
     @Test(dependsOnMethods = {"testApplyKafkaInstance"}, groups = {"pr-check", "production"}, priority = 2)
     @SneakyThrows
     public void testDeleteKafkaInstance() {
-        if (Environment.SKIP_KAFKA_TEARDOWN) {
+        if (Environment.SKIP_KAFKA_TEARDOWN || Environment.IS_ENTERPRISE) {
             throw new SkipException("Skip kafka delete");
         }
 
