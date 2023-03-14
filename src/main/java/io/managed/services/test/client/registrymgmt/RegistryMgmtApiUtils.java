@@ -16,6 +16,7 @@ import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -25,6 +26,7 @@ import static io.managed.services.test.TestUtils.waitFor;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
+@Log4j2
 public class RegistryMgmtApiUtils {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtApiUtils.class);
 
@@ -96,7 +98,7 @@ public class RegistryMgmtApiUtils {
         return waitUntilRootTypeOfRegistryIsReady(() -> {
             try {
                 return api.getRegistry(registryID);
-            } catch (ApiGenericException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });

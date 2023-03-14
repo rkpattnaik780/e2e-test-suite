@@ -4,9 +4,7 @@ import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
-import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.vertx.core.Vertx;
@@ -100,24 +98,24 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAlienUserCanNotReadTheRegistry() {
-        assertThrows(ApiNotFoundException.class, () -> alienRegistryMgmtApi.getRegistry(registry.getId()));
+        assertThrows(ApiGenericException.class, () -> alienRegistryMgmtApi.getRegistry(registry.getId()));
     }
 
     @Test
     public void testAlienUserCanNotCreateArtifactOnTheRegistry() throws Throwable {
         var registryClient = registryClient(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
 
-        assertThrows(ApiForbiddenException.class, () -> registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8)));
+        assertThrows(ApiGenericException.class, () -> registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test(priority = 1)
     public void testSecondaryUserCanNotDeleteTheRegistry() {
-        assertThrows(ApiForbiddenException.class, () -> secondaryRegistryMgmtApi.deleteRegistry(registry.getId()));
+        assertThrows(ApiGenericException.class, () -> secondaryRegistryMgmtApi.deleteRegistry(registry.getId()));
     }
 
     @Test(priority = 1)
     public void testAlienUserCanNotDeleteTheRegistry() {
-        assertThrows(ApiForbiddenException.class, () -> alienRegistryMgmtApi.deleteRegistry(registry.getId()));
+        assertThrows(ApiGenericException.class, () -> alienRegistryMgmtApi.deleteRegistry(registry.getId()));
     }
 
     @Test

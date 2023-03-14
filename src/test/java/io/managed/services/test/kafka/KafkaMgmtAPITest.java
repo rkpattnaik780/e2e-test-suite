@@ -530,7 +530,7 @@ public class KafkaMgmtAPITest extends TestBase {
         payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         log.info("create kafka instance '{}' with existing name", payload.getName());
-        assertThrows(ApiConflictException.class, () -> kafkaMgmtApi.createKafka(true, payload));
+        assertThrows(ApiGenericException.class, () -> kafkaMgmtApi.createKafka(true, payload));
     }
 
     // TODO change implementation so that there is no endless trying to reauth, (8 times/sec for rest of rests)

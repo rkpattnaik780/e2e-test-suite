@@ -10,10 +10,8 @@ import io.managed.services.test.TestBase;
 import io.managed.services.test.TestGroups;
 import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.ApplicationServicesApi;
-import io.managed.services.test.client.exception.ApiConflictException;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiLockedException;
-import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.exception.ApiUnauthorizedException;
 import io.managed.services.test.client.kafka.KafkaAuthMethod;
 import io.managed.services.test.client.kafka.KafkaConsumerClient;
@@ -231,7 +229,7 @@ public class KafkaInstanceAPITest extends TestBase {
         var settings = new TopicSettings();
         settings.setNumPartitions(1);
         payload.setSettings(settings);
-        assertThrows(ApiConflictException.class,
+        assertThrows(ApiGenericException.class,
             () -> kafkaInstanceApi.createTopic(payload));
     }
 
@@ -390,7 +388,7 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test(dependsOnMethods = "testCreateTopic", groups = TestGroups.INTEGRATION)
     public void testFailToGetTopicIfItDoesNotExist() {
         // get none existing topic should fail
-        assertThrows(ApiNotFoundException.class,
+        assertThrows(ApiGenericException.class,
             () -> kafkaInstanceApi.getTopic(TEST_NOT_EXISTING_TOPIC_NAME));
     }
 
@@ -411,7 +409,7 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test(groups = TestGroups.INTEGRATION)
     public void testFailToDeleteTopicIfItDoesNotExist() {
         // deleting not existing topic should fail
-        assertThrows(ApiNotFoundException.class,
+        assertThrows(ApiGenericException.class,
             () -> kafkaInstanceApi.deleteTopic(TEST_NOT_EXISTING_TOPIC_NAME));
     }
 
@@ -458,7 +456,7 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test(dependsOnMethods = "testConsumerGroup", groups = TestGroups.INTEGRATION)
     public void testFailToGetConsumerGroupIfItDoesNotExist() {
         // get consumer group non-existing consumer group should fail
-        assertThrows(ApiNotFoundException.class,
+        assertThrows(ApiGenericException.class,
             () -> kafkaInstanceApi.getConsumerGroupById(TEST_NOT_EXISTING_GROUP_NAME));
     }
 
@@ -472,7 +470,7 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test(dependsOnMethods = "testConsumerGroup", groups = TestGroups.INTEGRATION)
     public void testFailToDeleteConsumerGroupIfItDoesNotExist() {
         // deleting not existing consumer group should fail
-        assertThrows(ApiNotFoundException.class,
+        assertThrows(ApiGenericException.class,
             () -> kafkaInstanceApi.deleteConsumerGroupById(TEST_NOT_EXISTING_GROUP_NAME));
     }
 

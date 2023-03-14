@@ -159,7 +159,7 @@ public class KafkaInstanceApiUtils {
     public static Optional<Topic> getTopicByName(KafkaInstanceApi api, String name) throws ApiGenericException {
         try {
             return Optional.of(api.getTopic(name));
-        } catch (ApiNotFoundException e) {
+        } catch (ApiGenericException e) {
             return Optional.empty();
         }
     }

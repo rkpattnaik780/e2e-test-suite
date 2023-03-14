@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
@@ -61,7 +62,7 @@ public class KafkaMgmtMetricsUtils {
         LOGGER.info("start testing message in total metric");
 
         // retrieve the current in messages before sending more
-        var metricsList = api.getMetricsByInstantQuery(kafka.getId(), null);
+        var metricsList = api.getMetricsByInstantQuery(kafka.getId(), Collections.<String>emptyList());
         var initialInMessages = collectTopicMetric(metricsList.getItems(), topicName, IN_MESSAGES_METRIC);
         LOGGER.info("the topic '{}' started with '{}' in messages", topicName, initialInMessages);
 
@@ -81,7 +82,7 @@ public class KafkaMgmtMetricsUtils {
         var finalInMessagesAtom = new AtomicReference<Double>();
         ThrowingFunction<Boolean, Boolean, ApiGenericException> isMetricUpdated = last -> {
 
-            var m = api.getMetricsByInstantQuery(kafka.getId(), null);
+            var m = api.getMetricsByInstantQuery(kafka.getId(), Collections.<String>emptyList());
             var i = collectTopicMetric(m.getItems(), topicName, IN_MESSAGES_METRIC);
             finalInMessagesAtom.set(i);
 
