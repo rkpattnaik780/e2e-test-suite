@@ -409,6 +409,22 @@ public class DataPlaneClusterTest extends TestBase {
                         log.debug("newly observed remaining capacity '{}'", newlyObservedRemainingCapacity);
                         if (newlyObservedRemainingCapacity > remainingCapacityBefore)
                             return true;
+
+                        // see if any new instance of given type was created, if so don't expect capacity to be increased
+                        List<String> currentKafkaInstances = FleetshardUtils.listManagedKafka(oc, mkType).stream()
+                                .map(e -> e.getMetadata().getName())
+                                .collect(Collectors.toList());
+                        // filter: keep instances that did not existed previously, and filter instance that we created
+                        List<String> instancesCreatedDuringFreeingCapacity = currentKafkaInstances.stream()
+                                .filter(e -> !kafkaInstanceNamesBeforeCreating.contains(e))
+                                .collect(Collectors.toList());
+                        log.debug("count of instances that have been created since begging of waiting for freeing capacity {}", instancesCreatedDuringFreeingCapacity.size());
+                        log.debug(instancesCreatedDuringFreeingCapacity);
+
+                        if (instancesCreatedDuringFreeingCapacity.size() > 1)
+                            throw new SkipException("Instances created during waiting for freeing capacity, no longer possible to observe freeing capacity");
+
+                        // continue waiting
                         return false;
                     });
 
