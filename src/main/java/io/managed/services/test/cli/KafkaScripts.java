@@ -96,8 +96,8 @@ public class KafkaScripts {
         FileUtils.copyURLToFile(
                 new URL(kafkaURLString),
                 source.toFile(),
-                10000,
-                10000);
+                30000,
+                30000);
 
         LOGGER.info("extract binaries");
 
