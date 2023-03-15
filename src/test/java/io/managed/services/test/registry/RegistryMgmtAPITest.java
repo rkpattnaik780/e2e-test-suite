@@ -1,5 +1,6 @@
 package io.managed.services.test.registry;
 
+import com.openshift.cloud.api.registry.instance.models.ContentCreateRequest;
 import com.openshift.cloud.api.srs.models.RegistryCreate;
 import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.Environment;
@@ -14,11 +15,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.nio.charset.StandardCharsets;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.message;
-import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
+import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient2;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.waitUntilRegistryIsReady;
 import static org.testng.Assert.assertEquals;
@@ -37,7 +37,7 @@ import static org.testng.Assert.assertTrue;
 public class RegistryMgmtAPITest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtAPITest.class);
 
-    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_REGISTRY_NAME = "rama-test";
     private static final String SERVICE_REGISTRY_2_NAME = "mk-e2e-sr2-"  + Environment.LAUNCH_SUFFIX;
     private static final String ARTIFACT_SCHEMA = "{\"type\":\"record\",\"name\":\"Greeting\",\"fields\":[{\"name\":\"Message\",\"type\":\"string\"},{\"name\":\"Time\",\"type\":\"long\"}]}";
 
@@ -88,10 +88,13 @@ public class RegistryMgmtAPITest extends TestBase {
 
     @Test(dependsOnMethods = "testCreateRegistry")
     public void testCreateArtifact() throws Throwable {
-        var registryClient = registryClient(registry.getRegistryUrl(), Environment.PRIMARY_OFFLINE_TOKEN);
+        var registryClient = registryClient2(registry.getRegistryUrl(), Environment.PRIMARY_OFFLINE_TOKEN);
 
         LOGGER.info("create artifact on registry");
-        var artifactMetaData = registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8));
+
+        var content = new ContentCreateRequest();
+        content.setContent(ARTIFACT_SCHEMA);
+        var artifactMetaData = registryClient.createArtifact("default", null, content);
 
         assertEquals(artifactMetaData.getName(), "Greeting");
     }
