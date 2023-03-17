@@ -17,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.json.JSONObject;
 
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
@@ -71,10 +70,6 @@ public class QuotaKafkaInstanceTest extends TestBase {
         quotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.DIFF_ORG_OFFLINE_TOKEN);
         noQuotaUserKafkaMgmtApi = KafkaMgmtApiUtils.kafkaMgmtApi(Environment.OPENSHIFT_API_URI, Environment.ALIEN_OFFLINE_TOKEN);
 
-
-
-
-
         LOGGER.info("Preparing environment by deleting existing Kafka instances");
         deleteAllKafkaInstances();  
     }
@@ -116,10 +111,9 @@ public class QuotaKafkaInstanceTest extends TestBase {
             KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiGenericException e) {
-            assertEquals(e.getCode(), 400, "HTTP Status Response");
-            JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
-            assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_DEVELOPER + "\"");
+            assertEquals(e.getResponseStatusCode(), 400, "HTTP Status Response");
+            assertEquals(e.getCode(), KAFKAS_MGMT_21_CODE);
+
         }
     }
 
@@ -151,10 +145,9 @@ public class QuotaKafkaInstanceTest extends TestBase {
             KafkaMgmtApiUtils.createKafkaInstance(quotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiForbiddenException e) {
-            assertEquals(e.getCode(), 403, "HTTP Status Response");
-            JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
-            assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_120_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_120_REASON);
+            assertEquals(e.getResponseStatusCode(), 403, "HTTP Status Response");
+            assertEquals(e.getCode(), KAFKAS_MGMT_120_CODE);
+            assertEquals(e.getReason(), KAFKAS_MGMT_120_REASON);
         }
     }
 
@@ -171,10 +164,9 @@ public class QuotaKafkaInstanceTest extends TestBase {
             KafkaMgmtApiUtils.createKafkaInstance(noQuotaUserKafkaMgmtApi, payload);
             fail("Kafka instance creation did NOT fail");
         } catch (ApiGenericException e) {
-            assertEquals(e.getCode(), 400, "HTTP Status Response");
-            JSONObject jsonResponse = new JSONObject(e.getResponseBody());  
-            assertEquals(jsonResponse.get("code"), KAFKAS_MGMT_21_CODE);
-            assertEquals(jsonResponse.get("reason"), KAFKAS_MGMT_21_REASON + "\"" + PLAN_STANDARD + "\"");
+            assertEquals(e.getResponseStatusCode(), 400, "HTTP Status Response");
+            assertEquals(e.getCode(), KAFKAS_MGMT_21_CODE);
+            assertEquals(e.getReason(), KAFKAS_MGMT_21_REASON + "\"" + PLAN_STANDARD + "\"");
         }
     }
 

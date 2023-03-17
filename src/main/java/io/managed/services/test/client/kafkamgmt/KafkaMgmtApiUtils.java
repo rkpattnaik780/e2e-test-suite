@@ -1,13 +1,9 @@
 package io.managed.services.test.client.kafkamgmt;
 
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.andreatp.kiota.auth.RHAccessTokenProvider;
 import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
 import com.microsoft.kiota.http.OkHttpRequestAdapter;
 import com.openshift.cloud.api.kas.ApiClient;
-import com.openshift.cloud.api.kas.models.Error;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import com.openshift.cloud.api.kas.models.KafkaUpdateRequest;
@@ -154,16 +150,7 @@ public class KafkaMgmtApiUtils {
             try {
                 kafkaAtom.set(api.createKafka(true, payload));
             } catch (ApiForbiddenException e) {
-
-                Error error;
-                try {
-                    error = new ObjectMapper().readValue(e.getResponseBody(), Error.class);
-                } catch (JsonProcessingException ex) {
-                    LOGGER.warn("failed to decode API error: ", ex);
-                    throw e;
-                }
-
-                if (CLUSTER_CAPACITY_EXHAUSTED_CODE.equals(error.getCode())) {
+                if (CLUSTER_CAPACITY_EXHAUSTED_CODE.equals(e.getCode())) {
                     // try again without logging
                     exceptionAtom.set(e);
                     LOGGER.debug("{}: {}", e.getClass(), e.getMessage());

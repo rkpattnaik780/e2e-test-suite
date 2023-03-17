@@ -12,7 +12,6 @@ import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -36,11 +35,11 @@ public class KafkaMgmtApi extends BaseApi {
         if (e.getCause() != null) {
             if (e.getCause() instanceof com.openshift.cloud.api.kas.auth.models.Error) {
                 var err = (com.openshift.cloud.api.kas.auth.models.Error) e.getCause();
-                return new ApiUnknownException(err.getMessage(), err.getCode(), new HashMap<>(), "", err);
+                return new ApiUnknownException(err.getReason(), err.getCode().toString(), err.responseStatusCode, err.getHref(), err.getId(), err);
             }
             if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
                 var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
-                return new ApiUnknownException(err.getMessage(), e.hashCode(), new HashMap<>(), "", err);
+                return new ApiUnknownException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
             }
         }
         return null;

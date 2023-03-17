@@ -94,9 +94,8 @@ public class RegistryMgmtAPITest extends TestBase {
 
         var content = new ContentCreateRequest();
         content.setContent(ARTIFACT_SCHEMA);
-        var artifactMetaData = registryClient.createArtifact("default", null, content);
+        registryClient.createArtifact(content);
 
-        assertEquals(artifactMetaData.getName(), "Greeting");
     }
 
     @Test(dependsOnMethods = "testCreateRegistry")

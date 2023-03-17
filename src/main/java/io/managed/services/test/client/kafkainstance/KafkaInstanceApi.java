@@ -18,8 +18,6 @@ import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
-
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
@@ -41,18 +39,17 @@ public class KafkaInstanceApi extends BaseApi {
         if (e.getCause() != null) {
             if (e.getCause() instanceof com.openshift.cloud.api.kas.auth.models.Error) {
                 var err = (com.openshift.cloud.api.kas.auth.models.Error) e.getCause();
-                return new ApiUnknownException(err.getMessage(), err.getCode(), new HashMap<>(), "", err);
+                return new ApiUnknownException(err.getReason(), err.getCode().toString(), err.responseStatusCode, err.getHref(), err.getId(), err);
             }
             if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
                 var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
-                return new ApiUnknownException(err.getMessage(), e.hashCode(), new HashMap<>(), "", err);
+                return new ApiUnknownException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
             }
-
         }
 
         return null;
-    }
 
+    }
 
     public Topic updateTopic(String name, TopicSettings ts) throws ApiGenericException {
         //return getTopics(null, null, null, null, null);
@@ -82,7 +79,7 @@ public class KafkaInstanceApi extends BaseApi {
     }
 
     public void deleteTopic(String topicName) throws ApiGenericException {
-        retry(() -> v1.topics(topicName).delete());
+        retry(() -> v1.topics(topicName).delete().get(10, TimeUnit.SECONDS));
     }
 
     public ConsumerGroupList getConsumerGroups() throws ApiGenericException {

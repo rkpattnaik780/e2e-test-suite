@@ -17,7 +17,7 @@ public class RegistryClientUtils {
     public static RegistryClient2 registryClient2(String uri, String offlineToken) {
 
         var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
-        adapter.setBaseUrl(uri);
+        adapter.setBaseUrl(uri + "/apis/registry/v2");
         ApiClient client = new ApiClient(adapter);
 
         return new RegistryClient2(client, offlineToken);

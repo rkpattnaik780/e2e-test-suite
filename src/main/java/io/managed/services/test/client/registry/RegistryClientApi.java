@@ -30,16 +30,16 @@ public class RegistryClientApi extends BaseApi {
     @Override
     protected ApiUnknownException toApiException(Exception e) {
         if (e instanceof NotAuthorizedException) {
-            return new ApiUnknownException(e.getMessage(), HttpURLConnection.HTTP_UNAUTHORIZED, new HashMap<>(), "", e);
+            return new ApiUnknownException(e.getMessage(), "", HttpURLConnection.HTTP_UNAUTHORIZED, "", "", e);
         }
         if (e instanceof ForbiddenException) {
-            return new ApiUnknownException(e.getMessage(), HttpURLConnection.HTTP_FORBIDDEN, new HashMap<>(), "", e);
+            return new ApiUnknownException(e.getMessage(), "", HttpURLConnection.HTTP_FORBIDDEN, "", "", e);
         }
         if (e instanceof RateLimitedClientException) {
-            return new ApiUnknownException(e.getMessage(), 429, new HashMap<>(), "", e);
+            return new ApiUnknownException(e.getMessage(), "", 429, "", "", e);
         }
         if (e instanceof RestClientException) {
-            return new ApiUnknownException(e.getMessage(), ((RestClientException) e).getError().getErrorCode(), new HashMap<>(), "", e);
+            return new ApiUnknownException(e.getMessage(), "", ((RestClientException) e).getError().getErrorCode(), "", "", e);
         }
         return null;
     }

@@ -1,5 +1,6 @@
 package io.managed.services.test.registry;
 
+import com.openshift.cloud.api.registry.instance.models.ContentCreateRequest;
 import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
+import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient2;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.applyRegistry;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
 import static org.testng.Assert.assertEquals;
@@ -126,9 +128,11 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAdminUserCanCreateArtifactOnTheRegistry() throws Throwable {
-        var registryClient = registryClient(registry.getRegistryUrl(), Environment.ADMIN_OFFLINE_TOKEN);
+        var registryClient = registryClient2(registry.getRegistryUrl(), Environment.ADMIN_OFFLINE_TOKEN);
+        var content = new ContentCreateRequest();
+        content.setContent(ARTIFACT_SCHEMA);
+        registryClient.createArtifact(content);
 
-        registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8));
     }
 
     @Test(priority = 2)

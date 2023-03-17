@@ -9,8 +9,6 @@ import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
-
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
@@ -34,7 +32,7 @@ public class RegistryMgmtApi extends BaseApi {
         if (e.getCause() != null) {
             if (e.getCause() instanceof com.microsoft.kiota.ApiException) {
                 var err = (com.microsoft.kiota.ApiException) e.getCause();
-                return new ApiUnknownException(err.getMessage(), 400, new HashMap<>(), "", err);
+                return new ApiUnknownException(err.getMessage(), "", 400, "", "", err);
             }
         }
 

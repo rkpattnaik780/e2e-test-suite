@@ -37,7 +37,6 @@ public abstract class BaseApi {
             return f.get();
         } catch (Exception e) {
             log.info(e);
-            // TODO: remove this debugging code
 
             var ex = toApiException(e);
             if (ex != null) {
@@ -62,7 +61,7 @@ public abstract class BaseApi {
 
     private static boolean retryCondition(Throwable t) {
         if (t instanceof ApiGenericException) {
-            var code = ((ApiGenericException) t).getCode();
+            var code = ((ApiGenericException) t).getResponseStatusCode();
             return code >= 500 && code < 600 // Server Errors
                 || code == 408;  // Request Timeout
         }

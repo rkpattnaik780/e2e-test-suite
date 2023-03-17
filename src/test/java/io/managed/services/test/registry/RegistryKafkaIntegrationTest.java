@@ -3,10 +3,10 @@ package io.managed.services.test.registry;
 
 import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
+import com.openshift.cloud.api.registry.instance.models.RoleMapping;
+import com.openshift.cloud.api.registry.instance.models.RoleType;
 import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
-import io.apicurio.registry.rest.v2.beans.RoleMapping;
 import io.apicurio.registry.serde.SerdeConfig;
-import io.apicurio.registry.types.RoleType;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.client.ApplicationServicesApi;
@@ -43,7 +43,7 @@ import java.util.List;
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils.kafkaInstanceApiUri;
-import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
+import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient2;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
@@ -113,7 +113,7 @@ public class RegistryKafkaIntegrationTest extends TestBase {
 
         // grant access to the service account to the registry
         LOGGER.info("grant access to the registry for service account: {}", serviceAccount.getClientId());
-        var registryClient = registryClient(registry.getRegistryUrl(), offlineToken);
+        var registryClient = registryClient2(registry.getRegistryUrl(), offlineToken);
         var role = new RoleMapping();
         // We expect the service account to be always created with the same name
         // if that will not be the case in the feature we will have to retrieve the

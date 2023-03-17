@@ -18,7 +18,6 @@ import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafka;
 import io.managed.services.test.dataplane.FleetshardUtils;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -216,10 +215,9 @@ public class DataPlaneClusterTest extends TestBase {
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
-            JSONObject jsonResponse = new JSONObject(e.getResponseBody());
-            if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw  e;
@@ -300,7 +298,7 @@ public class DataPlaneClusterTest extends TestBase {
 
         } catch (ApiForbiddenException e) {
             // if not quota related exception rethrow it
-            if (!(e.getCode() == 403 && new JSONObject(e.getResponseBody()).get("code").equals(KAFKAS_MGMT_120_CODE))) {
+            if (!(e.getResponseStatusCode() == 403 && KAFKAS_MGMT_120_CODE.equals(e.getCode()))) {
                 throw e;
             }
             log.warn("quota reached %s", e);
@@ -375,10 +373,9 @@ public class DataPlaneClusterTest extends TestBase {
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
-            JSONObject jsonResponse = new JSONObject(e.getResponseBody());
-            if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw  e;

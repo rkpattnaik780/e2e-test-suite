@@ -1,46 +1,54 @@
 package io.managed.services.test.client.exception;
 
-import java.util.List;
-import java.util.Map;
-
 public class ApiUnknownException extends Exception {
 
-    private final int code;
-    private final Map<String, List<String>> responseHeaders;
-    private final String responseBody;
+    private final String code;
+    private final String href;
+    private final String id;
+
+    private final String reason;
+    private final int responseStatusCode;
+
 
     public ApiUnknownException(
-        String message,
-        int code, Map<String, List<String>> responseHeaders,
-        String responseBody,
+        String reason,
+        String code,
+        int responseStatusCode,
+        String href,
+        String id,
         Exception cause) {
 
-        super(message, cause);
+        super(reason, cause);
+        this.reason = reason;
         this.code = code;
-        this.responseHeaders = responseHeaders;
-        this.responseBody = responseBody;
+        this.responseStatusCode = responseStatusCode;
+        this.href = href;
+        this.id = id;
     }
 
-    public int getCode() {
+    public String getCode() {
         return code;
     }
-
-    public Map<String, List<String>> getResponseHeaders() {
-        return responseHeaders;
+    public String getHref() {
+        return href;
     }
-
-    public String getResponseBody() {
-        return responseBody;
+    public String getId() {
+        return id;
+    }
+    public int getResponseStatusCode() {
+        return responseStatusCode;
+    }
+    public String getReason() {
+        return reason;
     }
 
     public String getFullMessage() {
         var error = new StringBuilder();
         error.append(getMessage());
-        error.append(String.format("\nStatus Code: %d", getCode()));
-        for (var e : getResponseHeaders().entrySet()) {
-            error.append(String.format("\n< %s: %s", e.getKey(), e.getValue()));
-        }
-        error.append(String.format("\n%s", getResponseBody()));
+        error.append(String.format("\nCode: %s", getCode()));
+        error.append(String.format("\nHref: %s", getHref()));
+        error.append(String.format("\nResponse Status Code: %s", getResponseStatusCode()));
+        error.append(String.format("\nReason (Msg): %s", getReason()));
         return error.toString();
     }
 }

@@ -59,7 +59,6 @@ public class LongLiveKafkaInstanceTest extends TestBase {
 
     public static final String KAFKA_INSTANCE_NAME = "mk-e2e-ll-"  + Environment.LAUNCH_SUFFIX;
     public static final String SERVICE_ACCOUNT_NAME = "mk-e2e-ll-sa-"  + Environment.LAUNCH_SUFFIX;
-
     private static final String TOPIC_NAME = "test-topic";
     private static final String MULTI_PARTITION_TOPIC_NAME = "multi-partitions-topic";
     private static final String METRIC_TOPIC_NAME = "metric-test-topic";

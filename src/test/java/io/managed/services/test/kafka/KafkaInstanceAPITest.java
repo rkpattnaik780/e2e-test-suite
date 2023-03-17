@@ -61,7 +61,7 @@ import static org.testng.Assert.assertTrue;
 public class KafkaInstanceAPITest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(KafkaInstanceAPITest.class);
 
-    private static final String KAFKA_INSTANCE_NAME = "test-instance";
+    static final String KAFKA_INSTANCE_NAME = Environment.IS_ENTERPRISE ? "enterprise-test" : "mk-e2e-kmngm-" + Environment.LAUNCH_SUFFIX;
     private static final String SERVICE_ACCOUNT_NAME = "mk-e2e-kaa-sa-"  + Environment.LAUNCH_SUFFIX;
     private static final String TEST_TOPIC_NAME = "test-api-topic-1";
     private static final String TEST_NOT_EXISTING_TOPIC_NAME = "test-api-topic-not-exist";
@@ -380,7 +380,7 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test(dependsOnMethods = "testCreateTopic", groups = {"pr-check", TestGroups.INTEGRATION})
     @SneakyThrows
     public void testGetTopicByName() {
-        var topic = kafkaInstanceApi.getTopic("rama");
+        var topic = kafkaInstanceApi.getTopic(TEST_TOPIC_NAME);
         LOGGER.debug(topic);
         assertEquals(topic.getName(), TEST_TOPIC_NAME);
     }

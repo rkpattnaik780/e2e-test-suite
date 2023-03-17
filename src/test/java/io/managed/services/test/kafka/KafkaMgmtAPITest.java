@@ -74,6 +74,7 @@ public class KafkaMgmtAPITest extends TestBase {
 
     // TODO enterprise: change logic of name assignment back once we have quota for more than 1 enterprise kafka instance
     static final String KAFKA_INSTANCE_NAME = Environment.IS_ENTERPRISE ? "enterprise-test" : "mk-e2e-" + Environment.LAUNCH_SUFFIX;
+
     static final String SERVICE_ACCOUNT_NAME = "mk-e2e-sa-"  + Environment.LAUNCH_SUFFIX;
     static final String TOPIC_NAME = "test-topic";
     static final String METRIC_TOPIC_NAME = "metric-test-topic";
