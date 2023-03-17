@@ -26,7 +26,6 @@ import lombok.extern.log4j.Log4j2;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.testng.Assert;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -136,7 +135,8 @@ public class CLI {
 
     public KafkaRequest createKafka(String name) throws CliGenericException {
         return retryKafkaCreation(() -> exec("kafka", "create", "--bypass-checks", "--name", name, "--provider", Environment.CLOUD_PROVIDER, "--region", Environment.DEFAULT_KAFKA_REGION))
-            .asJson(KafkaRequest.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(KafkaRequest::createFromDiscriminatorValue);
     }
 
     public void deleteKafka(String id) throws CliGenericException {
@@ -145,12 +145,14 @@ public class CLI {
 
     public KafkaRequest describeKafkaById(String id) throws CliGenericException {
         return retry(() -> exec("kafka", "describe", "--id", id))
-            .asJson(KafkaRequest.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(KafkaRequest::createFromDiscriminatorValue);
     }
 
     public KafkaRequest describeKafkaByName(String name) throws CliGenericException {
         return retry(() -> exec("kafka", "describe", "--name", name))
-                .asJson(KafkaRequest.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(KafkaRequest::createFromDiscriminatorValue);
     }
 
     public void useKafka(String id) throws CliGenericException {
@@ -159,25 +161,26 @@ public class CLI {
 
     public KafkaRequestList listKafka() throws CliGenericException {
         return retry(() -> exec("kafka", "list", "-o", "json"))
-            .asJson(KafkaRequestList.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(KafkaRequestList::createFromDiscriminatorValue);
     }
 
     public KafkaRequestList searchKafkaByName(String name) throws CliGenericException {
-        var p = retry(() -> exec("kafka", "list", "--search", name, "-o", "json"));
-        if (p.stderrAsString().contains("No Kafka instances were found")) {
-            return new KafkaRequestList();
-        }
-        return p.asJson(KafkaRequestList.class);
+        return retry(() -> exec("kafka", "list", "--search", name, "-o", "json"))
+            .parseNodeFromProcessOutput()
+            .getObjectValue(KafkaRequestList::createFromDiscriminatorValue);
     }
 
     public ServiceAccountData describeServiceAccount(String id) throws CliGenericException {
         return retry(() -> exec("service-account", "describe", "--id", id))
-            .asJson(ServiceAccountData.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(ServiceAccountData::createFromDiscriminatorValue);
     }
 
-    public ServiceAccountData[] listServiceAccount() throws CliGenericException {
+    public List<ServiceAccountData> listServiceAccount() throws CliGenericException {
         return retry(() -> exec("service-account", "list", "-o", "json"))
-            .asJson(ServiceAccountData[].class);
+                .parseNodeFromProcessOutput()
+                .getCollectionOfObjectValues(ServiceAccountData::createFromDiscriminatorValue);
     }
 
     public void deleteServiceAccount(String id) throws CliGenericException {
@@ -190,12 +193,14 @@ public class CLI {
 
     public Topic createTopic(String topicName) throws CliGenericException {
         return retry(() -> exec("kafka", "topic", "create", "--name", topicName, "-o", "json"))
-            .asJson(Topic.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(Topic::createFromDiscriminatorValue);
     }
 
     public Topic createTopic(String topicName, int partitions) throws CliGenericException {
         return retry(() -> exec("kafka", "topic", "create", "--name", topicName, "--partitions", String.valueOf(partitions), "-o", "json"))
-                .asJson(Topic.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(Topic::createFromDiscriminatorValue);
     }
 
     public void deleteTopic(String topicName) throws CliGenericException {
@@ -204,12 +209,14 @@ public class CLI {
 
     public TopicsList listTopics() throws CliGenericException {
         return retry(() -> exec("kafka", "topic", "list", "-o", "json"))
-            .asJson(TopicsList.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(TopicsList::createFromDiscriminatorValue);
     }
 
     public Topic describeTopic(String topicName) throws CliGenericException {
         return retry(() -> exec("kafka", "topic", "describe", "--name", topicName, "-o", "json"))
-            .asJson(Topic.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(Topic::createFromDiscriminatorValue);
     }
 
     public void updateTopic(String topicName, String retentionTime) throws CliGenericException {
@@ -218,7 +225,8 @@ public class CLI {
 
     public ConsumerGroupList listConsumerGroups() throws CliGenericException {
         return retry(() -> exec("kafka", "consumer-group", "list", "-o", "json"))
-            .asJson(ConsumerGroupList.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(ConsumerGroupList::createFromDiscriminatorValue);
     }
 
     public void deleteConsumerGroup(String id) throws CliGenericException {
@@ -227,7 +235,8 @@ public class CLI {
 
     public ConsumerGroup describeConsumerGroup(String name) throws CliGenericException {
         return retry(() -> exec("kafka", "consumer-group", "describe", "--id", name, "-o", "json"))
-            .asJson(ConsumerGroup.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(ConsumerGroup::createFromDiscriminatorValue);
     }
 
     public void connectCluster(String token, String kubeconfig, String serviceType) throws CliGenericException {
@@ -255,12 +264,14 @@ public class CLI {
     //// kafka acl list
     public AclBindingListPage listACLs() throws CliGenericException {
         return retry(() -> exec("kafka", "acl", "list", "-o", "json"))
-            .asJson(AclBindingListPage.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(AclBindingListPage::createFromDiscriminatorValue);
     }
 
     public AclBindingListPage listACLs(ACLEntityType aclEntityType, String entityIdentificator) throws CliGenericException {
         return retry(() -> exec("kafka", "acl", "list", aclEntityType.flag, entityIdentificator, "-o", "json"))
-            .asJson(AclBindingListPage.class);
+            .parseNodeFromProcessOutput()
+            .getObjectValue(AclBindingListPage::createFromDiscriminatorValue);
     }
 
     //// kafka acl delete

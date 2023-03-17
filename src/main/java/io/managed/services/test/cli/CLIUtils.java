@@ -47,7 +47,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -181,8 +180,27 @@ public class CLIUtils {
         });
     }
 
+    public static KafkaRequest applyKafkaInstance(CLI cli, String kafkaInstanceName) throws CliGenericException, KafkaUnknownHostsException, KafkaNotReadyException, InterruptedException {
+        Optional<KafkaRequest> optionalKafka = cli.listKafka().getItems().stream().filter(e -> kafkaInstanceName.equals(e.getName())).findAny();
+        KafkaRequest kafka = null;
+        if (optionalKafka.isPresent()) {
+            LOGGER.info("kafka instance with name {} is present", kafkaInstanceName);
+            kafka = optionalKafka.get();
+        } else {
+            LOGGER.info("kafka instance with name {} is not present, it will be created now", kafkaInstanceName);
+            var k = cli.createKafka(kafkaInstanceName);
+            LOGGER.debug(k);
+
+            LOGGER.info("wait for kafka instance: {}", k.getId());
+            CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
+        }
+
+        cli.useKafka(kafka.getId());
+        return kafka;
+    }
+
     public static Optional<ServiceAccountData> getServiceAccountByName(CLI cli, String name) throws CliGenericException {
-        return Arrays.stream(cli.listServiceAccount()).filter(sa -> name.equals(sa.getName())).findAny();
+        return cli.listServiceAccount().stream().filter(sa -> name.equals(sa.getName())).findAny();
     }
 
     public static ServiceAccountSecret createServiceAccount(CLI cli, String name) throws CliGenericException {
