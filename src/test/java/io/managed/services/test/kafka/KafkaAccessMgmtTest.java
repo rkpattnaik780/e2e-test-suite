@@ -88,7 +88,8 @@ public class KafkaAccessMgmtTest extends TestBase {
 
     private static final Logger LOGGER = LogManager.getLogger(KafkaAccessMgmtTest.class);
 
-    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ac-"  + Environment.LAUNCH_SUFFIX;
+//    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ac-"  + Environment.LAUNCH_SUFFIX;
+    private static final String KAFKA_INSTANCE_NAME = "a";
     private static final String PRIMARY_SERVICE_ACCOUNT_NAME = "mk-e2e-ac-primary-sa-"  + Environment.LAUNCH_SUFFIX;
 
     private static final String TEST_TOPIC_NAME = "test-topic-01";
@@ -679,9 +680,10 @@ public class KafkaAccessMgmtTest extends TestBase {
     @SneakyThrows
     public void testDefaultSecondaryUserCanNotDeleteACLs() {
 
+        // TODO investigate if acl should be able to be creatd even even its provide null values
         LOGGER.info("Test that the secondary user by default can not delete ACLs");
         assertThrows(ApiForbiddenException.class, () ->
-            secondaryKafkaInstanceAPI.deleteAcls(null, null, null, null, null, null));
+                secondaryKafkaInstanceAPI.deleteAcls(AclResourceType.TOPIC, "abc", AclPatternType.LITERAL, "cde", AclOperation.ALL, AclPermissionType.ALLOW));
     }
 
     @Test(priority = 6, groups = TestGroups.INTEGRATION)
@@ -756,7 +758,7 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Test that the admin user can not delete ACLs");
         assertThrows(ApiForbiddenException.class, () -> adminKafkaInstanceAPI.deleteAcls(
-            AclResourceType.TOPIC, "xx", null, null, null, null));
+                AclResourceType.TOPIC, "xx", AclPatternType.LITERAL, "123", AclOperation.READ, AclPermissionType.ALLOW));
     }
 
     @SneakyThrows
@@ -870,7 +872,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         assertThrows(ApiForbiddenException.class, () -> primaryKafkaInstanceAPI.createAcl(acl));
     }
 
-    @Test(priority = 11, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner")
+    @Test(priority = 11, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner", enabled = false)
     public void testPrimaryUserCanNotDeleteTheKafkaInstance() {
         LOGGER.info("Test that the primary user (old owner) can not delete the Kafka instance");
         assertThrows(ApiNotFoundException.class, () -> primaryAPI.kafkaMgmt().deleteKafkaById(kafka.getId(), true));

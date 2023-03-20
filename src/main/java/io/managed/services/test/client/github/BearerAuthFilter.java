@@ -1,7 +1,7 @@
 package io.managed.services.test.client.github;
 
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
+import jakarta.ws.rs.client.ClientRequestContext;
+import jakarta.ws.rs.client.ClientRequestFilter;
 
 public class BearerAuthFilter implements ClientRequestFilter {
     private final String token;

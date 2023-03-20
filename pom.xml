@@ -36,12 +36,17 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>5.0.1.Final</version>
+            <version>6.2.3.Final</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-multipart-provider</artifactId>
-            <version>5.0.1.Final</version>
+            <version>6.2.3.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jackson2-provider</artifactId>
+            <version>6.2.3.Final</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.kiota</groupId>

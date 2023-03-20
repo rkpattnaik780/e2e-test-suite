@@ -47,6 +47,12 @@ public class KafkaInstanceApi extends BaseApi {
             }
         }
 
+        // TODO workaround: unathorized exception, will be solved like others with: https://github.com/bf2fc6cc711aee1a0c2a/kafka-admin-api/pull/243
+        if (e.getCause() instanceof com.microsoft.kiota.ApiException && e.getMessage().contains("403")) {
+            return new ApiUnknownException("Client is not authorized to perform the requested operation", "2", 403, "/api/v1/errors/2", "2", e);
+        }
+
+
         return null;
 
     }
