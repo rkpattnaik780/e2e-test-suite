@@ -44,18 +44,11 @@
             <version>5.0.1.Final</version>
         </dependency>
         <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jackson2-provider</artifactId>
-            <version>5.0.1.Final</version>
-        </dependency>
-
-        <!--  WIP  only for local dev. TODO delete  in final version  -->
-        <dependency>
             <groupId>com.microsoft.kiota</groupId>
             <artifactId>microsoft-kiota-http-okHttp</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.2</version>
         </dependency>
-        
+
         <dependency>
             <groupId>com.github.andreaTP.rh-java-sdk</groupId>
             <artifactId>account-management-sdk</artifactId>

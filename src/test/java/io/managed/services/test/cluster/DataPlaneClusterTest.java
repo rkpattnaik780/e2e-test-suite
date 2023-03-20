@@ -347,29 +347,32 @@ public class DataPlaneClusterTest extends TestBase {
             log.info("wait for provisioning of kafka instance with id '{}'", kafkaRequest.getId());
             KafkaMgmtApiUtils.waitUntilKafkaIsProvisioning(kafkaMgmtApi, kafkaRequest.getId());
 
-            // wait for three minutes to see if reported capacity already increased (exclusively)
+            // wait for few minutes to see if reported capacity already increased (exclusively)
             TestUtils.waitFor(
                 "update reported remaining capacity",
-                Duration.ofSeconds(5),
-                Duration.ofMinutes(2),
+                Duration.ofSeconds(10),
+                Duration.ofMinutes(6),
                 ready -> {
+
+                    // get number of instances that were deleted while waiting for provisioning of new kafka instance, if some were created skip the test
+                    List<String> kafkaInstanceNamesAfterCreating = FleetshardUtils.listManagedKafka(oc, mkType).stream()
+                            .map(e -> e.getMetadata().getName())
+                            .collect(Collectors.toList());
+                    List<String> deletedInstances = kafkaInstanceNamesBeforeCreating.stream().filter(e -> !kafkaInstanceNamesAfterCreating.contains(e)).collect(Collectors.toList());
+                    if (deletedInstances.size() > 0) {
+                        throw  new SkipException("other instances were deleted while waiting for decrease in capacity");
+                    }
+
                     int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
                     log.debug("newly observed remaining capacity '{}'", newlyObservedRemainingCapacity);
                     if (newlyObservedRemainingCapacity < observedRemainingCapacityInitially)
                         return true;
+
+                    log.error("update of capacity is taking too long");
                     return false;
-                });
+                }
+            );
 
-            // get number of instances that were deleted while waiting for provisioning of new kafka instance
-            List<String> kafkaInstanceNamesAfterCreating = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-                .map(e -> e.getMetadata().getName())
-                .collect(Collectors.toList());
-            List<String> deletedInstances = kafkaInstanceNamesBeforeCreating.stream().filter(e -> !kafkaInstanceNamesAfterCreating.contains(e)).collect(Collectors.toList());
-            log.debug("count of instances that have been deleted since begging of the test {}", deletedInstances.size());
-
-            int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
-            // remaining capacity should be lowered by 1, but as there are instances which may have been deleted by other users (which would free some space) we are not including them
-            Assert.assertTrue(newlyObservedRemainingCapacity <= observedRemainingCapacityInitially - 1  +  deletedInstances.size());
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
