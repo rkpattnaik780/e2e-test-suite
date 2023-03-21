@@ -188,11 +188,11 @@ public class CLIUtils {
             kafka = optionalKafka.get();
         } else {
             LOGGER.info("kafka instance with name {} is not present, it will be created now", kafkaInstanceName);
-            var k = cli.createKafka(kafkaInstanceName);
-            LOGGER.debug(k);
+            kafka = cli.createKafka(kafkaInstanceName);
+            LOGGER.debug(kafka);
 
-            LOGGER.info("wait for kafka instance: {}", k.getId());
-            CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
+            LOGGER.info("wait for kafka instance: {}", kafka.getId());
+            CLIUtils.waitUntilKafkaIsReady(cli, kafka.getId());
         }
 
         cli.useKafka(kafka.getId());

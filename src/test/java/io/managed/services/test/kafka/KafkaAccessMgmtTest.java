@@ -88,8 +88,7 @@ public class KafkaAccessMgmtTest extends TestBase {
 
     private static final Logger LOGGER = LogManager.getLogger(KafkaAccessMgmtTest.class);
 
-//    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ac-"  + Environment.LAUNCH_SUFFIX;
-    private static final String KAFKA_INSTANCE_NAME = "a";
+    private static final String KAFKA_INSTANCE_NAME = "mk-e2e-ac-"  + Environment.LAUNCH_SUFFIX;
     private static final String PRIMARY_SERVICE_ACCOUNT_NAME = "mk-e2e-ac-primary-sa-"  + Environment.LAUNCH_SUFFIX;
 
     private static final String TEST_TOPIC_NAME = "test-topic-01";
