@@ -5,7 +5,6 @@ public class ApiUnknownException extends Exception {
     private final String code;
     private final String href;
     private final String id;
-
     private final String reason;
     private final int responseStatusCode;
 

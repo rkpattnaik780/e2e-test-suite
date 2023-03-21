@@ -22,7 +22,7 @@ public class SecurityMgmtAPIUtils {
     public static SecurityMgmtApi securityMgmtApi(String uri, String offlineToken) {
         var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
         adapter.setBaseUrl(uri);
-        return new SecurityMgmtApi(new ApiClient(adapter), offlineToken);
+        return new SecurityMgmtApi(new ApiClient(adapter));
     }
 
     /**

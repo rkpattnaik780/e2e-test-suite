@@ -23,12 +23,10 @@ import java.util.concurrent.TimeUnit;
 @Log4j2
 public class KafkaInstanceApi extends BaseApi {
 
-    private final ApiClient apiClient;
     private final V1RequestBuilder v1;
 
-    public KafkaInstanceApi(ApiClient apiClient, String offlineToken) {
-        super(offlineToken);
-        this.apiClient = apiClient;
+    public KafkaInstanceApi(ApiClient apiClient) {
+        super();
         this.v1 = apiClient.api().v1();
     }
 
@@ -58,7 +56,6 @@ public class KafkaInstanceApi extends BaseApi {
     }
 
     public Topic updateTopic(String name, TopicSettings ts) throws ApiGenericException {
-        //return getTopics(null, null, null, null, null);
         return retry(() -> v1.topics(name).patch(ts).get(10, TimeUnit.SECONDS));
     }
 

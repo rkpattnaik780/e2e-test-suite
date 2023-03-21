@@ -13,12 +13,10 @@ import java.util.concurrent.TimeUnit;
 
 public class SecurityMgmtApi extends BaseApi {
 
-    private final ApiClient apiClient;
     private final V1RequestBuilder v1;
 
-    public SecurityMgmtApi(ApiClient apiClient, String offlineToken) {
-        super(offlineToken);
-        this.apiClient = apiClient;
+    public SecurityMgmtApi(ApiClient apiClient) {
+        super();
         this.v1 = apiClient.api().kafkas_mgmt().v1();
     }
 

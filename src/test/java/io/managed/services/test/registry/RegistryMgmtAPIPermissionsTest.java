@@ -6,6 +6,7 @@ import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.exception.ApiGenericException;
+import io.managed.services.test.client.registry.RegistryClient;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.vertx.core.Vertx;
@@ -15,12 +16,8 @@ import org.apache.logging.log4j.Logger;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.nio.charset.StandardCharsets;
-
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.bwait;
-import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
 import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient2;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.applyRegistry;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
@@ -105,9 +102,10 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAlienUserCanNotCreateArtifactOnTheRegistry() throws Throwable {
-        var registryClient = registryClient(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
-
-        assertThrows(ApiGenericException.class, () -> registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8)));
+        RegistryClient registryClient2 = registryClient2(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
+        var content = new ContentCreateRequest();
+        content.setContent(ARTIFACT_SCHEMA);
+        assertThrows(ApiGenericException.class, () -> registryClient2.createArtifact(content));
     }
 
     @Test(priority = 1)

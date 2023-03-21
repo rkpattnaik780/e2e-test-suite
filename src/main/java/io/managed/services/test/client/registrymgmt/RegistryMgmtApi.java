@@ -14,12 +14,10 @@ import java.util.concurrent.TimeUnit;
 @Log4j2
 public class RegistryMgmtApi extends BaseApi {
 
-    private final ApiClient apiClient;
     private final V1RequestBuilder v1;
 
-    public RegistryMgmtApi(ApiClient apiClient, String offlineToken) {
-        super(offlineToken);
-        this.apiClient = apiClient;
+    public RegistryMgmtApi(ApiClient apiClient) {
+        super();
         this.v1 = apiClient.api().serviceregistry_mgmt().v1();
     }
 
@@ -35,7 +33,6 @@ public class RegistryMgmtApi extends BaseApi {
                 return new ApiUnknownException(err.getMessage(), "", 400, "", "", err);
             }
         }
-
 
         return null;
     }

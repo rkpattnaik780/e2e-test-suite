@@ -34,13 +34,13 @@ public class RegistryMgmtApiUtils {
         var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
         adapter.setBaseUrl(Environment.OPENSHIFT_API_URI);
 
-        return new RegistryMgmtApi(new ApiClient(adapter), offlineToken);
+        return new RegistryMgmtApi(new ApiClient(adapter));
     }
     public static RegistryMgmtApi registryMgmtApi(String uri, String offlineToken) {
         var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
         adapter.setBaseUrl(uri);
 
-        return new RegistryMgmtApi(new ApiClient(adapter), offlineToken);
+        return new RegistryMgmtApi(new ApiClient(adapter));
     }
 
     /**

@@ -13,17 +13,10 @@ public abstract class BaseApi {
 
     private String defaultSSOUrl = Environment.REDHAT_SSO_URI + "/auth/realms/" + Environment.REDHAT_SSO_REALM + "/protocol/openid-connect/token";
 
-    private final String offlineToken;
     private final String url;
 
-    protected BaseApi(String offlineToken) {
-        this.offlineToken = offlineToken;
+    protected BaseApi() {
         this.url = defaultSSOUrl;
-    }
-
-    protected BaseApi(String offlineToken, String url) {
-        this.offlineToken = offlineToken;
-        this.url = url;
     }
 
     /**

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.microsoft.kiota.serialization.JsonParseNodeFactory;
 import com.openshift.cloud.api.kas.auth.models.AclBindingListPage;
 import com.openshift.cloud.api.kas.auth.models.AclOperation;
 import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
@@ -25,8 +24,6 @@ import com.openshift.cloud.api.kas.auth.models.Record;
 import lombok.extern.log4j.Log4j2;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.testng.Assert;
-
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,7 +34,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
 import static java.time.Duration.ofMinutes;
 import static lombok.Lombok.sneakyThrow;
 
@@ -297,35 +293,27 @@ public class CLI {
      * Return the Registry in use from the CLI
      */
     public Registry createServiceRegistry(String name) throws CliGenericException {
-        var process = retry(() -> exec("service-registry", "create", "--name", name));
-        process.readAll();
-        var factory = new JsonParseNodeFactory();
-        var parseNode = factory.getParseNode("application/json", new ByteArrayInputStream(process.stdoutAsString().getBytes()));
-        return parseNode.getObjectValue(Registry::createFromDiscriminatorValue);
+        return retry(() -> exec("service-registry", "create", "--name", name))
+            .parseNodeFromProcessOutput()
+            .getObjectValue(Registry::createFromDiscriminatorValue);
     }
 
     public Registry describeServiceRegistry(String id) throws CliGenericException  {
-        var process = retry(() -> exec("service-registry", "describe", "--id", id));
-        process.readAll();
-        var factory = new JsonParseNodeFactory();
-        var parseNode = factory.getParseNode("application/json", new ByteArrayInputStream(process.stdoutAsString().getBytes()));
-        return parseNode.getObjectValue(Registry::createFromDiscriminatorValue);
+        return retry(() -> exec("service-registry", "describe", "--id", id))
+            .parseNodeFromProcessOutput()
+            .getObjectValue(Registry::createFromDiscriminatorValue);
     }
 
     public Registry describeServiceRegistry() throws CliGenericException {
-        var process = retry(() -> exec("service-registry", "describe"));
-        process.readAll();
-        var factory = new JsonParseNodeFactory();
-        var parseNode = factory.getParseNode("application/json", new ByteArrayInputStream(process.stdoutAsString().getBytes()));
-        return parseNode.getObjectValue(Registry::createFromDiscriminatorValue);
+        return retry(() -> exec("service-registry", "describe"))
+            .parseNodeFromProcessOutput()
+            .getObjectValue(Registry::createFromDiscriminatorValue);
     }
 
     public RegistryList listServiceRegistry() throws CliGenericException {
-        var process = retry(() -> exec("service-registry", "list", "-o", "json"));
-        process.readAll();
-        var factory = new JsonParseNodeFactory();
-        var parseNode = factory.getParseNode("application/json", new ByteArrayInputStream(process.stdoutAsString().getBytes()));
-        return parseNode.getObjectValue(RegistryList::createFromDiscriminatorValue);
+        return retry(() -> exec("service-registry", "list", "-o", "json"))
+            .parseNodeFromProcessOutput()
+            .getObjectValue(RegistryList::createFromDiscriminatorValue);
     }
 
     public void useServiceRegistry(String id) throws CliGenericException {

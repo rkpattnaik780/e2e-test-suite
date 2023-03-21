@@ -13,18 +13,15 @@ import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
 public class KafkaMgmtApi extends BaseApi {
 
-    private final ApiClient apiClient;
     private final V1RequestBuilder v1;
 
-    public KafkaMgmtApi(ApiClient apiClient, String offlineToken) {
-        super(offlineToken);
-        this.apiClient = Objects.requireNonNull(apiClient);
+    public KafkaMgmtApi(ApiClient apiClient) {
+        super();
         this.v1 = apiClient.api().kafkas_mgmt().v1();
     }
 

@@ -47,7 +47,7 @@ public class KafkaMgmtApiUtils {
     public static KafkaMgmtApi kafkaMgmtApi(String uri, String offlineToken) {
         var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
         adapter.setBaseUrl(uri);
-        return new KafkaMgmtApi(new ApiClient(adapter), offlineToken);
+        return new KafkaMgmtApi(new ApiClient(adapter));
     }
 
     /**

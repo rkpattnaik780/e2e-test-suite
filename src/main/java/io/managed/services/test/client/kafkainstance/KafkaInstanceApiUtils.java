@@ -56,18 +56,10 @@ public class KafkaInstanceApiUtils {
         adapter.setBaseUrl(uri);
         ApiClient client = new ApiClient(adapter);
 
-//        TODO: should this be allowed?
-//        if (Environment.KAFKA_INSECURE_TLS) {
-//            ClientConfiguration clientConfig = new ClientConfiguration(ResteasyProviderFactory.getInstance());
-//            clientConfig.register(client.getJSON());
-//
-//            client.setHttpClient(ClientBuilder.newBuilder()
-//                    .sslContext(TestUtils.getInsecureSSLContext("TLS"))
-//                    .withConfig(clientConfig)
-//                    .build());
-//        }
+        //  TODO: implement case for situation of insecure connection is necessary
 
-        return new KafkaInstanceApi(client, offlineToken);
+
+        return new KafkaInstanceApi(client);
     }
 
     public static Future<KafkaConsumerClient<String, String>> startConsumerGroup(
