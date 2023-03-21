@@ -420,7 +420,6 @@ public class DataPlaneClusterTest extends TestBase {
                         if (newlyObservedRemainingCapacity > remainingCapacityBefore)
                             return true;
 
-
                         // list all instances that exist after our instance was deleted
                         List<String> kafkaInstanceNamesAfterDeleting = FleetshardUtils.listManagedKafka(oc, mkType).stream()
                                 .map(e -> e.getMetadata().getName())
