@@ -1,12 +1,12 @@
 package io.managed.services.test.client.kafkamgmt;
 
-import com.github.andreatp.kiota.auth.RHAccessTokenProvider;
 import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
 import com.microsoft.kiota.http.OkHttpRequestAdapter;
 import com.openshift.cloud.api.kas.ApiClient;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import com.openshift.cloud.api.kas.models.KafkaUpdateRequest;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import io.managed.services.test.DNSUtils;
 import io.managed.services.test.Environment;
 import io.managed.services.test.ThrowingFunction;

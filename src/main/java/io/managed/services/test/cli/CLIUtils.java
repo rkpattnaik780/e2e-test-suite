@@ -191,8 +191,9 @@ public class CLIUtils {
             kafka = cli.createKafka(kafkaInstanceName);
             LOGGER.debug(kafka);
 
+            // updated version of kafka after it is ready needs to be passed
             LOGGER.info("wait for kafka instance: {}", kafka.getId());
-            CLIUtils.waitUntilKafkaIsReady(cli, kafka.getId());
+            kafka = CLIUtils.waitUntilKafkaIsReady(cli, kafka.getId());
         }
 
         cli.useKafka(kafka.getId());

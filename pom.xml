@@ -85,9 +85,9 @@
             <version>${sdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.andreaTP.kiota-utils</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>kiota-rh-auth</artifactId>
-            <version>0.1.6</version>
+            <version>0.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>

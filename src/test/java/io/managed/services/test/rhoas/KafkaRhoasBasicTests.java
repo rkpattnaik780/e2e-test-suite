@@ -366,7 +366,7 @@ public class KafkaRhoasBasicTests extends TestBase {
         assertTrue(exists.isPresent());
     }
 
-
+    // TODO debug
     @Test(dependsOnMethods = {"testCreateTopic", "testGrantProducerAndConsumerAccess"}, enabled = true)
     @SneakyThrows
     public void testKafkaInstanceTopic() {
@@ -452,7 +452,7 @@ public class KafkaRhoasBasicTests extends TestBase {
             10,
             100));
     }
-
+    // TODO DEBUG
     @Test(dependsOnMethods = {"testGrantProducerAndConsumerAccess"}, enabled = true)
     @SneakyThrows
     public void testDescribeConsumerGroup() {

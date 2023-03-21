@@ -1,9 +1,9 @@
 package io.managed.services.test.client.registry;
 
-import com.github.andreatp.kiota.auth.RHAccessTokenProvider;
 import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
 import com.microsoft.kiota.http.OkHttpRequestAdapter;
 import com.openshift.cloud.api.registry.instance.ApiClient;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -1,6 +1,5 @@
 package io.managed.services.test.client.registrymgmt;
 
-import com.github.andreatp.kiota.auth.RHAccessTokenProvider;
 import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
 import com.microsoft.kiota.http.OkHttpRequestAdapter;
 import com.openshift.cloud.api.srs.ApiClient;
@@ -8,6 +7,7 @@ import com.openshift.cloud.api.srs.models.Registry;
 import com.openshift.cloud.api.srs.models.RegistryCreate;
 import com.openshift.cloud.api.srs.models.RegistryList;
 import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import io.managed.services.test.Environment;
 import io.managed.services.test.ThrowingFunction;
 import io.managed.services.test.ThrowingSupplier;

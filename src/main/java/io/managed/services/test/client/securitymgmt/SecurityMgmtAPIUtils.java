@@ -1,13 +1,13 @@
 package io.managed.services.test.client.securitymgmt;
 
 
-import com.github.andreatp.kiota.auth.RHAccessTokenProvider;
 import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
 import com.microsoft.kiota.http.OkHttpRequestAdapter;
 import com.openshift.cloud.api.kas.ApiClient;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
 import com.openshift.cloud.api.kas.models.ServiceAccountListItem;
 import com.openshift.cloud.api.kas.models.ServiceAccountRequest;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import io.managed.services.test.client.exception.ApiGenericException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
