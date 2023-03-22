@@ -177,7 +177,7 @@ public class RegistryMgmtApiUtils {
     }
 
     public static void waitUntilRegistryIsDeleted(RegistryMgmtApi api, String registryId)
-        throws InterruptedException, ApiGenericException, RegistryNotDeletedException {
+        throws InterruptedException, ApiGenericException, RegistryNotDeletedException, RootTypeOfRegistryNotDeletedException {
 
         waitUntilRootTypeOfRegistryIsDeleted(() -> {
             try {
@@ -216,14 +216,13 @@ public class RegistryMgmtApiUtils {
         try {
             waitFor("registry instance to be deleted", ofSeconds(1), ofSeconds(20), ready);
         } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-            // throw new RegistryNotDeletedException(registryAtom.get(), e);
+            throw new RegistryNotDeletedException(registryAtom.get(), e);
         }
     }
 
     public static <T extends Throwable> void waitUntilRootTypeOfRegistryIsDeleted(
             ThrowingSupplier<Optional<RootTypeForRegistry>, T> supplier)
-            throws T, InterruptedException, RegistryNotDeletedException {
+            throws T, InterruptedException, RootTypeOfRegistryNotDeletedException {
 
         var registryAtom = new AtomicReference<RootTypeForRegistry>();
         ThrowingFunction<Boolean, Boolean, T> ready = l -> {
@@ -241,8 +240,7 @@ public class RegistryMgmtApiUtils {
         try {
             waitFor("registry instance to be deleted", ofSeconds(1), ofSeconds(20), ready);
         } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-            // throw new RegistryNotDeletedException(registryAtom.get(), e);
+            throw new RootTypeOfRegistryNotDeletedException(registryAtom.get(), e);
         }
     }
 
