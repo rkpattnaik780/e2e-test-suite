@@ -35,6 +35,8 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import org.json.JSONObject;
+
 
 
 // TODO unify and add env variables for gcp data plane clusters.
@@ -214,9 +216,9 @@ public class DataPlaneClusterTest extends TestBase {
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
-            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
+            if (KAFKAS_MGMT_21_CODE.equals(new JSONObject(e.getResponseBody()).get("code")))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
+            if (KAFKAS_MGMT_24_CODE.equals(new JSONObject(e.getResponseBody()).get("code")))
                 throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw  e;
@@ -297,7 +299,7 @@ public class DataPlaneClusterTest extends TestBase {
 
         } catch (ApiForbiddenException e) {
             // if not quota related exception rethrow it
-            if (!(e.getResponseStatusCode() == 403 && KAFKAS_MGMT_120_CODE.equals(e.getCode()))) {
+            if (!(e.getCode() == 403 && new JSONObject(e.getResponseBody()).get("code").equals(KAFKAS_MGMT_120_CODE))) {
                 throw e;
             }
             log.warn("quota reached %s", e);
@@ -355,8 +357,8 @@ public class DataPlaneClusterTest extends TestBase {
 
                     // get number of instances that were deleted while waiting for provisioning of new kafka instance, if some were created skip the test
                     List<String> kafkaInstanceNamesAfterCreating = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-                            .map(e -> e.getMetadata().getName())
-                            .collect(Collectors.toList());
+                        .map(e -> e.getMetadata().getName())
+                        .collect(Collectors.toList());
                     List<String> deletedInstances = kafkaInstanceNamesBeforeCreating.stream().filter(e -> !kafkaInstanceNamesAfterCreating.contains(e)).collect(Collectors.toList());
                     if (deletedInstances.size() > 0) {
                         log.debug("newly deleted instances: {}", deletedInstances);
@@ -368,7 +370,6 @@ public class DataPlaneClusterTest extends TestBase {
                     if (newlyObservedRemainingCapacity < observedRemainingCapacityInitially)
                         return true;
 
-
                     return false;
                 }
             );
@@ -376,9 +377,9 @@ public class DataPlaneClusterTest extends TestBase {
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
-            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
+            if (KAFKAS_MGMT_21_CODE.equals(new JSONObject(e.getResponseBody()).get("code")))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
+            if (KAFKAS_MGMT_24_CODE.equals(new JSONObject(e.getResponseBody()).get("code")))
                 throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw e;
@@ -436,7 +437,8 @@ public class DataPlaneClusterTest extends TestBase {
                         }
 
                         return false;
-                    });
+                    }
+                );
             } catch (Exception e) {
                 log.warn("error while increasing reported remaining capacity");
                 log.error(e);
