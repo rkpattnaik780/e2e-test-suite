@@ -5,7 +5,6 @@ import io.managed.services.test.RetryUtils;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.ThrowingVoid;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -21,20 +20,22 @@ public abstract class BaseApi {
 
     /**
      * @param e Exception
-     * @return ApiUnknownException | null if the passed Exception can't be converted
+     * @return ApiGenericException | null if the passed Exception can't be converted
      */
-    protected abstract ApiUnknownException toApiException(Exception e);
+    protected abstract ApiGenericException toApiException(Exception e);
 
     private <A> A handleException(ThrowingSupplier<A, Exception> f) throws ApiGenericException {
         try {
             return f.get();
+        }  catch (ApiGenericException e) {
+            throw e;
         } catch (Exception e) {
             log.info(e);
 
             var ex = toApiException(e);
             if (ex != null) {
                 log.info(ex);
-                throw ApiGenericException.apiException(ex);
+                throw ex;
             }
             throw new RuntimeException(e);
         }

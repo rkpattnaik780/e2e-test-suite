@@ -43,7 +43,7 @@ public class SecurityMgmtApi extends BaseApi {
     }
 
     @Override
-    protected ApiUnknownException toApiException(Exception e) {
+    protected ApiGenericException toApiException(Exception e) {
         return null;
     }
 }

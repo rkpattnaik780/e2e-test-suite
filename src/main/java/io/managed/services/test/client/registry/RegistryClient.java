@@ -18,10 +18,10 @@ public class RegistryClient extends BaseApi {
     }
 
     @Override
-    protected ApiUnknownException toApiException(Exception e) {
+    protected ApiGenericException toApiException(Exception e) {
         if (e.getCause() instanceof com.microsoft.kiota.ApiException) {
             var err = (com.microsoft.kiota.ApiException) e.getCause();
-            return new ApiUnknownException(err.getMessage(), "", err.responseStatusCode, "", "", err);
+            return new ApiGenericException(err.getMessage(), "", err.responseStatusCode, "", "", err);
         }
 
         return null;

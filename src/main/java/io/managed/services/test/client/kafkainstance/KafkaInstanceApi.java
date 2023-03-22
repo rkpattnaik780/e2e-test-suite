@@ -31,23 +31,24 @@ public class KafkaInstanceApi extends BaseApi {
     }
 
     @Override
-    protected ApiUnknownException toApiException(Exception e) {
+    protected ApiGenericException toApiException(Exception e) {
         log.info(e);
 
         if (e.getCause() != null) {
             if (e.getCause() instanceof com.openshift.cloud.api.kas.auth.models.Error) {
                 var err = (com.openshift.cloud.api.kas.auth.models.Error) e.getCause();
-                return new ApiUnknownException(err.getReason(), err.getCode().toString(), err.responseStatusCode, err.getHref(), err.getId(), err);
+                var apiException = new ApiUnknownException(err.getReason(), err.getCode().toString(), err.responseStatusCode, err.getHref(), err.getId(), err);
+                return new ApiGenericException(apiException);
             }
             if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
                 var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
-                return new ApiUnknownException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
+                return new ApiGenericException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
             }
         }
 
         // TODO workaround: unathorized exception, will be solved like others with: https://github.com/bf2fc6cc711aee1a0c2a/kafka-admin-api/pull/243
         if (e.getCause() instanceof com.microsoft.kiota.ApiException && e.getMessage().contains("403")) {
-            return new ApiUnknownException("Client is not authorized to perform the requested operation", "2", 403, "/api/v1/errors/2", "2", e);
+            return new ApiGenericException("Client is not authorized to perform the requested operation", "2", 403, "/api/v1/errors/2", "2", e);
         }
 
 

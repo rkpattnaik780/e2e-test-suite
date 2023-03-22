@@ -24,6 +24,22 @@ public class ApiGenericException extends Exception {
         this.id = e.getId();
     }
 
+    public ApiGenericException(
+            String reason,
+            String code,
+            int responseStatusCode,
+            String href,
+            String id,
+            Exception cause) {
+
+        super(reason, cause);
+        this.reason = reason;
+        this.code = code;
+        this.responseStatusCode = responseStatusCode;
+        this.href = href;
+        this.id = id;
+    }
+
     public int getResponseStatusCode() {
         return responseStatusCode;
     }

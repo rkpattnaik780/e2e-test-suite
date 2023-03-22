@@ -79,6 +79,8 @@ public class KafkaMgmtApiUtils {
         kafka.setName(name);
         kafka.setCloudProvider(Environment.CLOUD_PROVIDER);
         kafka.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        kafka.setClusterId(Environment.CLUSTER_ID);
+        kafka.setMarketplace(Environment.IS_ENTERPRISE ? "enterprise" : null);
         return kafka;
     }
 

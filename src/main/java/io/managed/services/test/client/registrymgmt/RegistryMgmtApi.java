@@ -7,7 +7,6 @@ import com.openshift.cloud.api.srs.models.RegistryList;
 import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiUnknownException;
 import lombok.extern.log4j.Log4j2;
 import java.util.concurrent.TimeUnit;
 
@@ -22,7 +21,7 @@ public class RegistryMgmtApi extends BaseApi {
     }
 
     @Override
-    protected ApiUnknownException toApiException(Exception e) {
+    protected ApiGenericException toApiException(Exception e) {
         if (e != null && e.getCause() != null) {
             log.info(e);
         }
@@ -30,7 +29,7 @@ public class RegistryMgmtApi extends BaseApi {
         if (e.getCause() != null) {
             if (e.getCause() instanceof com.microsoft.kiota.ApiException) {
                 var err = (com.microsoft.kiota.ApiException) e.getCause();
-                return new ApiUnknownException(err.getMessage(), "", 400, "", "", err);
+                return new ApiGenericException(err.getMessage(), "", 400, "", "", err);
             }
         }
 

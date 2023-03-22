@@ -18,7 +18,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.bwait;
-import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient2;
+import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.applyRegistry;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
 import static org.testng.Assert.assertEquals;
@@ -102,10 +102,10 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAlienUserCanNotCreateArtifactOnTheRegistry() throws Throwable {
-        RegistryClient registryClient2 = registryClient2(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
+        RegistryClient registryClient = registryClient(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
         var content = new ContentCreateRequest();
         content.setContent(ARTIFACT_SCHEMA);
-        assertThrows(ApiGenericException.class, () -> registryClient2.createArtifact(content));
+        assertThrows(ApiGenericException.class, () -> registryClient.createArtifact(content));
     }
 
     @Test(priority = 1)
@@ -126,7 +126,7 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAdminUserCanCreateArtifactOnTheRegistry() throws Throwable {
-        var registryClient = registryClient2(registry.getRegistryUrl(), Environment.ADMIN_OFFLINE_TOKEN);
+        var registryClient = registryClient(registry.getRegistryUrl(), Environment.ADMIN_OFFLINE_TOKEN);
         var content = new ContentCreateRequest();
         content.setContent(ARTIFACT_SCHEMA);
         registryClient.createArtifact(content);

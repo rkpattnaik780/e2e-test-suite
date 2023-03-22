@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.message;
-import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient2;
+import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.cleanRegistry;
 import static io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils.waitUntilRegistryIsReady;
 import static org.testng.Assert.assertEquals;
@@ -88,7 +88,7 @@ public class RegistryMgmtAPITest extends TestBase {
 
     @Test(dependsOnMethods = "testCreateRegistry")
     public void testCreateArtifact() throws Throwable {
-        var registryClient = registryClient2(registry.getRegistryUrl(), Environment.PRIMARY_OFFLINE_TOKEN);
+        var registryClient = registryClient(registry.getRegistryUrl(), Environment.PRIMARY_OFFLINE_TOKEN);
 
         LOGGER.info("create artifact on registry");
 

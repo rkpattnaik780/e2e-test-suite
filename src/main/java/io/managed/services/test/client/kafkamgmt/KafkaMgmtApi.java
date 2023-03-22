@@ -26,17 +26,17 @@ public class KafkaMgmtApi extends BaseApi {
     }
 
     @Override
-    protected ApiUnknownException toApiException(Exception e) {
+    protected ApiGenericException toApiException(Exception e) {
         log.info(e);
 
         if (e.getCause() != null) {
             if (e.getCause() instanceof com.openshift.cloud.api.kas.auth.models.Error) {
                 var err = (com.openshift.cloud.api.kas.auth.models.Error) e.getCause();
-                return new ApiUnknownException(err.getReason(), err.getCode().toString(), err.responseStatusCode, err.getHref(), err.getId(), err);
+                return new ApiGenericException(err.getReason(), err.getCode().toString(), err.responseStatusCode, err.getHref(), err.getId(), err);
             }
             if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
                 var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
-                return new ApiUnknownException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
+                return new ApiGenericException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
             }
         }
         return null;
