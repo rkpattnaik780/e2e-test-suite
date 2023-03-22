@@ -4,7 +4,6 @@ import com.openshift.cloud.api.registry.instance.models.ArtifactMetaData;
 import com.openshift.cloud.api.registry.instance.models.ContentCreateRequest;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiUnknownException;
 import com.openshift.cloud.api.registry.instance.ApiClient;
 import java.util.concurrent.TimeUnit;
 
