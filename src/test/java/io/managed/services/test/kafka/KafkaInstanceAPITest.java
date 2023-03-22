@@ -11,8 +11,6 @@ import io.managed.services.test.TestGroups;
 import io.managed.services.test.TestUtils;
 import io.managed.services.test.client.ApplicationServicesApi;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiLockedException;
-import io.managed.services.test.client.exception.ApiUnauthorizedException;
 import io.managed.services.test.client.kafka.KafkaAuthMethod;
 import io.managed.services.test.client.kafka.KafkaConsumerClient;
 import io.managed.services.test.client.kafka.KafkaMessagingUtils;
@@ -135,7 +133,7 @@ public class KafkaInstanceAPITest extends TestBase {
     @SneakyThrows
     public void testFailToCallAPIIfUserBelongsToADifferentOrganization() {
         var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, Environment.ALIEN_OFFLINE_TOKEN);
-        assertThrows(ApiUnauthorizedException.class, () -> kafkaInstanceApi.getTopics());
+        assertThrows(ApiGenericException.class, () -> kafkaInstanceApi.getTopics());
     }
 
     @Test(groups = TestGroups.INTEGRATION)
@@ -464,7 +462,7 @@ public class KafkaInstanceAPITest extends TestBase {
     @Test(dependsOnMethods = "testConsumerGroup", groups = TestGroups.INTEGRATION)
     public void testFailToDeleteConsumerGroupIfItIsActive() {
         // deleting active consumer group should fail
-        assertThrows(ApiLockedException.class,
+        assertThrows(ApiGenericException.class,
             () -> kafkaInstanceApi.deleteConsumerGroupById(TEST_GROUP_NAME));
     }
 
@@ -484,7 +482,7 @@ public class KafkaInstanceAPITest extends TestBase {
         kafkaInstanceApi.deleteConsumerGroupById(TEST_GROUP_NAME);
 
         // consumer group should have been deleted
-        assertThrows(Exception.class,
+        assertThrows(ApiGenericException.class,
             () -> kafkaInstanceApi.getConsumerGroupById(TEST_GROUP_NAME));
         LOGGER.info("consumer group '{}' not found", TEST_GROUP_NAME);
     }

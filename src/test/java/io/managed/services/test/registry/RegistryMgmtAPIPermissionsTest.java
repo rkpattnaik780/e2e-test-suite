@@ -39,7 +39,7 @@ import static org.testng.Assert.assertThrows;
 public class RegistryMgmtAPIPermissionsTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtAPIPermissionsTest.class);
 
-    private static final String SERVICE_REGISTRY_NAME = "rama-test";
+    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-rmp-" + Environment.LAUNCH_SUFFIX;
     private static final String ARTIFACT_SCHEMA = "{\"type\":\"record\",\"name\":\"Greeting\",\"fields\":[{\"name\":\"Message\",\"type\":\"string\"},{\"name\":\"Time\",\"type\":\"long\"}]}";
 
     private final Vertx vertx = Vertx.vertx();
