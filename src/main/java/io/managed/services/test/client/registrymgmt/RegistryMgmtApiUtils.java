@@ -51,7 +51,7 @@ public class RegistryMgmtApiUtils {
      * @return Registry
      */
     public static RootTypeForRegistry applyRegistry(RegistryMgmtApi api, String name)
-        throws ApiGenericException, InterruptedException, RegistryNotReadyException {
+        throws ApiGenericException, InterruptedException, RegistryNotReadyException, RootTypeOfRegistryNotReadyException {
 
         var registryCreateRest = new RegistryCreate();
         registryCreateRest.setName(name);
@@ -66,7 +66,7 @@ public class RegistryMgmtApiUtils {
      * @return Registry
      */
     public static RootTypeForRegistry applyRegistry(RegistryMgmtApi api, RegistryCreate payload)
-        throws ApiGenericException, InterruptedException,  RegistryNotReadyException {
+        throws ApiGenericException, InterruptedException,  RegistryNotReadyException, RootTypeOfRegistryNotReadyException {
 
         var registryList = getRegistryByName(api, payload.getName());
 
@@ -93,7 +93,7 @@ public class RegistryMgmtApiUtils {
      * @return Registry
      */
     public static RootTypeForRegistry waitUntilRegistryIsReady(RegistryMgmtApi api, String registryID)
-        throws RegistryNotReadyException, InterruptedException, ApiGenericException {
+        throws RegistryNotReadyException, InterruptedException, ApiGenericException, RootTypeOfRegistryNotReadyException {
 
         return waitUntilRootTypeOfRegistryIsReady(() -> {
             try {
@@ -106,7 +106,7 @@ public class RegistryMgmtApiUtils {
 
     // TODO: refactor the following 2 methods into one
     public static <T extends Throwable> RootTypeForRegistry waitUntilRootTypeOfRegistryIsReady(ThrowingSupplier<RootTypeForRegistry, T> supplier)
-            throws T, InterruptedException, RegistryNotReadyException {
+            throws T, InterruptedException, RegistryNotReadyException, RootTypeOfRegistryNotReadyException {
 
         var registryAtom = new AtomicReference<RootTypeForRegistry>();
         ThrowingFunction<Boolean, Boolean, T> ready = last -> {
@@ -121,7 +121,7 @@ public class RegistryMgmtApiUtils {
             waitFor("registry to be ready", ofSeconds(5), ofMinutes(1), ready);
         } catch (TimeoutException e) {
             // throw a more accurate error
-            throw new RegistryNotReadyException(registryAtom.get(), e);
+            throw new RootTypeOfRegistryNotReadyException(registryAtom.get(), e);
         }
 
         var registry = registryAtom.get();
@@ -146,8 +146,7 @@ public class RegistryMgmtApiUtils {
             waitFor("registry to be ready", ofSeconds(5), ofMinutes(1), ready);
         } catch (TimeoutException e) {
             // throw a more accurate error
-            throw new RuntimeException(e);
-            // throw new RegistryNotReadyException(registryAtom.get(), e);
+            throw new RegistryNotReadyException(registryAtom.get(), e);
         }
 
         var registry = registryAtom.get();
