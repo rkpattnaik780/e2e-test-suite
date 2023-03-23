@@ -27,7 +27,7 @@ public class RegistryMgmtApi extends BaseApi {
             log.info(e);
             if (e.getCause() instanceof com.microsoft.kiota.ApiException) {
                 var err = (com.microsoft.kiota.ApiException) e.getCause();
-                return new ApiGenericException(err.getMessage(), "", 400, "", "", err);
+                return new ApiGenericException(err.getMessage(), "", err.responseStatusCode, "", "", err);
             }
         }
 

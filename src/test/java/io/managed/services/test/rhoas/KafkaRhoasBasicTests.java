@@ -366,7 +366,6 @@ public class KafkaRhoasBasicTests extends TestBase {
         assertTrue(exists.isPresent());
     }
 
-    // TODO debug
     @Test(dependsOnMethods = {"testCreateTopic", "testGrantProducerAndConsumerAccess"}, enabled = true)
     @SneakyThrows
     public void testKafkaInstanceTopic() {

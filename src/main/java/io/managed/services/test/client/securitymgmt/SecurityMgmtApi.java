@@ -7,9 +7,11 @@ import com.openshift.cloud.api.kas.models.ServiceAccount;
 import com.openshift.cloud.api.kas.models.ServiceAccountRequest;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.concurrent.TimeUnit;
 
+@Log4j2
 public class SecurityMgmtApi extends BaseApi {
 
     private final V1RequestBuilder v1;
@@ -43,6 +45,15 @@ public class SecurityMgmtApi extends BaseApi {
 
     @Override
     protected ApiGenericException toApiException(Exception e) {
+
+        if (e.getCause() != null) {
+            log.info(e);
+            if (e.getCause() instanceof com.microsoft.kiota.ApiException) {
+                var err = (com.microsoft.kiota.ApiException) e.getCause();
+                return new ApiGenericException(err.getMessage(), "", err.responseStatusCode, "", "", err);
+            }
+        }
+
         return null;
     }
 }
