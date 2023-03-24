@@ -27,15 +27,14 @@ public abstract class BaseApi {
     private <A> A handleException(ThrowingSupplier<A, Exception> f) throws ApiGenericException {
         try {
             return f.get();
-        }  catch (ApiGenericException e) {
+        } catch (ApiGenericException e) {
             throw e;
         } catch (Exception e) {
             log.info(e);
-
             var ex = toApiException(e);
             if (ex != null) {
                 log.info(ex);
-                throw ex;
+                throw ApiGenericException.apiException(ex);
             }
             throw new RuntimeException(e);
         }

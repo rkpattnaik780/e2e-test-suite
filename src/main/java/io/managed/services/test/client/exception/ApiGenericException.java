@@ -24,6 +24,15 @@ public class ApiGenericException extends Exception {
         this.id = e.getId();
     }
 
+    public ApiGenericException(ApiGenericException e) {
+        super(e.getReason(), e);
+        this.responseStatusCode = e.getResponseStatusCode();
+        this.reason = e.getReason();
+        this.code = e.getCode();
+        this.href = e.getHref();
+        this.id = e.getId();
+    }
+
     public ApiGenericException(
             String reason,
             String code,
@@ -60,7 +69,7 @@ public class ApiGenericException extends Exception {
         return id;
     }
 
-    public static ApiGenericException apiException(ApiUnknownException e) {
+    public static ApiGenericException apiException(ApiGenericException e) {
         switch (e.getResponseStatusCode()) {
             case HttpURLConnection.HTTP_NOT_FOUND:
                 return new ApiNotFoundException(e);

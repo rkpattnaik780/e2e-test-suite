@@ -1,7 +1,7 @@
 package io.managed.services.test.client.exception;
 
 public class ApiLockedException extends ApiGenericException {
-    public ApiLockedException(ApiUnknownException e) {
+    public ApiLockedException(ApiGenericException e) {
         super(e);
     }
 }
