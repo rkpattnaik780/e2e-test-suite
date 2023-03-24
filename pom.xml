@@ -22,15 +22,8 @@
         <sundrio.version>0.93.2</sundrio.version>
         <!-- See 'Update the rhoas-model dependency' in the README.md on how to build and update the rhoas-model -->
         <rhoas-model.version>0.9.7</rhoas-model.version>
-        <sdk.version>0.0.9</sdk.version>
+        <sdk.version>1.0.1</sdk.version>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
@@ -55,32 +48,32 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>account-management-sdk</artifactId>
             <version>${sdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>kafka-instance-sdk</artifactId>
             <version>${sdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>kafka-management-sdk</artifactId>
             <version>${sdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>registry-instance-sdk</artifactId>
             <version>${sdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>registry-management-sdk</artifactId>
             <version>${sdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.andreaTP.rh-java-sdk</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>service-accounts-sdk</artifactId>
             <version>${sdk.version}</version>
         </dependency>
