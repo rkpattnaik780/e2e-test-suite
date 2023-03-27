@@ -1,14 +1,16 @@
 package io.managed.services.test.client.kafkainstance;
 
-import com.openshift.cloud.api.kas.auth.invoker.ApiClient;
+import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
+import com.microsoft.kiota.http.OkHttpRequestAdapter;
+import com.openshift.cloud.api.kas.auth.ApiClient;
 import com.openshift.cloud.api.kas.auth.models.ConsumerGroup;
 import com.openshift.cloud.api.kas.auth.models.NewTopicInput;
 import com.openshift.cloud.api.kas.auth.models.Topic;
 import com.openshift.cloud.api.kas.auth.models.TopicSettings;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import io.managed.services.test.Environment;
 import io.managed.services.test.IsReady;
-import io.managed.services.test.TestUtils;
 import io.managed.services.test.ThrowingFunction;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.client.exception.ApiGenericException;
@@ -21,10 +23,6 @@ import io.vertx.core.Vertx;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.javatuples.Pair;
-import org.jboss.resteasy.client.jaxrs.internal.ClientConfiguration;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
-
-import javax.ws.rs.client.ClientBuilder;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -54,19 +52,14 @@ public class KafkaInstanceApiUtils {
     }
 
     public static KafkaInstanceApi kafkaInstanceApi(String uri, String offlineToken) {
-        ApiClient client = new ApiClient();
+        var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
+        adapter.setBaseUrl(uri);
+        ApiClient client = new ApiClient(adapter);
 
-        if (Environment.KAFKA_INSECURE_TLS) {
-            ClientConfiguration clientConfig = new ClientConfiguration(ResteasyProviderFactory.getInstance());
-            clientConfig.register(client.getJSON());
+        //  TODO: implement case for situation of insecure connection is necessary
 
-            client.setHttpClient(ClientBuilder.newBuilder()
-                    .sslContext(TestUtils.getInsecureSSLContext("TLS"))
-                    .withConfig(clientConfig)
-                    .build());
-        }
 
-        return new KafkaInstanceApi(client.setBasePath(uri), offlineToken);
+        return new KafkaInstanceApi(client);
     }
 
     public static Future<KafkaConsumerClient<String, String>> startConsumerGroup(
@@ -158,16 +151,17 @@ public class KafkaInstanceApiUtils {
     public static Optional<Topic> getTopicByName(KafkaInstanceApi api, String name) throws ApiGenericException {
         try {
             return Optional.of(api.getTopic(name));
-        } catch (ApiNotFoundException e) {
+        } catch (ApiGenericException e) {
             return Optional.empty();
         }
     }
 
     public static Topic applyTopic(KafkaInstanceApi api, String topicName) throws ApiGenericException {
-        var topicPayload = new NewTopicInput()
-            .name(topicName)
-            .settings(new TopicSettings().numPartitions(1));
-
+        var topicPayload = new NewTopicInput();
+        topicPayload.setName(topicName);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        topicPayload.setSettings(settings);
         return applyTopic(api, topicPayload);
     }
 

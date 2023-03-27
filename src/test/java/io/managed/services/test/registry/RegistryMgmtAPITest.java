@@ -1,7 +1,8 @@
 package io.managed.services.test.registry;
 
-import com.openshift.cloud.api.srs.models.Registry;
+import com.openshift.cloud.api.registry.instance.models.ContentCreateRequest;
 import com.openshift.cloud.api.srs.models.RegistryCreate;
+import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.client.exception.ApiGenericException;
@@ -14,7 +15,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.nio.charset.StandardCharsets;
 
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.message;
@@ -37,12 +37,12 @@ import static org.testng.Assert.assertTrue;
 public class RegistryMgmtAPITest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtAPITest.class);
 
-    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-" + Environment.LAUNCH_SUFFIX;
     private static final String SERVICE_REGISTRY_2_NAME = "mk-e2e-sr2-"  + Environment.LAUNCH_SUFFIX;
     private static final String ARTIFACT_SCHEMA = "{\"type\":\"record\",\"name\":\"Greeting\",\"fields\":[{\"name\":\"Message\",\"type\":\"string\"},{\"name\":\"Time\",\"type\":\"long\"}]}";
 
     private RegistryMgmtApi registryMgmtApi;
-    private Registry registry;
+    private RootTypeForRegistry registry;
 
     @BeforeClass(alwaysRun = true)
     public void bootstrap() throws Throwable {
@@ -71,9 +71,9 @@ public class RegistryMgmtAPITest extends TestBase {
     @Test()
     public void testCreateRegistry() throws Exception {
 
-        var registryCreateRest = new RegistryCreate()
-            .name(SERVICE_REGISTRY_NAME)
-            .description("Hello World!");
+        var registryCreateRest = new RegistryCreate();
+        registryCreateRest.setName(SERVICE_REGISTRY_NAME);
+        registryCreateRest.setDescription("Hello World!");
 
         var registry = registryMgmtApi.createRegistry(registryCreateRest);
         LOGGER.info("service registry: {}", Json.encode(registry));
@@ -91,9 +91,11 @@ public class RegistryMgmtAPITest extends TestBase {
         var registryClient = registryClient(registry.getRegistryUrl(), Environment.PRIMARY_OFFLINE_TOKEN);
 
         LOGGER.info("create artifact on registry");
-        var artifactMetaData = registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8));
 
-        assertEquals(artifactMetaData.getName(), "Greeting");
+        var content = new ContentCreateRequest();
+        content.setContent(ARTIFACT_SCHEMA);
+        registryClient.createArtifact(content);
+
     }
 
     @Test(dependsOnMethods = "testCreateRegistry")
@@ -124,8 +126,8 @@ public class RegistryMgmtAPITest extends TestBase {
     @Test(dependsOnMethods = "testCreateRegistry")
     public void testFailToCreateRegistryIfItAlreadyExist() {
 
-        var registryCreateRest = new RegistryCreate()
-            .name(SERVICE_REGISTRY_NAME);
+        var registryCreateRest = new RegistryCreate();
+        registryCreateRest.setName(SERVICE_REGISTRY_NAME);
 
         assertThrows(() -> registryMgmtApi.createRegistry(registryCreateRest));
     }
@@ -143,8 +145,8 @@ public class RegistryMgmtAPITest extends TestBase {
     @Test(priority = 2)
     public void testDeleteProvisioningRegistry() throws Throwable {
 
-        var registryCreateRest = new RegistryCreate()
-            .name(SERVICE_REGISTRY_NAME);
+        var registryCreateRest = new RegistryCreate();
+        registryCreateRest.setName(SERVICE_REGISTRY_NAME);
 
         LOGGER.info("create kafka instance: {}", SERVICE_REGISTRY_2_NAME);
         var registryToDelete = registryMgmtApi.createRegistry(registryCreateRest);

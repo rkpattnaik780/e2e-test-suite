@@ -37,9 +37,11 @@ public class KafkaTopicSteps {
         var kafkaInstanceApi = kafkaInstanceContext.kafkaInstanceApi();
 
         log.info("create topic with name '{}' on kafka instance '{}'", name, kafkaInstance.getName());
-        var payload = new NewTopicInput()
-            .name(name)
-            .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(name);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         var topic = kafkaInstanceApi.createTopic(payload);
         log.debug(topic);
 
@@ -52,9 +54,11 @@ public class KafkaTopicSteps {
         var kafkaInstanceApi = kafkaInstanceContext.kafkaInstanceApi();
 
         log.info("apply topic with name '{}' on kafka instance '{}'", name, kafkaInstance.getName());
-        var payload = new NewTopicInput()
-            .name(name)
-            .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(name);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         var topic = KafkaInstanceApiUtils.applyTopic(kafkaInstanceApi, payload);
 
         // add to the topics list to clean it in the after method

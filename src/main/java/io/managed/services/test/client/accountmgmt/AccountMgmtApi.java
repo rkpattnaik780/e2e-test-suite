@@ -1,10 +1,10 @@
 package io.managed.services.test.client.accountmgmt;
 
-import com.github.andreatp.kiota.auth.RHAccessTokenProvider;
 import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
 import com.microsoft.kiota.http.OkHttpRequestAdapter;
 import com.openshift.cloud.api.accountmanagement.ApiClient;
 import com.openshift.cloud.api.accountmanagement.models.Account;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

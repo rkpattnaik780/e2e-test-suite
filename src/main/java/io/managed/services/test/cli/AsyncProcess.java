@@ -4,11 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.microsoft.kiota.serialization.JsonParseNodeFactory;
+import com.microsoft.kiota.serialization.ParseNode;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.openapitools.jackson.nullable.JsonNullableModule;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -165,6 +166,15 @@ public class AsyncProcess {
         } catch (JsonProcessingException e) {
             throw sneakyThrow(e);
         }
+    }
+
+    public ParseNode parseNodeFromProcessOutput() {
+        InputStream targetStream = new java.io.ByteArrayInputStream(this.stdoutAsString().getBytes());
+        log.debug("process stdout: ");
+        log.debug(this.stdoutAsString());
+
+        var factory = new JsonParseNodeFactory();
+        return factory.getParseNode("application/json", targetStream);
     }
 
     public void readAll() {

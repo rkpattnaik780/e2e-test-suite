@@ -1,7 +1,7 @@
 package io.managed.services.test.client.exception;
 
 public class ApiToManyRequestsException extends ApiGenericException {
-    public ApiToManyRequestsException(ApiUnknownException e) {
+    public ApiToManyRequestsException(ApiGenericException e) {
         super(e);
     }
 }

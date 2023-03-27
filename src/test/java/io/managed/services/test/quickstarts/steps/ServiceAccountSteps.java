@@ -34,7 +34,8 @@ public class ServiceAccountSteps {
         var securityMgmtApi = openShiftAPIContext.requireSecurityMgmtApi();
 
         log.info("create service account with name '{}'", SERVICE_ACCOUNT_UNIQUE_NAME);
-        var payload = new ServiceAccountRequest().name(SERVICE_ACCOUNT_UNIQUE_NAME);
+        var payload = new ServiceAccountRequest();
+        payload.setName(SERVICE_ACCOUNT_UNIQUE_NAME);
         var serviceAccount = securityMgmtApi.createServiceAccount(payload);
         log.debug(serviceAccount);
 

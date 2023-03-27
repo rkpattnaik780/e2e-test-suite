@@ -1,12 +1,12 @@
 package io.managed.services.test.registry;
 
-import com.openshift.cloud.api.srs.models.Registry;
+import com.openshift.cloud.api.registry.instance.models.ContentCreateRequest;
+import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
-import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiNotFoundException;
+import io.managed.services.test.client.registry.RegistryClient;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
 import io.vertx.core.Vertx;
@@ -16,9 +16,6 @@ import org.apache.logging.log4j.Logger;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.nio.charset.StandardCharsets;
-
 import static io.managed.services.test.TestUtils.assumeTeardown;
 import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.client.registry.RegistryClientUtils.registryClient;
@@ -42,7 +39,7 @@ import static org.testng.Assert.assertThrows;
 public class RegistryMgmtAPIPermissionsTest extends TestBase {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtAPIPermissionsTest.class);
 
-    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-rmp-"  + Environment.LAUNCH_SUFFIX;
+    private static final String SERVICE_REGISTRY_NAME = "mk-e2e-sr-rmp-" + Environment.LAUNCH_SUFFIX;
     private static final String ARTIFACT_SCHEMA = "{\"type\":\"record\",\"name\":\"Greeting\",\"fields\":[{\"name\":\"Message\",\"type\":\"string\"},{\"name\":\"Time\",\"type\":\"long\"}]}";
 
     private final Vertx vertx = Vertx.vertx();
@@ -52,7 +49,7 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
     private RegistryMgmtApi secondaryRegistryMgmtApi;
     private RegistryMgmtApi alienRegistryMgmtApi;
 
-    private Registry registry;
+    private RootTypeForRegistry registry;
 
     @BeforeClass
     public void bootstrap() throws Throwable {
@@ -100,24 +97,25 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAlienUserCanNotReadTheRegistry() {
-        assertThrows(ApiNotFoundException.class, () -> alienRegistryMgmtApi.getRegistry(registry.getId()));
+        assertThrows(ApiGenericException.class, () -> alienRegistryMgmtApi.getRegistry(registry.getId()));
     }
 
     @Test
     public void testAlienUserCanNotCreateArtifactOnTheRegistry() throws Throwable {
-        var registryClient = registryClient(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
-
-        assertThrows(ApiForbiddenException.class, () -> registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8)));
+        RegistryClient registryClient = registryClient(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
+        var content = new ContentCreateRequest();
+        content.setContent(ARTIFACT_SCHEMA);
+        assertThrows(ApiGenericException.class, () -> registryClient.createArtifact(content));
     }
 
     @Test(priority = 1)
     public void testSecondaryUserCanNotDeleteTheRegistry() {
-        assertThrows(ApiForbiddenException.class, () -> secondaryRegistryMgmtApi.deleteRegistry(registry.getId()));
+        assertThrows(ApiGenericException.class, () -> secondaryRegistryMgmtApi.deleteRegistry(registry.getId()));
     }
 
     @Test(priority = 1)
     public void testAlienUserCanNotDeleteTheRegistry() {
-        assertThrows(ApiForbiddenException.class, () -> alienRegistryMgmtApi.deleteRegistry(registry.getId()));
+        assertThrows(ApiGenericException.class, () -> alienRegistryMgmtApi.deleteRegistry(registry.getId()));
     }
 
     @Test
@@ -129,8 +127,10 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
     @Test
     public void testAdminUserCanCreateArtifactOnTheRegistry() throws Throwable {
         var registryClient = registryClient(registry.getRegistryUrl(), Environment.ADMIN_OFFLINE_TOKEN);
+        var content = new ContentCreateRequest();
+        content.setContent(ARTIFACT_SCHEMA);
+        registryClient.createArtifact(content);
 
-        registryClient.createArtifact(null, null, ARTIFACT_SCHEMA.getBytes(StandardCharsets.UTF_8));
     }
 
     @Test(priority = 2)

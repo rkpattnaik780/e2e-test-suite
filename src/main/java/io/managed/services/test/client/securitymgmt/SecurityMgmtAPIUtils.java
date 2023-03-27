@@ -1,10 +1,13 @@
 package io.managed.services.test.client.securitymgmt;
 
 
-import com.openshift.cloud.api.kas.invoker.ApiClient;
+import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
+import com.microsoft.kiota.http.OkHttpRequestAdapter;
+import com.openshift.cloud.api.kas.ApiClient;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
 import com.openshift.cloud.api.kas.models.ServiceAccountListItem;
 import com.openshift.cloud.api.kas.models.ServiceAccountRequest;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import io.managed.services.test.client.exception.ApiGenericException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +20,9 @@ public class SecurityMgmtAPIUtils {
     private static final Logger LOGGER = LogManager.getLogger(SecurityMgmtAPIUtils.class);
 
     public static SecurityMgmtApi securityMgmtApi(String uri, String offlineToken) {
-        return new SecurityMgmtApi(new ApiClient().setBasePath(uri), offlineToken);
+        var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
+        adapter.setBaseUrl(uri);
+        return new SecurityMgmtApi(new ApiClient(adapter));
     }
 
     /**
@@ -76,7 +81,10 @@ public class SecurityMgmtAPIUtils {
             LOGGER.debug(serviceAccount);
         } else {
             LOGGER.info("create service account '{}'", name);
-            serviceAccount = api.createServiceAccount(new ServiceAccountRequest().name(name).description("E2E test service account"));
+            var req = new ServiceAccountRequest();
+            req.setName(name);
+            req.setDescription("E2E test service account");
+            serviceAccount = api.createServiceAccount(req);
         }
         return serviceAccount;
     }

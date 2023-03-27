@@ -1,15 +1,15 @@
 package io.managed.services.test.client.exception;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
 import java.net.HttpURLConnection;
 
 public class ApiGenericException extends Exception {
 
-    private final int code;
-    private final String responseBody;
+    private final String code;
+    private final String href;
+    private final String id;
+
+    private final String reason;
+    private final int responseStatusCode;
 
     public final static String API_ERROR_BILLING_ACCOUNT_INVALID = "43";
     public final static String API_ERROR_INSUFFICIENT_QUOTA = "120";
@@ -17,27 +17,60 @@ public class ApiGenericException extends Exception {
 
     public ApiGenericException(ApiUnknownException e) {
         super(e.getFullMessage(), e);
+        this.responseStatusCode = e.getResponseStatusCode();
+        this.reason = e.getReason();
         this.code = e.getCode();
-        this.responseBody = e.getResponseBody();
+        this.href = e.getHref();
+        this.id = e.getId();
     }
 
-    public int getCode() {
+    public ApiGenericException(ApiGenericException e) {
+        super(e.getReason(), e);
+        this.responseStatusCode = e.getResponseStatusCode();
+        this.reason = e.getReason();
+        this.code = e.getCode();
+        this.href = e.getHref();
+        this.id = e.getId();
+    }
+
+    public ApiGenericException(
+            String reason,
+            String code,
+            int responseStatusCode,
+            String href,
+            String id,
+            Exception cause) {
+
+        super(reason, cause);
+        this.reason = reason;
+        this.code = code;
+        this.responseStatusCode = responseStatusCode;
+        this.href = href;
+        this.id = id;
+    }
+
+    public int getResponseStatusCode() {
+        return responseStatusCode;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public String getCode() {
         return code;
     }
 
-    public String getResponseBody() {
-        return responseBody;
+    public String getHref() {
+        return href;
     }
 
-    public Body decode() throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(
-                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper.readValue(getResponseBody(), Body.class);
+    public String getId() {
+        return id;
     }
 
-    public static ApiGenericException apiException(ApiUnknownException e) {
-        switch (e.getCode()) {
+    public static ApiGenericException apiException(ApiGenericException e) {
+        switch (e.getResponseStatusCode()) {
             case HttpURLConnection.HTTP_NOT_FOUND:
                 return new ApiNotFoundException(e);
             case HttpURLConnection.HTTP_UNAUTHORIZED:
@@ -53,13 +86,5 @@ public class ApiGenericException extends Exception {
             default:
                 return new ApiGenericException(e);
         }
-    }
-
-    public static class Body {
-        public String reason;
-        public String id;
-        public String code;
-        public String kind;
-        public String href;
     }
 }

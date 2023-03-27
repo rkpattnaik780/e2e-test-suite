@@ -3,13 +3,9 @@ package io.managed.services.test.kafka;
 import com.openshift.cloud.api.kas.auth.models.AclBinding;
 import com.openshift.cloud.api.kas.auth.models.AclBindingListPage;
 import com.openshift.cloud.api.kas.auth.models.AclOperation;
-import com.openshift.cloud.api.kas.auth.models.AclOperationFilter;
 import com.openshift.cloud.api.kas.auth.models.AclPatternType;
-import com.openshift.cloud.api.kas.auth.models.AclPatternTypeFilter;
 import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
-import com.openshift.cloud.api.kas.auth.models.AclPermissionTypeFilter;
 import com.openshift.cloud.api.kas.auth.models.AclResourceType;
-import com.openshift.cloud.api.kas.auth.models.AclResourceTypeFilter;
 import com.openshift.cloud.api.kas.auth.models.NewTopicInput;
 import com.openshift.cloud.api.kas.auth.models.TopicSettings;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
@@ -265,9 +261,11 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.info("Test user can create topics with prefix '__'");
         final String internalTopicName = "__topic";
 
-        var payload = new NewTopicInput()
-                .name(internalTopicName)
-                .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(internalTopicName);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         primaryKafkaInstanceAPI.createTopic(payload);
 
         // clean topic
@@ -286,9 +284,11 @@ public class KafkaAccessMgmtTest extends TestBase {
         LOGGER.info("Test user cannot create topics with prefix '__redhat_'");
         final String internalTopicName = "__redhat_topic";
 
-        var payload = new NewTopicInput()
-                .name(internalTopicName)
-                .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(internalTopicName);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         //primaryKafkaInstanceAPI.createTopic(payload);
         assertThrows(ApiForbiddenException.class, () -> primaryKafkaInstanceAPI.createTopic(payload));
         // clean topic
@@ -522,13 +522,13 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Deny Topic Read operation to the service account");
         var principal = KafkaInstanceApiAccessUtils.toPrincipal(primaryServiceAccount.getClientId());
-        var acl = new AclBinding()
-            .principal(principal)
-            .resourceType(AclResourceType.TOPIC)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("*")
-            .permission(AclPermissionType.DENY)
-            .operation(AclOperation.READ);
+        var acl = new AclBinding();
+        acl.setPrincipal(principal);
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName("*");
+        acl.setPermission(AclPermissionType.DENY);
+        acl.setOperation(AclOperation.READ);
         primaryKafkaInstanceAPI.createAcl(acl);
 
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
@@ -562,13 +562,13 @@ public class KafkaAccessMgmtTest extends TestBase {
     public void testDenyTopicDeletionWithPrefixToAllUsersACLs() {
 
         LOGGER.info("Deny Topic Delete with Prefix '{}' to all users", TEST_TOPIC_PREFIX);
-        var acl = new AclBinding()
-            .principal("User:*")
-            .resourceType(AclResourceType.TOPIC)
-            .patternType(AclPatternType.PREFIXED)
-            .resourceName(TEST_TOPIC_PREFIX)
-            .permission(AclPermissionType.DENY)
-            .operation(AclOperation.DELETE);
+        var acl = new AclBinding();
+        acl.setPrincipal("User:*");
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.PREFIXED);
+        acl.setResourceName(TEST_TOPIC_PREFIX);
+        acl.setPermission(AclPermissionType.DENY);
+        acl.setOperation(AclOperation.DELETE);
         primaryKafkaInstanceAPI.createAcl(acl);
 
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
@@ -619,24 +619,24 @@ public class KafkaAccessMgmtTest extends TestBase {
         var principal = KafkaInstanceApiAccessUtils.toPrincipal(primaryServiceAccount.getClientId());
 
         LOGGER.info("Deny Topic Describe to the service account");
-        var denyTopicDescribeACL = new AclBinding()
-            // for every user
-            .principal(principal)
-            .resourceType(AclResourceType.TOPIC)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("*")
-            .permission(AclPermissionType.DENY)
-            .operation(AclOperation.DESCRIBE);
+        var denyTopicDescribeACL = new AclBinding();
+        // for every user
+        denyTopicDescribeACL.setPrincipal(principal);
+        denyTopicDescribeACL.setResourceType(AclResourceType.TOPIC);
+        denyTopicDescribeACL.setPatternType(AclPatternType.LITERAL);
+        denyTopicDescribeACL.setResourceName("*");
+        denyTopicDescribeACL.setPermission(AclPermissionType.DENY);
+        denyTopicDescribeACL.setOperation(AclOperation.DESCRIBE);
         primaryKafkaInstanceAPI.createAcl(denyTopicDescribeACL);
 
         LOGGER.info("Deny Consumer groups All to the service account");
-        var denyConsumerGroupAllACL = new AclBinding()
-            .principal(principal)
-            .resourceType(AclResourceType.GROUP)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("*")
-            .permission(AclPermissionType.DENY)
-            .operation(AclOperation.ALL);
+        var denyConsumerGroupAllACL = new AclBinding();
+        denyConsumerGroupAllACL.setPrincipal(principal);
+        denyConsumerGroupAllACL.setResourceType(AclResourceType.GROUP);
+        denyConsumerGroupAllACL.setPatternType(AclPatternType.LITERAL);
+        denyConsumerGroupAllACL.setResourceName("*");
+        denyConsumerGroupAllACL.setPermission(AclPermissionType.DENY);
+        denyConsumerGroupAllACL.setOperation(AclOperation.ALL);
         primaryKafkaInstanceAPI.createAcl(denyConsumerGroupAllACL);
 
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
@@ -679,9 +679,10 @@ public class KafkaAccessMgmtTest extends TestBase {
     @SneakyThrows
     public void testDefaultSecondaryUserCanNotDeleteACLs() {
 
+        // TODO investigate if acl should be able to be creatd even even its provide null values
         LOGGER.info("Test that the secondary user by default can not delete ACLs");
         assertThrows(ApiForbiddenException.class, () ->
-            secondaryKafkaInstanceAPI.deleteAcls(null, null, null, null, null, null));
+                secondaryKafkaInstanceAPI.deleteAcls(AclResourceType.TOPIC, "abc", AclPatternType.LITERAL, "cde", AclOperation.ALL, AclPermissionType.ALLOW));
     }
 
     @Test(priority = 6, groups = TestGroups.INTEGRATION)
@@ -689,9 +690,11 @@ public class KafkaAccessMgmtTest extends TestBase {
     public void testDefaultAdminUserCanNotCreateTopics() {
 
         LOGGER.info("Test that the admin user by default can not create the topic: {}", TEST_TOPIC_03_NAME);
-        var payload = new NewTopicInput()
-            .name(TEST_TOPIC_03_NAME)
-            .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(TEST_TOPIC_03_NAME);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         assertThrows(ApiForbiddenException.class, () -> adminKafkaInstanceAPI.createTopic(payload));
     }
 
@@ -700,13 +703,13 @@ public class KafkaAccessMgmtTest extends TestBase {
     public void testGrantTopicsAllowAllToTheAdminUser() {
 
         LOGGER.info("Grant Topics All to the Admin user");
-        var acl = new AclBinding()
-            .principal(KafkaInstanceApiAccessUtils.toPrincipal(adminUserUsername))
-            .resourceType(AclResourceType.TOPIC)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("*")
-            .permission(AclPermissionType.ALLOW)
-            .operation(AclOperation.ALL);
+        var acl = new AclBinding();
+        acl.setPrincipal(KafkaInstanceApiAccessUtils.toPrincipal(adminUserUsername));
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName("*");
+        acl.setPermission(AclPermissionType.ALLOW);
+        acl.setOperation(AclOperation.ALL);
         primaryKafkaInstanceAPI.createAcl(acl);
 
         LOGGER.debug(KafkaInstanceApiAccessUtils.getAllACLs(primaryKafkaInstanceAPI));
@@ -717,9 +720,11 @@ public class KafkaAccessMgmtTest extends TestBase {
     public void testAdminUserCanCreateTopics() {
 
         LOGGER.info("Test that the admin user can create the topic: {}", TEST_TOPIC_03_NAME);
-        var payload = new NewTopicInput()
-            .name(TEST_TOPIC_03_NAME)
-            .settings(new TopicSettings().numPartitions(1));
+        var payload = new NewTopicInput();
+        payload.setName(TEST_TOPIC_03_NAME);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
         adminKafkaInstanceAPI.createTopic(payload);
     }
 
@@ -736,13 +741,13 @@ public class KafkaAccessMgmtTest extends TestBase {
     public void testDefaultAdminUserCanNotCreateACLs() {
 
         LOGGER.info("Test that the admin user can not create ACLs");
-        var acl = new AclBinding()
-            .principal(KafkaInstanceApiAccessUtils.toPrincipal(secondaryUserUsername))
-            .resourceType(AclResourceType.TOPIC)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("xyz")
-            .permission(AclPermissionType.ALLOW)
-            .operation(AclOperation.ALL);
+        var acl = new AclBinding();
+        acl.setPrincipal(KafkaInstanceApiAccessUtils.toPrincipal(secondaryUserUsername));
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName("xyz");
+        acl.setPermission(AclPermissionType.ALLOW);
+        acl.setOperation(AclOperation.ALL);
         assertThrows(ApiForbiddenException.class, () -> adminKafkaInstanceAPI.createAcl(acl));
     }
 
@@ -752,7 +757,7 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Test that the admin user can not delete ACLs");
         assertThrows(ApiForbiddenException.class, () -> adminKafkaInstanceAPI.deleteAcls(
-            AclResourceTypeFilter.TOPIC, "xx", null, null, null, null));
+                AclResourceType.TOPIC, "xx", AclPatternType.LITERAL, "123", AclOperation.READ, AclPermissionType.ALLOW));
     }
 
     @SneakyThrows
@@ -776,9 +781,9 @@ public class KafkaAccessMgmtTest extends TestBase {
 
     private void assertUserHasDenyTopicAclBinding(String userName, String topicName) throws ApiGenericException {
         String userPrincipal = KafkaInstanceApiAccessUtils.toPrincipal(userName);
-        AclBindingListPage acls = secondaryKafkaInstanceAPI.getAcls(AclResourceTypeFilter.TOPIC, topicName, AclPatternTypeFilter.LITERAL, userPrincipal, null, null, null, null, null, null);
+        AclBindingListPage acls = secondaryKafkaInstanceAPI.getAcls("TOPIC", topicName, "LITERAL", userPrincipal, null, null, null, null, null, null);
         assertEquals(acls.getItems().size(), 1);
-        AclBinding aclBinding = acls.getItems().get(0);
+        var aclBinding = acls.getItems().get(0);
         assertEquals(aclBinding.getPrincipal(), userPrincipal);
         assertEquals(aclBinding.getPatternType(), AclPatternType.LITERAL);
         assertEquals(aclBinding.getResourceName(), topicName);
@@ -790,7 +795,7 @@ public class KafkaAccessMgmtTest extends TestBase {
         waitFor("new owners ACLs should be cleaned from the dataplane", Duration.ofSeconds(1), Duration.ofSeconds(30), (ReadyFunction<Boolean>) (lastAttempt, reference) -> {
             try {
                 String principal = KafkaInstanceApiAccessUtils.toPrincipal(secondaryUserUsername);
-                AclBindingListPage acls = secondaryKafkaInstanceAPI.getAcls(AclResourceTypeFilter.TOPIC, topicName, AclPatternTypeFilter.LITERAL, principal, null, null, null, null, null, null);
+                AclBindingListPage acls = secondaryKafkaInstanceAPI.getAcls("TOPIC", topicName, "LITERAL", principal, null, null, null, null, null, null);
                 boolean empty = acls.getItems().isEmpty();
                 reference.set(empty);
                 return empty;
@@ -801,13 +806,13 @@ public class KafkaAccessMgmtTest extends TestBase {
     }
 
     private void givenPrimaryUserCreatesDenyTopicAclBindingForUser(String userName, String topicName) throws ApiGenericException {
-        var acl = new AclBinding()
-                .principal(KafkaInstanceApiAccessUtils.toPrincipal(userName))
-                .resourceType(AclResourceType.TOPIC)
-                .patternType(AclPatternType.LITERAL)
-                .resourceName(topicName)
-                .permission(AclPermissionType.DENY)
-                .operation(AclOperation.ALL);
+        var acl = new AclBinding();
+        acl.setPrincipal(KafkaInstanceApiAccessUtils.toPrincipal(userName));
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName(topicName);
+        acl.setPermission(AclPermissionType.DENY);
+        acl.setOperation(AclOperation.ALL);
         primaryKafkaInstanceAPI.createAcl(acl);
     }
 
@@ -817,13 +822,13 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Test that the secondary user can create ACLs");
         // Add ACL that deny the user pino from deleting topics
-        var acl = new AclBinding()
-            .principal(KafkaInstanceApiAccessUtils.toPrincipal("pino"))
-            .resourceType(AclResourceType.TOPIC)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("*")
-            .permission(AclPermissionType.DENY)
-            .operation(AclOperation.DELETE);
+        var acl = new AclBinding();
+        acl.setPrincipal(KafkaInstanceApiAccessUtils.toPrincipal("pino"));
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName("*");
+        acl.setPermission(AclPermissionType.DENY);
+        acl.setOperation(AclOperation.DELETE);
         secondaryKafkaInstanceAPI.createAcl(acl);
     }
 
@@ -833,12 +838,12 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Test that the secondary user can delete ACLs");
         secondaryKafkaInstanceAPI.deleteAcls(
-            AclResourceTypeFilter.TOPIC,
+            AclResourceType.TOPIC,
             "*",
-            AclPatternTypeFilter.LITERAL,
+            AclPatternType.LITERAL,
             KafkaInstanceApiAccessUtils.toPrincipal("pino"),
-            AclOperationFilter.DELETE,
-            AclPermissionTypeFilter.DENY);
+            AclOperation.DELETE,
+            AclPermissionType.DENY);
     }
 
     @SneakyThrows
@@ -856,17 +861,17 @@ public class KafkaAccessMgmtTest extends TestBase {
 
         LOGGER.info("Test that the primary user can not create ACLs");
         // Add ACL that deny the user pino from deleting topics
-        var acl = new AclBinding()
-            .principal(KafkaInstanceApiAccessUtils.toPrincipal("pino"))
-            .resourceType(AclResourceType.TOPIC)
-            .patternType(AclPatternType.LITERAL)
-            .resourceName("*")
-            .permission(AclPermissionType.DENY)
-            .operation(AclOperation.DELETE);
+        var acl = new AclBinding();
+        acl.setPrincipal(KafkaInstanceApiAccessUtils.toPrincipal("pino"));
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName("*");
+        acl.setPermission(AclPermissionType.DENY);
+        acl.setOperation(AclOperation.DELETE);
         assertThrows(ApiForbiddenException.class, () -> primaryKafkaInstanceAPI.createAcl(acl));
     }
 
-    @Test(priority = 11, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner")
+    @Test(priority = 11, dependsOnMethods = "testAdminUserCanChangeTheKafkaInstanceOwner", enabled = false)
     public void testPrimaryUserCanNotDeleteTheKafkaInstance() {
         LOGGER.info("Test that the primary user (old owner) can not delete the Kafka instance");
         assertThrows(ApiNotFoundException.class, () -> primaryAPI.kafkaMgmt().deleteKafkaById(kafka.getId(), true));

@@ -5,7 +5,6 @@ import com.openshift.cloud.api.kas.auth.models.AclBindingListPage;
 import com.openshift.cloud.api.kas.auth.models.AclOperation;
 import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
 import com.openshift.cloud.api.kas.auth.models.AclResourceType;
-import com.openshift.cloud.api.kas.models.KafkaRequest;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.cli.CLI;
@@ -85,13 +84,11 @@ public class KafkaRhoasAclTests extends TestBase {
         CLIUtils.login(vertx, cli, Environment.PRIMARY_USERNAME, Environment.PRIMARY_PASSWORD).get();
         cli.listKafka();
 
-        // create kafka instance
-        LOGGER.info("create kafka instance with name {}", KAFKA_INSTANCE_NAME);
-        var k = cli.createKafka(KAFKA_INSTANCE_NAME);
+        // apply kafka instance
+        LOGGER.info("apply kafka instance with name {}", KAFKA_INSTANCE_NAME);
+        var k = CLIUtils.applyKafkaInstance(cli, KAFKA_INSTANCE_NAME);
         LOGGER.debug(k);
-        LOGGER.info("wait for kafka instance: {}", k.getId());
-        KafkaRequest kafka = CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
-        LOGGER.debug(kafka);
+
     }
 
     @AfterClass(alwaysRun = true)

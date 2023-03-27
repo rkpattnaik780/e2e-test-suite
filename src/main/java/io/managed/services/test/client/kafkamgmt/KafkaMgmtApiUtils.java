@@ -1,20 +1,18 @@
 package io.managed.services.test.client.kafkamgmt;
 
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openshift.cloud.api.kas.invoker.ApiClient;
-import com.openshift.cloud.api.kas.models.Error;
+import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
+import com.microsoft.kiota.http.OkHttpRequestAdapter;
+import com.openshift.cloud.api.kas.ApiClient;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.KafkaRequestPayload;
 import com.openshift.cloud.api.kas.models.KafkaUpdateRequest;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import io.managed.services.test.DNSUtils;
 import io.managed.services.test.Environment;
 import io.managed.services.test.ThrowingFunction;
 import io.managed.services.test.ThrowingSupplier;
 import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
-import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApi;
 import io.managed.services.test.client.kafkainstance.KafkaInstanceApiUtils;
 import lombok.extern.log4j.Log4j2;
@@ -47,7 +45,9 @@ public class KafkaMgmtApiUtils {
     private static final String CLUSTER_CAPACITY_EXHAUSTED_CODE = "KAFKAS-MGMT-24";
 
     public static KafkaMgmtApi kafkaMgmtApi(String uri, String offlineToken) {
-        return new KafkaMgmtApi(new ApiClient().setBasePath(uri), offlineToken);
+        var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
+        adapter.setBaseUrl(uri);
+        return new KafkaMgmtApi(new ApiClient(adapter));
     }
 
     /**
@@ -75,11 +75,13 @@ public class KafkaMgmtApiUtils {
     }
 
     public static KafkaRequestPayload defaultKafkaInstance(String name) {
-        return new KafkaRequestPayload()
-            .name(name)
-            // TODO enterprise provide .clusterId(Environment.CLUSTER_ID) and .marketplace(Environment.IS_ENTERPRISE ? "enterprise" : null) with new SDK
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .region(Environment.DEFAULT_KAFKA_REGION);
+        var kafka = new KafkaRequestPayload();
+        kafka.setName(name);
+        kafka.setCloudProvider(Environment.CLOUD_PROVIDER);
+        kafka.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        kafka.setClusterId(Environment.CLUSTER_ID);
+        kafka.setMarketplace(Environment.IS_ENTERPRISE ? "enterprise" : null);
+        return kafka;
     }
 
     /**
@@ -150,16 +152,7 @@ public class KafkaMgmtApiUtils {
             try {
                 kafkaAtom.set(api.createKafka(true, payload));
             } catch (ApiForbiddenException e) {
-
-                Error error;
-                try {
-                    error = new ObjectMapper().readValue(e.getResponseBody(), Error.class);
-                } catch (JsonProcessingException ex) {
-                    LOGGER.warn("failed to decode API error: ", ex);
-                    throw e;
-                }
-
-                if (CLUSTER_CAPACITY_EXHAUSTED_CODE.equals(error.getCode())) {
+                if (CLUSTER_CAPACITY_EXHAUSTED_CODE.equals(e.getCode())) {
                     // try again without logging
                     exceptionAtom.set(e);
                     LOGGER.debug("{}: {}", e.getClass(), e.getMessage());
@@ -482,7 +475,7 @@ public class KafkaMgmtApiUtils {
         waitUntilKafkaIsDeleted(() -> {
             try {
                 return Optional.of(api.getKafkaById(kafkaID));
-            } catch (ApiNotFoundException __) {
+            } catch (Exception __) {
                 return Optional.empty();
             }
         });
@@ -567,8 +560,8 @@ public class KafkaMgmtApiUtils {
      */
     public static KafkaRequest changeKafkaInstanceOwner(KafkaMgmtApi mgmtApi, KafkaRequest kafka, String newOwnerName) throws Throwable {
 
-        var kafkaUpdateRequest = new KafkaUpdateRequest()
-            .owner(newOwnerName.toLowerCase(Locale.ROOT));
+        var kafkaUpdateRequest = new KafkaUpdateRequest();
+        kafkaUpdateRequest.setOwner(newOwnerName.toLowerCase(Locale.ROOT));
 
         return mgmtApi.updateKafka(kafka.getId(), kafkaUpdateRequest);
     }

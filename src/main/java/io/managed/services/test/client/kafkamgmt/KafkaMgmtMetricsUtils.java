@@ -1,7 +1,7 @@
 package io.managed.services.test.client.kafkamgmt;
 
-import com.openshift.cloud.api.kas.models.InstantQuery;
 import com.openshift.cloud.api.kas.models.KafkaRequest;
+import com.openshift.cloud.api.kas.models.MetricsInstantQueryListResponse_items;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
 import io.managed.services.test.ThrowingFunction;
 import io.managed.services.test.client.exception.ApiGenericException;
@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
@@ -41,12 +42,12 @@ public class KafkaMgmtMetricsUtils {
      * @param metric      String
      * @return double
      */
-    public static double collectTopicMetric(List<InstantQuery> metricItems, String topicName, String metric) {
+    public static double collectTopicMetric(List<MetricsInstantQueryListResponse_items> metricItems, String topicName, String metric) {
         Objects.requireNonNull(metricItems);
         return metricItems.stream()
             .filter(item -> item.getMetric() != null)
-            .filter(item -> metric.equals(item.getMetric().get("__name__")))
-            .filter(item -> topicName.equals(item.getMetric().get("topic")))
+            .filter(item -> metric.equals(item.getMetric().getAdditionalData().get("__name__")))
+            .filter(item -> topicName.equals(item.getMetric().getAdditionalData().get("topic")))
             .mapToDouble(i -> i.getValue())
             .sum();
     }
@@ -61,7 +62,7 @@ public class KafkaMgmtMetricsUtils {
         LOGGER.info("start testing message in total metric");
 
         // retrieve the current in messages before sending more
-        var metricsList = api.getMetricsByInstantQuery(kafka.getId(), null);
+        var metricsList = api.getMetricsByInstantQuery(kafka.getId(), Collections.<String>emptyList());
         var initialInMessages = collectTopicMetric(metricsList.getItems(), topicName, IN_MESSAGES_METRIC);
         LOGGER.info("the topic '{}' started with '{}' in messages", topicName, initialInMessages);
 
@@ -81,9 +82,8 @@ public class KafkaMgmtMetricsUtils {
         var finalInMessagesAtom = new AtomicReference<Double>();
         ThrowingFunction<Boolean, Boolean, ApiGenericException> isMetricUpdated = last -> {
 
-            var m = api.getMetricsByInstantQuery(kafka.getId(), null);
+            var m = api.getMetricsByInstantQuery(kafka.getId(), Collections.<String>emptyList());
             var i = collectTopicMetric(m.getItems(), topicName, IN_MESSAGES_METRIC);
-
             finalInMessagesAtom.set(i);
 
             LOGGER.debug("kafka_server_brokertopicmetrics_messages_in_total: {}", i);

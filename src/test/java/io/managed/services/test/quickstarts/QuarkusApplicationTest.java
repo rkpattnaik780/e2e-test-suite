@@ -155,9 +155,11 @@ public class QuarkusApplicationTest extends TestBase {
         LOGGER.info("create topic '{}'", TOPIC_NAME);
         var kafkaInstanceApi = KafkaInstanceApiUtils.kafkaInstanceApi(kafka, offlineToken);
 
-        var topicPayload = new NewTopicInput()
-            .name(TOPIC_NAME)
-            .settings(new TopicSettings().numPartitions(1));
+        var topicPayload = new NewTopicInput();
+        topicPayload.setName(TOPIC_NAME);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        topicPayload.setSettings(settings);
         KafkaInstanceApiUtils.applyTopic(kafkaInstanceApi, topicPayload);
 
         try {

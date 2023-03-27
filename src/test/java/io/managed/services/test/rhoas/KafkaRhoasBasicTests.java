@@ -28,7 +28,6 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import static io.managed.services.test.TestUtils.bwait;
 import static io.managed.services.test.client.kafka.KafkaMessagingUtils.testTopic;
@@ -213,22 +212,11 @@ public class KafkaRhoasBasicTests extends TestBase {
     public void testApplyKafkaInstance() {
         LOGGER.info("apply kafka instance with name {}", KAFKA_INSTANCE_NAME);
 
-        Optional<KafkaRequest> optionalKafka = cli.listKafka().getItems().stream().filter(e -> KAFKA_INSTANCE_NAME.equals(e.getName())).findAny();
-        if (optionalKafka.isPresent()) {
-            LOGGER.info("kafka instance with name {} is present", KAFKA_INSTANCE_NAME);
-            kafka = optionalKafka.get();
-        } else {
-            LOGGER.info("kafka instance with name {} is not present, it will be created now", KAFKA_INSTANCE_NAME);
-            var k = cli.createKafka(KAFKA_INSTANCE_NAME);
-            LOGGER.debug(k);
-
-            LOGGER.info("wait for kafka instance: {}", k.getId());
-            kafka = CLIUtils.waitUntilKafkaIsReady(cli, k.getId());
-        }
-
-        cli.useKafka(kafka.getId());
+        kafka = CLIUtils.applyKafkaInstance(cli, KAFKA_INSTANCE_NAME);
         LOGGER.debug(kafka);
     }
+
+
 
     @Test(dependsOnMethods = {"testApplyKafkaInstance", "testCreateServiceAccount"}, enabled = true)
     @SneakyThrows
@@ -378,7 +366,6 @@ public class KafkaRhoasBasicTests extends TestBase {
         assertTrue(exists.isPresent());
     }
 
-
     @Test(dependsOnMethods = {"testCreateTopic", "testGrantProducerAndConsumerAccess"}, enabled = true)
     @SneakyThrows
     public void testKafkaInstanceTopic() {
@@ -464,7 +451,7 @@ public class KafkaRhoasBasicTests extends TestBase {
             10,
             100));
     }
-
+    // TODO DEBUG
     @Test(dependsOnMethods = {"testGrantProducerAndConsumerAccess"}, enabled = true)
     @SneakyThrows
     public void testDescribeConsumerGroup() {

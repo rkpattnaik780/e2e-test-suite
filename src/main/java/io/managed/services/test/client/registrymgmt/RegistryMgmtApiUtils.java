@@ -1,9 +1,13 @@
 package io.managed.services.test.client.registrymgmt;
 
-import com.openshift.cloud.api.srs.invoker.ApiClient;
+import com.microsoft.kiota.authentication.BaseBearerTokenAuthenticationProvider;
+import com.microsoft.kiota.http.OkHttpRequestAdapter;
+import com.openshift.cloud.api.srs.ApiClient;
 import com.openshift.cloud.api.srs.models.Registry;
 import com.openshift.cloud.api.srs.models.RegistryCreate;
 import com.openshift.cloud.api.srs.models.RegistryList;
+import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
+import com.redhat.cloud.kiota.auth.RHAccessTokenProvider;
 import io.managed.services.test.Environment;
 import io.managed.services.test.ThrowingFunction;
 import io.managed.services.test.ThrowingSupplier;
@@ -12,6 +16,7 @@ import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -21,14 +26,21 @@ import static io.managed.services.test.TestUtils.waitFor;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
+@Log4j2
 public class RegistryMgmtApiUtils {
     private static final Logger LOGGER = LogManager.getLogger(RegistryMgmtApiUtils.class);
 
     public static RegistryMgmtApi registryMgmtApi(String offlineToken) {
-        return new RegistryMgmtApi(new ApiClient().setBasePath(Environment.OPENSHIFT_API_URI), offlineToken);
+        var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
+        adapter.setBaseUrl(Environment.OPENSHIFT_API_URI);
+
+        return new RegistryMgmtApi(new ApiClient(adapter));
     }
     public static RegistryMgmtApi registryMgmtApi(String uri, String offlineToken) {
-        return new RegistryMgmtApi(new ApiClient().setBasePath(uri), offlineToken);
+        var adapter = new OkHttpRequestAdapter(new BaseBearerTokenAuthenticationProvider(new RHAccessTokenProvider(offlineToken)));
+        adapter.setBaseUrl(uri);
+
+        return new RegistryMgmtApi(new ApiClient(adapter));
     }
 
     /**
@@ -38,10 +50,11 @@ public class RegistryMgmtApiUtils {
      * @param name Name for the Registry
      * @return Registry
      */
-    public static Registry applyRegistry(RegistryMgmtApi api, String name)
-        throws ApiGenericException, InterruptedException, RegistryNotReadyException {
+    public static RootTypeForRegistry applyRegistry(RegistryMgmtApi api, String name)
+        throws ApiGenericException, InterruptedException, RegistryNotReadyException, RootTypeOfRegistryNotReadyException {
 
-        var registryCreateRest = new RegistryCreate().name(name);
+        var registryCreateRest = new RegistryCreate();
+        registryCreateRest.setName(name);
         return applyRegistry(api, registryCreateRest);
     }
 
@@ -52,8 +65,8 @@ public class RegistryMgmtApiUtils {
      * @param payload RegistryCreate
      * @return Registry
      */
-    public static Registry applyRegistry(RegistryMgmtApi api, RegistryCreate payload)
-        throws ApiGenericException, InterruptedException,  RegistryNotReadyException {
+    public static RootTypeForRegistry applyRegistry(RegistryMgmtApi api, RegistryCreate payload)
+        throws ApiGenericException, InterruptedException,  RegistryNotReadyException, RootTypeOfRegistryNotReadyException {
 
         var registryList = getRegistryByName(api, payload.getName());
 
@@ -79,10 +92,42 @@ public class RegistryMgmtApiUtils {
      * @param registryID String
      * @return Registry
      */
-    public static Registry waitUntilRegistryIsReady(RegistryMgmtApi api, String registryID)
-        throws RegistryNotReadyException, InterruptedException, ApiGenericException {
+    public static RootTypeForRegistry waitUntilRegistryIsReady(RegistryMgmtApi api, String registryID)
+        throws RegistryNotReadyException, InterruptedException, ApiGenericException, RootTypeOfRegistryNotReadyException {
 
-        return waitUntilRegistryIsReady(() -> api.getRegistry(registryID));
+        return waitUntilRootTypeOfRegistryIsReady(() -> {
+            try {
+                return api.getRegistry(registryID);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    // TODO: refactor the following 2 methods into one
+    public static <T extends Throwable> RootTypeForRegistry waitUntilRootTypeOfRegistryIsReady(ThrowingSupplier<RootTypeForRegistry, T> supplier)
+            throws T, InterruptedException, RegistryNotReadyException, RootTypeOfRegistryNotReadyException {
+
+        var registryAtom = new AtomicReference<RootTypeForRegistry>();
+        ThrowingFunction<Boolean, Boolean, T> ready = last -> {
+            var registry = supplier.get();
+            registryAtom.set(registry);
+
+            LOGGER.debug(registry);
+            return "ready".equals(registry.getStatus().getValue());
+        };
+
+        try {
+            waitFor("registry to be ready", ofSeconds(5), ofMinutes(1), ready);
+        } catch (TimeoutException e) {
+            // throw a more accurate error
+            throw new RootTypeOfRegistryNotReadyException(registryAtom.get(), e);
+        }
+
+        var registry = registryAtom.get();
+        LOGGER.info("service registry '{}' is ready", registry.getName());
+        LOGGER.debug(registry);
+        return registry;
     }
 
     public static <T extends Throwable> Registry waitUntilRegistryIsReady(ThrowingSupplier<Registry, T> supplier)
@@ -131,12 +176,14 @@ public class RegistryMgmtApiUtils {
     }
 
     public static void waitUntilRegistryIsDeleted(RegistryMgmtApi api, String registryId)
-        throws InterruptedException, ApiGenericException, RegistryNotDeletedException {
+        throws InterruptedException, ApiGenericException, RegistryNotDeletedException, RootTypeOfRegistryNotDeletedException {
 
-        waitUntilRegistryIsDeleted(() -> {
+        waitUntilRootTypeOfRegistryIsDeleted(() -> {
             try {
                 return Optional.of(api.getRegistry(registryId));
             } catch (ApiNotFoundException __) {
+                return Optional.empty();
+            } catch (ApiGenericException e) {
                 return Optional.empty();
             }
         });
@@ -147,6 +194,7 @@ public class RegistryMgmtApiUtils {
      *
      * @param supplier Return true if the instance doesn't exist anymore
      */
+    // TODO: refactor the following 2 methods
     public static <T extends Throwable> void waitUntilRegistryIsDeleted(
         ThrowingSupplier<Optional<Registry>, T> supplier)
         throws T, InterruptedException, RegistryNotDeletedException {
@@ -168,6 +216,30 @@ public class RegistryMgmtApiUtils {
             waitFor("registry instance to be deleted", ofSeconds(1), ofSeconds(20), ready);
         } catch (TimeoutException e) {
             throw new RegistryNotDeletedException(registryAtom.get(), e);
+        }
+    }
+
+    public static <T extends Throwable> void waitUntilRootTypeOfRegistryIsDeleted(
+            ThrowingSupplier<Optional<RootTypeForRegistry>, T> supplier)
+            throws T, InterruptedException, RootTypeOfRegistryNotDeletedException {
+
+        var registryAtom = new AtomicReference<RootTypeForRegistry>();
+        ThrowingFunction<Boolean, Boolean, T> ready = l -> {
+            var exists = supplier.get();
+            if (exists.isEmpty()) {
+                return true;
+            }
+
+            var registry = exists.get();
+            LOGGER.debug(registry);
+            registryAtom.set(registry);
+            return false;
+        };
+
+        try {
+            waitFor("registry instance to be deleted", ofSeconds(1), ofSeconds(20), ready);
+        } catch (TimeoutException e) {
+            throw new RootTypeOfRegistryNotDeletedException(registryAtom.get(), e);
         }
     }
 

@@ -22,8 +22,6 @@ import static io.managed.services.test.TestUtils.assumeTeardown;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-
 
 @Log4j2
 public class BillingModelTest {
@@ -37,6 +35,10 @@ public class BillingModelTest {
 
     @BeforeClass
     public void bootstrap() {
+
+        if (Environment.SKIP_KAFKA_TEARDOWN) {
+            throw new SkipException("SKIP_KAFKA_TEARDOWN environment variable must be set to false");
+        }
 
         log.info("assert offline tokens of all used users");
         assertNotNull(Environment.STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN, "the STRATOSPHERE_SCENARIO_1_USER_OFFLINE_TOKEN env is null");
@@ -81,13 +83,13 @@ public class BillingModelTest {
         if ("gcp".equals(Environment.CLOUD_PROVIDER)) {
             throw new SkipException("gcp marketplace is not available as a billing option at this time");
         }
-//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         KafkaRequest kafka;
         log.info("create kafka instance '{}'", payload.getName());
@@ -102,20 +104,19 @@ public class BillingModelTest {
         }
     }
 
-
     @Test
     @SneakyThrows
     // User sets the billing_model to standard.
     // Outcome: failure, the organization does not have standard quota.
     public void testFailWhenBillingModelIsNotAvailable() {
-//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+
         KafkaMgmtApi kafkaMgmtApi =  kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("standard");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("standard");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -126,11 +127,9 @@ public class BillingModelTest {
             log.debug(kafka);
             assertNull(kafka);
         } catch (ApiGenericException ex) {
-            assertEquals(ex.getCode(), HttpStatus.SC_FORBIDDEN);
-
-            var body = ex.decode();
-            assertEquals(body.reason, "Insufficient quota: Insufficient Quota");
-            assertEquals(body.id, ApiGenericException.API_ERROR_INSUFFICIENT_QUOTA);
+            assertEquals(ex.getResponseStatusCode(), HttpStatus.SC_FORBIDDEN);
+            assertEquals(ex.getReason(), "Insufficient quota: Insufficient Quota");
+            assertEquals(ex.getId(), ApiGenericException.API_ERROR_INSUFFICIENT_QUOTA);
         } finally {
             cleanup(kafkaMgmtApi);
         }
@@ -142,15 +141,15 @@ public class BillingModelTest {
     // User sets the billing_cloud_account_id to a value that does not match the linked account.
     // Outcome: failure, no matching cloud account.
     public void testFailWhenCloudAccountNotFound() {
-//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("marketplace")
-                .billingCloudAccountId("dummy");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("marketplace");
+        payload.setBillingCloudAccountId("dummy");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -161,10 +160,9 @@ public class BillingModelTest {
             log.debug(kafka);
             assertNull(kafka);
         } catch (ApiGenericException ex) {
-            assertEquals(ex.getCode(), HttpStatus.SC_BAD_REQUEST);
-            var body = ex.decode();
-            assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
-            assertEquals(body.reason,
+            assertEquals(ex.getResponseStatusCode(), HttpStatus.SC_BAD_REQUEST);
+            assertEquals(ex.getId(), ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
+            assertEquals(ex.getReason(),
                     String.format("Billing account id missing or invalid: we have not been able to validate your billingAccountID",
                             Environment.STRATOSPHERE_SCENARIO_1_AWS_ACCOUNT_ID));
         } finally {
@@ -177,15 +175,15 @@ public class BillingModelTest {
     // User sets the marketplace to RHM.
     // Outcome: failure, no cloud account linked for that marketplace.
     public void testFailWhenMarketplaceNotAvailable() {
-//        String user = Environment.STRATOSPHERE_SCENARIO_1_USER;
+
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere1;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("marketplace")
-                .marketplace("rhm");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("marketplace");
+        payload.setMarketplace("rhm");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -196,10 +194,9 @@ public class BillingModelTest {
             log.debug(kafka);
             assertNull(kafka);
         } catch (ApiGenericException ex) {
-            assertEquals(ex.getCode(), HttpStatus.SC_BAD_REQUEST);
-            var body = ex.decode();
-            assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
-            assertEquals(body.reason, "Billing account id missing or invalid: no billing account provided for marketplace: rhm");
+            assertEquals(ex.getResponseStatusCode(), HttpStatus.SC_BAD_REQUEST);
+            assertEquals(ex.getId(), ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
+            assertEquals(ex.getReason(), "Billing account id missing or invalid: no billing account provided for marketplace: rhm");
         } finally {
             cleanup(kafkaMgmtApi);
         }
@@ -212,10 +209,10 @@ public class BillingModelTest {
     public void testDefaultToStandardWhenNoCloudAccountAvailable() {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere2;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -242,11 +239,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere2;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_2_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -269,11 +266,11 @@ public class BillingModelTest {
     public void testAutomaticallyPickMarketplaceRhmWhenBillingModelIsMarketplace() {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingModel("marketplace");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingModel("marketplace");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -298,11 +295,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -326,12 +323,12 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId)
-                .marketplace("aws");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
+        payload.setMarketplace("aws");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -342,11 +339,8 @@ public class BillingModelTest {
             log.debug(kafka);
             assertNull(kafka);
         } catch (ApiGenericException ex) {
-            assertEquals(ex.getCode(), HttpStatus.SC_BAD_REQUEST);
-            var body = ex.decode();
-            // TODO the error message in the fleet manager needs to be improved here to include the marketplace
-            assertTrue(body.reason.contains("Billing account id missing or invalid: we have not been able to validate your billingAccountID"));
-            assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
+            assertEquals(ex.getResponseStatusCode(), HttpStatus.SC_BAD_REQUEST);
+            assertEquals(ex.getId(), ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
         } finally {
             cleanup(kafkaMgmtApi);
         }
@@ -361,11 +355,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere3;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -388,12 +382,12 @@ public class BillingModelTest {
     public void testFailWhenNoCloudAccountIsChosenAndMultipleAvailable() {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .marketplace("aws")
-                .billingModel("marketplace");
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setMarketplace("aws");
+        payload.setBillingModel("marketplace");
 
         log.info("create kafka instance '{}'", payload.getName());
         KafkaRequest kafka;
@@ -404,10 +398,8 @@ public class BillingModelTest {
             log.debug(kafka);
             assertNull(kafka);
         } catch (ApiGenericException ex) {
-            assertEquals(ex.getCode(), HttpStatus.SC_BAD_REQUEST);
-            var body = ex.decode();
-            assertEquals(body.reason, "Billing account id missing or invalid: no billing account provided for marketplace: aws");
-            assertEquals(body.id, ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
+            assertEquals(ex.getResponseStatusCode(), HttpStatus.SC_BAD_REQUEST);
+            assertEquals(ex.getId(), ApiGenericException.API_ERROR_BILLING_ACCOUNT_INVALID);
         } finally {
             cleanup(kafkaMgmtApi);
         }
@@ -424,11 +416,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME)
-                .cloudProvider(Environment.CLOUD_PROVIDER)
-                .region(Environment.DEFAULT_KAFKA_REGION)
-                .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
 
@@ -450,11 +442,11 @@ public class BillingModelTest {
         KafkaMgmtApi kafkaMgmtApi = kafkaMgmtApiStratosphere4;
 
         String cloudAccountId = Environment.STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID;
-        var payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider("gcp")
-            .region("us-east1")
-            .billingCloudAccountId(cloudAccountId);
+        var payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider("gcp");
+        payload.setRegion("us-east1");
+        payload.setBillingCloudAccountId(cloudAccountId);
 
         log.info("create kafka instance '{}'", payload.getName());
 

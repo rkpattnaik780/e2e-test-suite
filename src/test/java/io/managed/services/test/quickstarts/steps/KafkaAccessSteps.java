@@ -48,13 +48,13 @@ public class KafkaAccessSteps {
         var principal = KafkaInstanceApiAccessUtils.toPrincipal(serviceAccount.getClientId());
         log.info("apply acl to create topics for principal '{}'", principal);
 
-        var acl = new AclBinding()
-                .principal(principal)
-                .resourceType(AclResourceType.TOPIC)
-                .patternType(AclPatternType.LITERAL)
-                .resourceName("*")
-                .permission(AclPermissionType.ALLOW)
-                .operation(AclOperation.ALL);
+        var acl = new AclBinding();
+        acl.setPrincipal(principal);
+        acl.setResourceType(AclResourceType.TOPIC);
+        acl.setPatternType(AclPatternType.LITERAL);
+        acl.setResourceName("*");
+        acl.setPermission(AclPermissionType.ALLOW);
+        acl.setOperation(AclOperation.ALL);
 
         log.debug(acl);
 

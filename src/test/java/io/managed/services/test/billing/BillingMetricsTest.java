@@ -301,12 +301,12 @@ public class BillingMetricsTest extends TestBase {
         }
 
         // create topic with 3 replicas (the only possible way to create topic currently)
-        kafkaInstanceApi.createTopic(
-            new NewTopicInput()
-                .name(TOPIC_NAME)
-                .settings(
-                    new TopicSettings().numPartitions(1))
-        );
+        var payload = new NewTopicInput();
+        payload.setName(TOPIC_NAME);
+        var settings = new TopicSettings();
+        settings.setNumPartitions(1);
+        payload.setSettings(settings);
+        kafkaInstanceApi.createTopic(payload);
     }
 
     private void createACLs(ServiceAccount serviceAccount) throws ApiGenericException {

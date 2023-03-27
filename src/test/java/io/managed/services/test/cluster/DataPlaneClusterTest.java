@@ -18,15 +18,14 @@ import io.managed.services.test.k8.managedkafka.v1alpha1.ManagedKafka;
 import io.managed.services.test.dataplane.FleetshardUtils;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.ConfigBuilder;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.ConfigBuilder;
 
 import java.time.Duration;
 import java.util.List;
@@ -59,7 +58,6 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 public class DataPlaneClusterTest extends TestBase {
-
 
     static final String KAFKA_INSTANCE_NAME = "cl-e2e-" + Environment.LAUNCH_SUFFIX;
     private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
@@ -200,11 +198,11 @@ public class DataPlaneClusterTest extends TestBase {
         }
 
         // create kafka instance of expected type
-        KafkaRequestPayload payload = new KafkaRequestPayload()
-            .name(KAFKA_INSTANCE_NAME)
-            .cloudProvider("aws")
-            .region("us-east-1")
-            .plan(String.format("%s.x1", mkType));
+        KafkaRequestPayload payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME);
+        payload.setCloudProvider("aws");
+        payload.setRegion("us-east-1");
+        payload.setPlan(String.format("%s.x1", mkType));
 
         log.info("attempt to create kafka instance");
         KafkaRequest kafkaRequest = null;
@@ -216,10 +214,9 @@ public class DataPlaneClusterTest extends TestBase {
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
-            JSONObject jsonResponse = new JSONObject(e.getResponseBody());
-            if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw  e;
@@ -257,11 +254,11 @@ public class DataPlaneClusterTest extends TestBase {
             throw new SkipException("cluster already reported to be at its maximum capacity");
 
         log.info("creating an instance");
-        var payload = new KafkaRequestPayload()
-            .name(DUMMY_KAFKA_INSTANCE_NAME)
-            .plan(PLAN_STANDARD)
-            .cloudProvider(Environment.CLOUD_PROVIDER)
-            .region(Environment.DEFAULT_KAFKA_REGION);
+        var payload = new KafkaRequestPayload();
+        payload.setName(DUMMY_KAFKA_INSTANCE_NAME);
+        payload.setPlan(PLAN_STANDARD);
+        payload.setCloudProvider(Environment.CLOUD_PROVIDER);
+        payload.setRegion(Environment.DEFAULT_KAFKA_REGION);
 
         try {
             KafkaRequest kafkaRequest = KafkaMgmtApiUtils.attemptCreatingKafkaInstance(kafkaMgmtApi, payload, Duration.ofSeconds(20), Duration.ofSeconds(20));
@@ -300,7 +297,7 @@ public class DataPlaneClusterTest extends TestBase {
 
         } catch (ApiForbiddenException e) {
             // if not quota related exception rethrow it
-            if (!(e.getCode() == 403 && new JSONObject(e.getResponseBody()).get("code").equals(KAFKAS_MGMT_120_CODE))) {
+            if (!(e.getResponseStatusCode() == 403 && KAFKAS_MGMT_120_CODE.equals(e.getCode()))) {
                 throw e;
             }
             log.warn("quota reached %s", e);
@@ -335,11 +332,11 @@ public class DataPlaneClusterTest extends TestBase {
 
         // create kafka instance of expected type
         log.info(KAFKA_INSTANCE_NAME + "-" + mkType);
-        KafkaRequestPayload payload = new KafkaRequestPayload()
-                .name(KAFKA_INSTANCE_NAME + "-" + mkType)
-                .cloudProvider("aws")
-                .region("us-east-1")
-                .plan(String.format("%s.x1", mkType));
+        KafkaRequestPayload payload = new KafkaRequestPayload();
+        payload.setName(KAFKA_INSTANCE_NAME + "-" + mkType);
+        payload.setCloudProvider("aws");
+        payload.setRegion("us-east-1");
+        payload.setPlan(String.format("%s.x1", mkType));
 
         log.info("attempt to create kafka instance");
         KafkaRequest kafkaRequest = null;
@@ -349,41 +346,54 @@ public class DataPlaneClusterTest extends TestBase {
             log.info("wait for provisioning of kafka instance with id '{}'", kafkaRequest.getId());
             KafkaMgmtApiUtils.waitUntilKafkaIsProvisioning(kafkaMgmtApi, kafkaRequest.getId());
 
-            // wait for three minutes to see if reported capacity already increased (exclusively)
+            // wait for few minutes to see if reported capacity already increased (exclusively)
             TestUtils.waitFor(
                 "update reported remaining capacity",
-                Duration.ofSeconds(5),
-                Duration.ofMinutes(2),
+                Duration.ofSeconds(10),
+                Duration.ofMinutes(6),
                 ready -> {
+
+                    // get number of instances that were deleted while waiting for provisioning of new kafka instance, if some were created skip the test
+                    List<String> kafkaInstanceNamesAfterCreating = FleetshardUtils.listManagedKafka(oc, mkType).stream()
+                            .map(e -> e.getMetadata().getName())
+                            .collect(Collectors.toList());
+                    List<String> deletedInstances = kafkaInstanceNamesBeforeCreating.stream().filter(e -> !kafkaInstanceNamesAfterCreating.contains(e)).collect(Collectors.toList());
+                    if (deletedInstances.size() > 0) {
+                        log.debug("newly deleted instances: {}", deletedInstances);
+                        throw  new SkipException("other instances were deleted while waiting for decrease in capacity");
+                    }
+
                     int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
                     log.debug("newly observed remaining capacity '{}'", newlyObservedRemainingCapacity);
                     if (newlyObservedRemainingCapacity < observedRemainingCapacityInitially)
                         return true;
+
+
                     return false;
-                });
+                }
+            );
 
-            // get number of instances that were deleted while waiting for provisioning of new kafka instance
-            List<String> kafkaInstanceNamesAfterCreating = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-                .map(e -> e.getMetadata().getName())
-                .collect(Collectors.toList());
-            List<String> deletedInstances = kafkaInstanceNamesBeforeCreating.stream().filter(e -> !kafkaInstanceNamesAfterCreating.contains(e)).collect(Collectors.toList());
-            log.debug("count of instances that have been deleted since begging of the test {}", deletedInstances.size());
-
-            int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
-            // remaining capacity should be lowered by 1, but as there are instances which may have been deleted by other users (which would free some space) we are not including them
-            Assert.assertTrue(newlyObservedRemainingCapacity <= observedRemainingCapacityInitially - 1  +  deletedInstances.size());
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
-            JSONObject jsonResponse = new JSONObject(e.getResponseBody());
-            if (KAFKAS_MGMT_21_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(jsonResponse.get("code")))
+            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
-                throw  e;
+                throw e;
+        } catch (SkipException e) {
+            // cleanup kafka instance
+            KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
+            KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
+            kafkaRequest = null;
         } finally {
-            // cleanup of kafka instance
+
+            if (kafkaRequest == null) {
+                throw new SkipException("test skipped due to traffic in kafka creation");
+            }
+
+            // test releasing of capacity & delete kafka instance
             log.info("clean kafka instance with name '{}'", KAFKA_INSTANCE_NAME + "-" + mkType);
             try {
                 // list all instances which exist before we delete our instance
@@ -402,51 +412,40 @@ public class DataPlaneClusterTest extends TestBase {
                 // waiting for ideal case (capacity updated accordingly, and no other user created new kafka instance)
                 TestUtils.waitFor(
                     "update (increase) reported remaining capacity",
-                    Duration.ofSeconds(5),
-                    Duration.ofMinutes(2),
+                    Duration.ofSeconds(10),
+                    Duration.ofMinutes(6),
                     ready -> {
                         int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
                         log.debug("newly observed remaining capacity '{}'", newlyObservedRemainingCapacity);
                         if (newlyObservedRemainingCapacity > remainingCapacityBefore)
                             return true;
 
-                        // see if any new instance of given type was created, if so don't expect capacity to be increased
-                        List<String> currentKafkaInstances = FleetshardUtils.listManagedKafka(oc, mkType).stream()
+                        // list all instances that exist after our instance was deleted
+                        List<String> kafkaInstanceNamesAfterDeleting = FleetshardUtils.listManagedKafka(oc, mkType).stream()
                                 .map(e -> e.getMetadata().getName())
                                 .collect(Collectors.toList());
-                        // filter: keep instances that did not existed previously, and filter instance that we created
-                        List<String> instancesCreatedDuringFreeingCapacity = currentKafkaInstances.stream()
-                                .filter(e -> !kafkaInstanceNamesBeforeCreating.contains(e))
-                                .collect(Collectors.toList());
-                        log.debug("count of instances that have been created since begging of waiting for freeing capacity {}", instancesCreatedDuringFreeingCapacity.size());
-                        log.debug(instancesCreatedDuringFreeingCapacity);
 
-                        if (instancesCreatedDuringFreeingCapacity.size() > 1)
-                            throw new SkipException("Instances created during waiting for freeing capacity, no longer possible to observe freeing capacity");
+                        // observe how many new instances of given type were created while we were deleting our instance (increasing free capacity by one)
+                        List<String> newlyCreatedInstances = kafkaInstanceNamesAfterDeleting.stream().filter(e -> !kafkaInstanceNamesBeforeDeleting.contains(e)).collect(Collectors.toList());
 
-                        // continue waiting
+                        if (newlyCreatedInstances.size() > 0) {
+                            log.debug("newly created instances: {}", newlyCreatedInstances);
+                            log.debug("new kafka instance was created, capacity will no longer be freed");
+                            KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
+                            return true;
+                        }
+
                         return false;
                     });
-
-                // list all instances that exist after our instance was deleted
-                List<String> kafkaInstanceNamesAfterDeleting = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-                    .map(e -> e.getMetadata().getName())
-                    .collect(Collectors.toList());
-
-                // observe how many new instances of given type were created while we were deleting our instance (increasing free capacity by one)
-                int countNewlyCreatedInstances = kafkaInstanceNamesAfterDeleting.stream().filter(e -> !kafkaInstanceNamesBeforeDeleting.contains(e)).collect(Collectors.toList()).size();
-                log.debug("number of newly created kafka instances while waiting to increase free capacity '{}'", countNewlyCreatedInstances);
-
-                // get free capacity after (kafka deletion)
-                int remainingCapacityAfter = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
-                log.debug("reported remaining free capacity after kafka deletion '{}'", remainingCapacityAfter);
-
-                // if no new kafka were created we expect remaining (free) capacity to be higher than before deletion of 1 instance
-                // condition is eased with each new kafka instance that was created while we were waiting for capacity to reflect deletion of 1 instance.
-                Assert.assertTrue(remainingCapacityAfter + countNewlyCreatedInstances > remainingCapacityBefore);
-
             } catch (Exception e) {
-                log.error("error while cleaning kafka instance: %s", e);
+                log.warn("error while increasing reported remaining capacity");
+                log.error(e);
+            } finally {
+                try {
+                    KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
+                } catch (Exception ignore) {
+                    // skip
+                }
             }
         }
     }

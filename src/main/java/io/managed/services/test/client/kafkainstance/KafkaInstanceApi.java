@@ -1,115 +1,149 @@
 package io.managed.services.test.client.kafkainstance;
 
-import com.openshift.cloud.api.kas.auth.AclsApi;
-import com.openshift.cloud.api.kas.auth.GroupsApi;
-import com.openshift.cloud.api.kas.auth.TopicsApi;
-import com.openshift.cloud.api.kas.auth.invoker.ApiClient;
-import com.openshift.cloud.api.kas.auth.invoker.ApiException;
+import com.openshift.cloud.api.kas.auth.ApiClient;
+import com.openshift.cloud.api.kas.auth.api.v1.V1RequestBuilder;
 import com.openshift.cloud.api.kas.auth.models.AclBinding;
 import com.openshift.cloud.api.kas.auth.models.AclBindingListPage;
-import com.openshift.cloud.api.kas.auth.models.AclBindingOrderKey;
-import com.openshift.cloud.api.kas.auth.models.AclOperationFilter;
-import com.openshift.cloud.api.kas.auth.models.AclPatternTypeFilter;
-import com.openshift.cloud.api.kas.auth.models.AclPermissionTypeFilter;
-import com.openshift.cloud.api.kas.auth.models.AclResourceTypeFilter;
+import com.openshift.cloud.api.kas.auth.models.AclOperation;
+import com.openshift.cloud.api.kas.auth.models.AclPatternType;
+import com.openshift.cloud.api.kas.auth.models.AclPermissionType;
+import com.openshift.cloud.api.kas.auth.models.AclResourceType;
 import com.openshift.cloud.api.kas.auth.models.ConsumerGroup;
-import com.openshift.cloud.api.kas.auth.models.ConsumerGroupDescriptionOrderKey;
 import com.openshift.cloud.api.kas.auth.models.ConsumerGroupList;
-import com.openshift.cloud.api.kas.auth.models.ConsumerGroupOrderKey;
 import com.openshift.cloud.api.kas.auth.models.NewTopicInput;
-import com.openshift.cloud.api.kas.auth.models.SortDirection;
 import com.openshift.cloud.api.kas.auth.models.Topic;
-import com.openshift.cloud.api.kas.auth.models.TopicOrderKey;
 import com.openshift.cloud.api.kas.auth.models.TopicSettings;
 import com.openshift.cloud.api.kas.auth.models.TopicsList;
 import io.managed.services.test.client.BaseApi;
 import io.managed.services.test.client.exception.ApiGenericException;
 import io.managed.services.test.client.exception.ApiUnknownException;
+import lombok.extern.log4j.Log4j2;
+import java.util.concurrent.TimeUnit;
 
+@Log4j2
 public class KafkaInstanceApi extends BaseApi {
 
-    private final ApiClient apiClient;
-    private final AclsApi aclsApi;
-    private final GroupsApi groupsApi;
-    private final TopicsApi topicsApi;
+    private final V1RequestBuilder v1;
 
-    public KafkaInstanceApi(ApiClient apiClient, String offlineToken) {
-        super(offlineToken);
-        this.apiClient = apiClient;
-        this.aclsApi = new AclsApi(apiClient);
-        this.groupsApi = new GroupsApi(apiClient);
-        this.topicsApi = new TopicsApi(apiClient);
+    public KafkaInstanceApi(ApiClient apiClient) {
+        super();
+        this.v1 = apiClient.api().v1();
     }
 
     @Override
-    protected ApiUnknownException toApiException(Exception e) {
-        if (e instanceof ApiException) {
-            var ex = (ApiException) e;
-            return new ApiUnknownException(ex.getMessage(), ex.getCode(), ex.getResponseHeaders(), ex.getResponseBody(), ex);
+    protected ApiGenericException toApiException(Exception e) {
+        log.info(e);
+
+        if (e.getCause() != null) {
+            if (e.getCause() instanceof com.openshift.cloud.api.kas.auth.models.Error) {
+                var err = (com.openshift.cloud.api.kas.auth.models.Error) e.getCause();
+                var apiException = new ApiUnknownException(err.getReason(), err.getCode().toString(), err.responseStatusCode, err.getHref(), err.getId(), err);
+                return new ApiGenericException(apiException);
+            }
+            if (e.getCause() instanceof com.openshift.cloud.api.kas.models.Error) {
+                var err = (com.openshift.cloud.api.kas.models.Error) e.getCause();
+                return new ApiGenericException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
+            }
         }
+
+        // TODO workaround: unathorized exception, will be solved like others with: https://github.com/bf2fc6cc711aee1a0c2a/kafka-admin-api/pull/243
+        if (e.getCause() instanceof com.microsoft.kiota.ApiException && e.getMessage().contains("403")) {
+            return new ApiGenericException("Client is not authorized to perform the requested operation", "2", 403, "/api/v1/errors/2", "2", e);
+        }
+
+
         return null;
-    }
 
-    @Override
-    protected void setAccessToken(String accessToken) {
-        this.apiClient.setAccessToken(accessToken);
     }
-
 
     public Topic updateTopic(String name, TopicSettings ts) throws ApiGenericException {
-        //return getTopics(null, null, null, null, null);
-        return retry(() -> topicsApi.updateTopic(name, ts));
+        return retry(() -> v1.topics(name).patch(ts).get(10, TimeUnit.SECONDS));
     }
 
     public TopicsList getTopics() throws ApiGenericException {
         return getTopics(null, null, null, null, null);
     }
 
-    public TopicsList getTopics(Integer size, Integer page, String filter, SortDirection order, TopicOrderKey orderKey) throws ApiGenericException {
-        return retry(() -> topicsApi.getTopics(size, filter, page, order, orderKey));
+    public TopicsList getTopics(Integer size, Integer page, String filter, String order, String orderKey) throws ApiGenericException {
+        return retry(() -> v1.topics().get(config -> {
+            config.queryParameters.size = size;
+            config.queryParameters.page = page;
+            config.queryParameters.filter = filter;
+            config.queryParameters.order = order;
+            config.queryParameters.orderKey = orderKey;
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public Topic getTopic(String topicName) throws ApiGenericException {
-        return retry(() -> topicsApi.getTopic(topicName));
+        return retry(() -> v1.topics(topicName).get().get(10, TimeUnit.SECONDS));
     }
 
     public Topic createTopic(NewTopicInput newTopicInput) throws ApiGenericException {
-        return retry(() -> topicsApi.createTopic(newTopicInput));
+        return retry(() -> v1.topics().post(newTopicInput).get(10, TimeUnit.SECONDS));
     }
 
     public void deleteTopic(String topicName) throws ApiGenericException {
-        retry(() -> topicsApi.deleteTopic(topicName));
+        retry(() -> v1.topics(topicName).delete().get(10, TimeUnit.SECONDS));
     }
 
     public ConsumerGroupList getConsumerGroups() throws ApiGenericException {
         return getConsumerGroups(null, null, null, null, null, null);
     }
 
-    public ConsumerGroupList getConsumerGroups(Integer size, Integer page, String topic, String groupIdFilter, SortDirection order, ConsumerGroupOrderKey orderKey) throws ApiGenericException {
-        return retry(() -> groupsApi.getConsumerGroups(size, page, topic, groupIdFilter, order, orderKey));
+    public ConsumerGroupList getConsumerGroups(Integer size, Integer page, String topic, String groupIdFilter, String order, String orderKey) throws ApiGenericException {
+        return retry(() -> v1.consumerGroups().get(config -> {
+            config.queryParameters.size = size;
+            config.queryParameters.page = page;
+            config.queryParameters.groupIdFilter = groupIdFilter;
+            config.queryParameters.order = order;
+            config.queryParameters.orderKey = orderKey;
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public ConsumerGroup getConsumerGroupById(String consumerGroupId) throws ApiGenericException {
         return getConsumerGroupById(consumerGroupId, null, null, null, null);
     }
 
-    public ConsumerGroup getConsumerGroupById(String consumerGroupId, SortDirection order, ConsumerGroupDescriptionOrderKey orderKey, Integer partitionFilter, String topic) throws ApiGenericException {
-        return retry(() -> groupsApi.getConsumerGroupById(consumerGroupId, order, orderKey, partitionFilter, topic));
+    public ConsumerGroup getConsumerGroupById(String consumerGroupId, String order, String orderKey, Integer partitionFilter, String topic) throws ApiGenericException {
+        return retry(() -> v1.consumerGroups(consumerGroupId).get(config -> {
+            config.queryParameters.order = order;
+            config.queryParameters.orderKey = orderKey;
+            config.queryParameters.partitionFilter = partitionFilter;
+            config.queryParameters.topic = topic;
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public void deleteConsumerGroupById(String consumerGroupId) throws ApiGenericException {
-        retry(() -> groupsApi.deleteConsumerGroupById(consumerGroupId));
+        retry(() -> v1.consumerGroups(consumerGroupId).delete().get(10, TimeUnit.SECONDS));
     }
 
-    public AclBindingListPage getAcls(AclResourceTypeFilter resourceType, String resourceName, AclPatternTypeFilter patternType, String principal, AclOperationFilter operation, AclPermissionTypeFilter permission, Integer page, Integer size, SortDirection order, AclBindingOrderKey orderKey) throws ApiGenericException {
-        return retry(() -> aclsApi.getAcls(resourceType, resourceName, patternType, principal, operation, permission, page, size, order, orderKey));
+    public AclBindingListPage getAcls(String resourceType, String resourceName, String patternType, String principal, String operation, String permission, Integer page, Integer size, String order, String orderKey) throws ApiGenericException {
+        return retry(() -> v1.acls().get(config -> {
+            config.queryParameters.resourceType = resourceType;
+            config.queryParameters.resourceName = resourceName;
+            config.queryParameters.patternType = patternType;
+            config.queryParameters.principal = principal;
+            config.queryParameters.operation = operation;
+            config.queryParameters.permission = permission;
+            config.queryParameters.page = page;
+            config.queryParameters.size = size;
+            config.queryParameters.order = order;
+            config.queryParameters.orderKey = orderKey;
+        }).get(10, TimeUnit.SECONDS));
     }
 
     public void createAcl(AclBinding aclBinding) throws ApiGenericException {
-        retry(() -> aclsApi.createAcl(aclBinding));
+        retry(() -> v1.acls().post(aclBinding).get(10, TimeUnit.SECONDS));
     }
 
-    public AclBindingListPage deleteAcls(AclResourceTypeFilter resourceType, String resourceName, AclPatternTypeFilter patternType, String principal, AclOperationFilter operation, AclPermissionTypeFilter permission) throws ApiGenericException {
-        return retry(() -> aclsApi.deleteAcls(resourceType, resourceName, patternType, principal, operation, permission));
+    public AclBindingListPage deleteAcls(AclResourceType resourceType, String resourceName, AclPatternType patternType, String principal, AclOperation operation, AclPermissionType permission) throws ApiGenericException {
+        return retry(() -> v1.acls().delete(config -> {
+            config.queryParameters.resourceType = resourceType.name();
+            config.queryParameters.resourceName = resourceName;
+            config.queryParameters.patternType = patternType.name();
+            config.queryParameters.principal = principal;
+            config.queryParameters.operation = operation.name();
+            config.queryParameters.permission = permission.name();
+        }).get(10, TimeUnit.SECONDS));
     }
 }

@@ -3,10 +3,10 @@ package io.managed.services.test.registry;
 
 import com.openshift.cloud.api.kas.models.KafkaRequest;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
-import com.openshift.cloud.api.srs.models.Registry;
-import io.apicurio.registry.rest.v2.beans.RoleMapping;
+import com.openshift.cloud.api.registry.instance.models.RoleMapping;
+import com.openshift.cloud.api.registry.instance.models.RoleType;
+import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.apicurio.registry.serde.SerdeConfig;
-import io.apicurio.registry.types.RoleType;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.client.ApplicationServicesApi;
@@ -67,7 +67,7 @@ public class RegistryKafkaIntegrationTest extends TestBase {
     private final Vertx vertx = Vertx.vertx();
 
     private RegistryMgmtApi registryMgmtApi;
-    private Registry registry;
+    private RootTypeForRegistry registry;
     private KafkaMgmtApi kafkaMgmtApi;
     private SecurityMgmtApi securityMgmtApi;
     private KafkaRequest kafka;
