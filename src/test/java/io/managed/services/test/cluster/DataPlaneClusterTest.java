@@ -34,8 +34,6 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import org.json.JSONObject;
-
 // TODO unify and add env variables for gcp data plane clusters.
 /**
  * <p>
@@ -194,9 +192,9 @@ public class DataPlaneClusterTest extends TestBase {
         } catch (ApiGenericException e) {
             // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
             log.warn(e);
-            if (KAFKAS_MGMT_21_CODE.equals(new JSONObject(e.getResponseBody()).get("code")))
+            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(new JSONObject(e.getResponseBody()).get("code")))
+            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
                 throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
             else
                 throw  e;
@@ -206,7 +204,9 @@ public class DataPlaneClusterTest extends TestBase {
             try {
                 KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
                 log.info("wait until kafka is deleted");
-                KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
+                if (kafkaRequest != null) {
+                    KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
+                }
             } catch (Exception e) {
                 log.error("error while cleaning kafka instance: %s", e);
             }
@@ -230,8 +230,10 @@ public class DataPlaneClusterTest extends TestBase {
         log.info("remaining capacity in the cluster '{}'", remainingCapacity);
 
         // if no free capacity remains skip test
-        if (remainingCapacity == 0)
+        if (remainingCapacity == 0) {
+            log.warn("test skipped due to full capacity");
             throw new SkipException("cluster already reported to be at its maximum capacity");
+        }
 
         log.info("creating an instance");
         var payload = new KafkaRequestPayload();
@@ -277,7 +279,8 @@ public class DataPlaneClusterTest extends TestBase {
 
         } catch (ApiForbiddenException e) {
             // if not quota related exception rethrow it
-            if (!(e.getCode() == 403 && new JSONObject(e.getResponseBody()).get("code").equals(KAFKAS_MGMT_120_CODE))) {
+            if (!(e.getResponseStatusCode() == 403)) {
+                log.warn(e);
                 throw e;
             }
             log.warn("quota reached %s", e);
@@ -325,7 +328,7 @@ public class DataPlaneClusterTest extends TestBase {
 
         Set<String> originalMkNames = FleetshardUtils.listManagedKafka(oc, mkType).stream()
                         .map(e -> e.getMetadata().getName())
-                        .filter(e -> e.equals(FleetshardUtils.getReservedDeploymentName(mkType)))
+                        .filter(e -> e.contains(FleetshardUtils.getReservedDeploymentPrefix(mkType)))
                         .collect(Collectors.toSet());
 
         if (consumedCapacity < consumedStreamingUnit) {
@@ -339,7 +342,7 @@ public class DataPlaneClusterTest extends TestBase {
                     // skip if meanwhile any of originally existing kafka instances was deleted.
                     Set<String> mkNamesCurrent = FleetshardUtils.listManagedKafka(oc, mkType).stream()
                         .map(e -> e.getMetadata().getName())
-                        .filter(e -> e.equals(FleetshardUtils.getReservedDeploymentName(mkType)))
+                        .filter(e -> e.contains(FleetshardUtils.getReservedDeploymentPrefix(mkType)))
                         .collect(Collectors.toSet());
 
                     // keep only names which were present originally, i.e. list contains names of MKs which were deleted
@@ -354,7 +357,7 @@ public class DataPlaneClusterTest extends TestBase {
                     return   newMKFreeCapacity < freeMKCapacity;
                 });
         } else {
-            log.info("less streaming unit are consumed than consumed, waiting for consumed capacity to decrease");
+            log.info("less streaming unit are consumed than reported consumed capacity, waiting for consumed capacity to decrease");
             TestUtils.waitFor(
                 "update reported remaining capacity, consumed capacity is to be increased",
                 Duration.ofSeconds(10),
@@ -363,7 +366,7 @@ public class DataPlaneClusterTest extends TestBase {
                     // skip if some new kafka is created.
                     Set<String> mkNamesCurrent = FleetshardUtils.listManagedKafka(oc, mkType).stream()
                         .map(e -> e.getMetadata().getName())
-                        .filter(e -> e.equals(FleetshardUtils.getReservedDeploymentName(mkType)))
+                        .filter(e -> e.contains(FleetshardUtils.getReservedDeploymentPrefix(mkType)))
                         .collect(Collectors.toSet());
 
                     // keep only names which were present originally, i.e. list contains names of MKs which were deleted
