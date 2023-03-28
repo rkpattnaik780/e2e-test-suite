@@ -28,14 +28,11 @@ import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-
-
 
 // TODO unify and add env variables for gcp data plane clusters.
 /**
@@ -60,19 +57,17 @@ import java.util.stream.Collectors;
 public class DataPlaneClusterTest extends TestBase {
 
     static final String KAFKA_INSTANCE_NAME = "cl-e2e-" + Environment.LAUNCH_SUFFIX;
-    private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
 
     private OpenShiftClient oc;
 
-    private static int maxStandardStreamingUnitsInCluster;
-    private static int maxDeveloperStreamingUnitsInCluster;
+    private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
     private static final String KAFKAS_MGMT_24_CODE = "KAFKAS-MGMT-24";
     private static final String PLAN_STANDARD = "standard.x1";
     private static final String DUMMY_KAFKA_INSTANCE_NAME = "cl-e2e-placeholder-" + Environment.LAUNCH_KEY;
     private KafkaMgmtApi kafkaMgmtApi;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     @SneakyThrows
     public void bootstrap() {
 
@@ -85,17 +80,10 @@ public class DataPlaneClusterTest extends TestBase {
         log.info("init openshift client");
         oc = new KubernetesClientBuilder().withConfig(config).build().adapt(OpenShiftClient.class);
 
-        var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
+        // validate oc
         oc.pods().list();
-        log.info(FleetshardUtils.managedKafkaAgent(oc).list().getItems());
-        log.info(FleetshardUtils.managedKafka(oc).list().getItems());
-        log.info(FleetshardUtils.managedKafkaAgent(oc).inAnyNamespace().list().getItems());
 
-        log.info("init cluster capacity info");
-        maxStandardStreamingUnitsInCluster = FleetshardUtils.getClusterCapacityFromMKAgent(oc, ManagedKafkaType.standard);
-        log.debug("Max standard streaming units according to MKAgent capacity '{}'", maxStandardStreamingUnitsInCluster);
-        maxDeveloperStreamingUnitsInCluster = FleetshardUtils.getClusterCapacityFromMKAgent(oc, ManagedKafkaType.developer);
-        log.debug("Max developer streaming units according to MKAgent capacity '{}'", maxDeveloperStreamingUnitsInCluster);
+        var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
 
         log.info("init kafka management");
         kafkaMgmtApi = apps.kafkaMgmt();
@@ -167,22 +155,12 @@ public class DataPlaneClusterTest extends TestBase {
     }
 
     @Test(dataProvider = "managedKafkaTypes")
-    public void testReservedDeploymentDoesNotPreventKafkaCreation(ManagedKafkaType mkType) throws Exception {
+    public void testReservedDeploymentDoesNotPreventKafkaCreation(ManagedKafkaType mkType) throws Throwable {
 
         log.info("testing managed kafka type: '{}'", mkType);
 
         // obtain max limit of kafka instances per given mk type (developer, standard)
-        int upperStreamingUnitLimitPerManagedKafkaType;
-        switch (mkType) {
-            case standard:
-                upperStreamingUnitLimitPerManagedKafkaType = maxStandardStreamingUnitsInCluster;
-                break;
-            case developer:
-                upperStreamingUnitLimitPerManagedKafkaType = maxDeveloperStreamingUnitsInCluster;
-                break;
-            default:
-                throw new Exception("Unsupported managed kafka type");
-        }
+        int upperStreamingUnitLimitPerManagedKafkaType = FleetshardUtils.getClusterCapacityFromMKAgent(oc, mkType);
         log.info("upper streaming unit limit for instance type '{}' is '{}' instances.", mkType, upperStreamingUnitLimitPerManagedKafkaType);
 
         int currentStreamingUnitsCountOfGivenMkType = FleetshardUtils.getStreamingUnitCountOfExistingGivenManagedKafkaCRType(oc, mkType);
@@ -226,7 +204,9 @@ public class DataPlaneClusterTest extends TestBase {
             try {
                 KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME);
                 log.info("wait until kafka is deleted");
-                KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
+                if (kafkaRequest != null) {
+                    KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
+                }
             } catch (Exception e) {
                 log.error("error while cleaning kafka instance: %s", e);
             }
@@ -246,12 +226,14 @@ public class DataPlaneClusterTest extends TestBase {
         log.info("currently minimum existing nodes in machine set '{}'", minNodeInMachineSet);
 
         // get remaining capacity from MK agent
-        int remainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, ManagedKafkaType.standard);
+        int remainingCapacity = FleetshardUtils.getRemainingCapacityMKAgent(oc, ManagedKafkaType.standard);
         log.info("remaining capacity in the cluster '{}'", remainingCapacity);
 
         // if no free capacity remains skip test
-        if (remainingCapacity == 0)
+        if (remainingCapacity == 0) {
+            log.warn("test skipped due to full capacity");
             throw new SkipException("cluster already reported to be at its maximum capacity");
+        }
 
         log.info("creating an instance");
         var payload = new KafkaRequestPayload();
@@ -297,7 +279,8 @@ public class DataPlaneClusterTest extends TestBase {
 
         } catch (ApiForbiddenException e) {
             // if not quota related exception rethrow it
-            if (!(e.getResponseStatusCode() == 403 && KAFKAS_MGMT_120_CODE.equals(e.getCode()))) {
+            if (!(e.getResponseStatusCode() == 403)) {
+                log.warn(e);
                 throw e;
             }
             log.warn("quota reached %s", e);
@@ -318,135 +301,85 @@ public class DataPlaneClusterTest extends TestBase {
 
     @Test(dataProvider = "managedKafkaTypes")
     @SneakyThrows
-    public void testReportedCapacityMatchesNumberOfExistingInstances(ManagedKafkaType mkType) {
+    public void testReportedMKCapacity(ManagedKafkaType mkType) {
 
-        int observedRemainingCapacityInitially = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
-        log.info("observed remaining capacity before creating new instance '{}'", observedRemainingCapacityInitially);
-        if (observedRemainingCapacityInitially == 0)
-            throw new SkipException("cluster has no free capacity to test at the moment");
+        log.info("test reported capacity for {} instances", mkType);
 
-        Set<String> kafkaInstanceNamesBeforeCreating = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-            .map(e -> e.getMetadata().getName())
-            .collect(Collectors.toSet());
-        log.debug("existing mk instances before creating a new one {}", kafkaInstanceNamesBeforeCreating);
+        // obtain reported consumed capacity
+        int maxMKCapacity = FleetshardUtils.getClusterCapacityFromMKAgent(oc, mkType);
+        log.debug("maximal capacity '{}'", maxMKCapacity);
+        int freeMKCapacity = FleetshardUtils.getRemainingCapacityMKAgent(oc, mkType);
+        log.debug("free capacity '{}'", freeMKCapacity);
+        int consumedCapacity = maxMKCapacity - freeMKCapacity;
+        log.info("consumed capacity '{}'", consumedCapacity);
 
-        // create kafka instance of expected type
-        log.info(KAFKA_INSTANCE_NAME + "-" + mkType);
-        KafkaRequestPayload payload = new KafkaRequestPayload();
-        payload.setName(KAFKA_INSTANCE_NAME + "-" + mkType);
-        payload.setCloudProvider("aws");
-        payload.setRegion("us-east-1");
-        payload.setPlan(String.format("%s.x1", mkType));
 
-        log.info("attempt to create kafka instance");
-        KafkaRequest kafkaRequest = null;
-        try {
-            kafkaRequest = kafkaMgmtApi.createKafka(true, payload);
-            log.debug(kafkaRequest);
-            log.info("wait for provisioning of kafka instance with id '{}'", kafkaRequest.getId());
-            KafkaMgmtApiUtils.waitUntilKafkaIsProvisioning(kafkaMgmtApi, kafkaRequest.getId());
+        int consumedStreamingUnit = FleetshardUtils.getStreamingUnitCountOfExistingGivenManagedKafkaCRType(oc, mkType);
+        log.info("reportedly consumed streaming units '{}'", consumedStreamingUnit);
 
-            // wait for few minutes to see if reported capacity already increased (exclusively)
+        // if capacity matches streaming units all is reported correctly
+        if (consumedStreamingUnit == consumedCapacity) {
+            log.info("consumed capacity matches consumed streaming unit");
+            return;
+        }
+
+        // otherwise consider following scenarios and wait for some time to capacity to be updated accordingly
+        // if there is activity in cluster (i.e., kafka instances being deleted/created) acting against expected change (in capacity) skip test
+
+        Set<String> originalMkNames = FleetshardUtils.listManagedKafka(oc, mkType).stream()
+                        .map(e -> e.getMetadata().getName())
+                        .filter(e -> e.contains(FleetshardUtils.getReservedDeploymentPrefix(mkType)))
+                        .collect(Collectors.toSet());
+
+        if (consumedCapacity < consumedStreamingUnit) {
+            log.info("consumed capacity is lower than consumed streaming units, waiting for consumed capacity to increase");
+
             TestUtils.waitFor(
-                "update reported remaining capacity",
+                "update reported remaining capacity, consumed capacity is to be increased",
                 Duration.ofSeconds(10),
                 Duration.ofMinutes(6),
                 ready -> {
+                    // skip if meanwhile any of originally existing kafka instances was deleted.
+                    Set<String> mkNamesCurrent = FleetshardUtils.listManagedKafka(oc, mkType).stream()
+                        .map(e -> e.getMetadata().getName())
+                        .filter(e -> e.contains(FleetshardUtils.getReservedDeploymentPrefix(mkType)))
+                        .collect(Collectors.toSet());
 
-                    // get number of instances that were deleted while waiting for provisioning of new kafka instance, if some were created skip the test
-                    List<String> kafkaInstanceNamesAfterCreating = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-                            .map(e -> e.getMetadata().getName())
-                            .collect(Collectors.toList());
-                    List<String> deletedInstances = kafkaInstanceNamesBeforeCreating.stream().filter(e -> !kafkaInstanceNamesAfterCreating.contains(e)).collect(Collectors.toList());
-                    if (deletedInstances.size() > 0) {
-                        log.debug("newly deleted instances: {}", deletedInstances);
-                        throw  new SkipException("other instances were deleted while waiting for decrease in capacity");
+                    // keep only names which were present originally, i.e. list contains names of MKs which were deleted
+                    Set<String> onlyInstancesBefore = originalMkNames.stream().filter(e -> !mkNamesCurrent.contains(e)).collect(Collectors.toSet());
+                    log.debug(onlyInstancesBefore);
+                    if (onlyInstancesBefore.size() > 0) {
+                        throw new SkipException("skipped due to kafka instance being deleted while waiting for free capacity going down");
                     }
 
-                    int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
-                    log.debug("newly observed remaining capacity '{}'", newlyObservedRemainingCapacity);
-                    if (newlyObservedRemainingCapacity < observedRemainingCapacityInitially)
-                        return true;
+                    int newMKFreeCapacity = FleetshardUtils.getRemainingCapacityMKAgent(oc, mkType);
+                    // capacity (taken) increased.
+                    return   newMKFreeCapacity < freeMKCapacity;
+                });
+        } else {
+            log.info("less streaming unit are consumed than reported consumed capacity, waiting for consumed capacity to decrease");
+            TestUtils.waitFor(
+                "update reported remaining capacity, consumed capacity is to be increased",
+                Duration.ofSeconds(10),
+                Duration.ofMinutes(6),
+                ready -> {
+                    // skip if some new kafka is created.
+                    Set<String> mkNamesCurrent = FleetshardUtils.listManagedKafka(oc, mkType).stream()
+                        .map(e -> e.getMetadata().getName())
+                        .filter(e -> e.contains(FleetshardUtils.getReservedDeploymentPrefix(mkType)))
+                        .collect(Collectors.toSet());
 
+                    // keep only names which were present originally, i.e. list contains names of MKs which were deleted
+                    Set<String> onlyInstancesAfter = mkNamesCurrent.stream().filter(e -> !originalMkNames.contains(e)).collect(Collectors.toSet());
+                    log.debug(onlyInstancesAfter);
+                    if (onlyInstancesAfter.size() > 0) {
+                        throw new SkipException("skipped due to kafka instance being created while waiting for free capacity going up");
+                    }
 
-                    return false;
-                }
-            );
-
-        } catch (ApiGenericException e) {
-            // some users may not be able to create some types of instances, e.g., user with quota will not be able to create dev. instance
-            log.warn(e);
-            if (KAFKAS_MGMT_21_CODE.equals(e.getCode()))
-                throw new SkipException(String.format("user %s has no quota to create instance of type %s", Environment.PRIMARY_USERNAME, mkType));
-            if (KAFKAS_MGMT_24_CODE.equals(e.getCode()))
-                throw new SkipException(String.format("user %s cannot create instance of type %s, due to cluster max capacity", Environment.PRIMARY_USERNAME, mkType));
-            else
-                throw e;
-        } catch (SkipException e) {
-            // cleanup kafka instance
-            KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
-            KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
-            kafkaRequest = null;
-        } finally {
-
-            if (kafkaRequest == null) {
-                throw new SkipException("test skipped due to traffic in kafka creation");
-            }
-
-            // test releasing of capacity & delete kafka instance
-            log.info("clean kafka instance with name '{}'", KAFKA_INSTANCE_NAME + "-" + mkType);
-            try {
-                // list all instances which exist before we delete our instance
-                List<String> kafkaInstanceNamesBeforeDeleting = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-                    .map(e -> e.getMetadata().getName())
-                    .collect(Collectors.toList());
-
-                // get remaining capacity before
-                int remainingCapacityBefore = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
-
-                // delete our instance
-                KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
-                log.info("wait until kafka is deleted");
-                KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, kafkaRequest.getId());
-
-                // waiting for ideal case (capacity updated accordingly, and no other user created new kafka instance)
-                TestUtils.waitFor(
-                    "update (increase) reported remaining capacity",
-                    Duration.ofSeconds(10),
-                    Duration.ofMinutes(6),
-                    ready -> {
-                        int newlyObservedRemainingCapacity = FleetshardUtils.getCapacityRemainingUnitsFromMKAgent(oc, mkType);
-                        log.debug("newly observed remaining capacity '{}'", newlyObservedRemainingCapacity);
-                        if (newlyObservedRemainingCapacity > remainingCapacityBefore)
-                            return true;
-
-                        // list all instances that exist after our instance was deleted
-                        List<String> kafkaInstanceNamesAfterDeleting = FleetshardUtils.listManagedKafka(oc, mkType).stream()
-                                .map(e -> e.getMetadata().getName())
-                                .collect(Collectors.toList());
-
-                        // observe how many new instances of given type were created while we were deleting our instance (increasing free capacity by one)
-                        List<String> newlyCreatedInstances = kafkaInstanceNamesAfterDeleting.stream().filter(e -> !kafkaInstanceNamesBeforeDeleting.contains(e)).collect(Collectors.toList());
-
-                        if (newlyCreatedInstances.size() > 0) {
-                            log.debug("newly created instances: {}", newlyCreatedInstances);
-                            log.debug("new kafka instance was created, capacity will no longer be freed");
-                            KafkaMgmtApiUtils.waitUntilKafkaIsDeleted(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
-                            return true;
-                        }
-
-                        return false;
-                    });
-            } catch (Exception e) {
-                log.warn("error while increasing reported remaining capacity");
-                log.error(e);
-            } finally {
-                try {
-                    KafkaMgmtApiUtils.deleteKafkaByNameIfExists(kafkaMgmtApi, KAFKA_INSTANCE_NAME + "-" + mkType);
-                } catch (Exception ignore) {
-                    // skip
-                }
-            }
+                    int newMKFreeCapacity = FleetshardUtils.getRemainingCapacityMKAgent(oc, mkType);
+                    // capacity (free) increased.
+                    return   newMKFreeCapacity > freeMKCapacity;
+                });
         }
     }
 

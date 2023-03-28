@@ -29,6 +29,7 @@ public class FleetshardUtils {
     public static int getStreamingUnitCountOfExistingGivenManagedKafkaCRType(OpenShiftClient oc, ManagedKafkaType mkType) {
         return listManagedKafka(oc, mkType)
             .stream()
+            .filter(e -> !e.getMetadata().getName().contains(getReservedDeploymentPrefix(mkType)))
             .mapToInt(FleetshardUtils::getStreamingUnitOfMkInstance)
             .sum();
     }
@@ -60,7 +61,7 @@ public class FleetshardUtils {
             .getMaxUnits();
     }
 
-    public static int getCapacityRemainingUnitsFromMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
+    public static int getRemainingCapacityMKAgent(OpenShiftClient oc, ManagedKafkaType mkType) throws Throwable {
         return FleetshardUtils.getManagedKafkaAgent(oc)
             .getStatus()
             .getCapacity()
@@ -72,6 +73,10 @@ public class FleetshardUtils {
         return oc.machine().machineSets().list().getItems().stream()
             .filter(e -> e.getMetadata().getName().contains(containedName))
             .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m.getStatus().getReadyReplicas()));
+    }
+
+    public static String getReservedDeploymentPrefix(ManagedKafkaType managedKafkaType) {
+        return String.format("reserved-kafka-%s-", managedKafkaType);
     }
 
 }
