@@ -5,7 +5,9 @@ import com.openshift.cloud.api.srs.models.RootTypeForRegistry;
 import io.managed.services.test.Environment;
 import io.managed.services.test.TestBase;
 import io.managed.services.test.TestUtils;
+import io.managed.services.test.client.exception.ApiForbiddenException;
 import io.managed.services.test.client.exception.ApiGenericException;
+import io.managed.services.test.client.exception.ApiNotFoundException;
 import io.managed.services.test.client.registry.RegistryClient;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApi;
 import io.managed.services.test.client.registrymgmt.RegistryMgmtApiUtils;
@@ -97,7 +99,7 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
 
     @Test
     public void testAlienUserCanNotReadTheRegistry() {
-        assertThrows(ApiGenericException.class, () -> alienRegistryMgmtApi.getRegistry(registry.getId()));
+        assertThrows(ApiNotFoundException.class, () -> alienRegistryMgmtApi.getRegistry(registry.getId()));
     }
 
     @Test
@@ -105,17 +107,17 @@ public class RegistryMgmtAPIPermissionsTest extends TestBase {
         RegistryClient registryClient = registryClient(registry.getRegistryUrl(), Environment.ALIEN_OFFLINE_TOKEN);
         var content = new ContentCreateRequest();
         content.setContent(ARTIFACT_SCHEMA);
-        assertThrows(ApiGenericException.class, () -> registryClient.createArtifact(content));
+        assertThrows(ApiForbiddenException.class, () -> registryClient.createArtifact(content));
     }
 
     @Test(priority = 1)
     public void testSecondaryUserCanNotDeleteTheRegistry() {
-        assertThrows(ApiGenericException.class, () -> secondaryRegistryMgmtApi.deleteRegistry(registry.getId()));
+        assertThrows(ApiForbiddenException.class, () -> secondaryRegistryMgmtApi.deleteRegistry(registry.getId()));
     }
 
     @Test(priority = 1)
     public void testAlienUserCanNotDeleteTheRegistry() {
-        assertThrows(ApiGenericException.class, () -> alienRegistryMgmtApi.deleteRegistry(registry.getId()));
+        assertThrows(ApiForbiddenException.class, () -> alienRegistryMgmtApi.deleteRegistry(registry.getId()));
     }
 
     @Test
