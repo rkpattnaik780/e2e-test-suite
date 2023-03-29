@@ -82,7 +82,7 @@ public class KafkaTopicSteps {
     @After(order = 10100)
     public void cleanTopics() {
 
-        // nothing to clan
+        // nothing to clean
         if (topicNames.isEmpty()) return;
 
         assumeTeardown();
