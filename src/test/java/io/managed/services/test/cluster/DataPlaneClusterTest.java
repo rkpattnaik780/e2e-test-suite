@@ -50,7 +50,8 @@ import java.util.stream.Collectors;
  * <p>
  * <b>Requires:</b>
  * <ul>
- *     <li> PRIMARY_OFFLINE_TOKEN
+ *     <li> PRIMARY_OFFLINE_TOKEN </>
+ *     <li> AWS_DATA_PLANE_ACCESS_TOKEN_ENV </>
  * </ul>
  */
 @Log4j2
@@ -59,8 +60,6 @@ public class DataPlaneClusterTest extends TestBase {
     static final String KAFKA_INSTANCE_NAME = "cl-e2e-" + Environment.LAUNCH_SUFFIX;
 
     private OpenShiftClient oc;
-
-    private static final String KAFKAS_MGMT_120_CODE = "KAFKAS-MGMT-120";
     private static final String KAFKAS_MGMT_21_CODE = "KAFKAS-MGMT-21";
     private static final String KAFKAS_MGMT_24_CODE = "KAFKAS-MGMT-24";
     private static final String PLAN_STANDARD = "standard.x1";
@@ -74,7 +73,7 @@ public class DataPlaneClusterTest extends TestBase {
         log.info("build config");
         Config config = new ConfigBuilder()
             .withMasterUrl("https://api.mk-stage-0622.bd59.p1.openshiftapps.com:6443")
-            .withOauthToken(Environment.PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN)
+            .withOauthToken(Environment.AWS_DATA_PLANE_ACCESS_TOKEN)
             .withTrustCerts(true)
             .build();
         log.info("init openshift client");
