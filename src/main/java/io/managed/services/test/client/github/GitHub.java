@@ -19,14 +19,9 @@ public class GitHub implements AutoCloseable {
     private final Client client;
     private final WebTarget github;
 
-    public GitHub(String token) {
+    public GitHub() {
         this.client = ClientBuilder.newClient();
-
-        var t = client.target(GITHUB_URL);
-        if (token != null) {
-            t = t.register(new BearerAuthFilter(token));
-        }
-        this.github = t;
+        this.github = client.target(GITHUB_URL);
     }
 
     private List<Release> getReleases(String org, String repo) {
