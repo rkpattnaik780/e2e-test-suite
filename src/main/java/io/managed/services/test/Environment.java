@@ -74,8 +74,6 @@ public class Environment {
     private static final String CLI_PLATFORM_ENV = "CLI_PLATFORM";
     private static final String CLI_ARCH_ENV = "CLI_ARCH";
     private static final String CLI_EXCLUDE_VERSIONS_ENV = "CLI_EXCLUDE_VERSIONS";
-    private static final String GITHUB_TOKEN_ENV = "GITHUB_TOKEN";
-
     private static final String LAUNCH_KEY_ENV = "LAUNCH_KEY";
 
     private static final String SKIP_TEARDOWN_ENV = "SKIP_TEARDOWN";
@@ -146,7 +144,6 @@ public class Environment {
     // identity.api.openshift.com OAuth ENVs
     // getOrDefault(OPENSHIFT_IDENTITY_URI_ENV, "https://identity.api.stage.openshift.com") -> REDHAT_SSO_URI
     public static final String OPENSHIFT_IDENTITY_URI = getOrDefault(OPENSHIFT_IDENTITY_URI_ENV, REDHAT_SSO_URI);
-    //public static final String OPENSHIFT_IDENTITY_URI = getOrDefault(REDHAT_SSO_URI_ENV, REDHAT_SSO_URI);
     // "rhoas" -> REDHAT_SSO_REALM
     public static final String OPENSHIFT_IDENTITY_REALM = getOrDefault(OPENSHIFT_IDENTITY_REALM_ENV, REDHAT_SSO_REALM);
     // "strimzi-ui"
@@ -170,7 +167,6 @@ public class Environment {
     public static final String CLI_PLATFORM = getOrDefault(CLI_PLATFORM_ENV, Platform.getArch().toString());
     public static final String CLI_ARCH = getOrDefault(CLI_ARCH_ENV, "amd64");
     public static final String CLI_EXCLUDE_VERSIONS = getOrDefault(CLI_EXCLUDE_VERSIONS_ENV, "alpha");
-    public static final String GITHUB_TOKEN = getOrDefault(GITHUB_TOKEN_ENV, null);
 
     public static final String LAUNCH_KEY = getOrDefault(LAUNCH_KEY_ENV, "change-me");
     public static final String LAUNCH_SUFFIX = LAUNCH_KEY + "-" + CLOUD_PROVIDER;

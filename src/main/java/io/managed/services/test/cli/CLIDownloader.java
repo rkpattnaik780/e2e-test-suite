@@ -35,7 +35,6 @@ public class CLIDownloader {
     private final String excludeVersions;
 
     public CLIDownloader(
-        String token,
         String organization,
         String repository,
         String version,
@@ -43,7 +42,7 @@ public class CLIDownloader {
         String arch,
         String excludeVersions) {
 
-        this.github = new GitHub(token);
+        this.github = new GitHub();
         this.organization = organization;
         this.repository = repository;
         this.version = version;
@@ -55,7 +54,6 @@ public class CLIDownloader {
 
     public static CLIDownloader defaultDownloader() {
         return new CLIDownloader(
-            Environment.GITHUB_TOKEN,
             Environment.CLI_DOWNLOAD_ORG,
             Environment.CLI_DOWNLOAD_REPO,
             Environment.CLI_VERSION,
