@@ -51,7 +51,7 @@ import static org.testng.Assert.fail;
  * <b>Requires:</b>
  * <ul>
  *     <li> PRIMARY_OFFLINE_TOKEN
- *     <li> PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN
+ *     <li> AWS_DATA_PLANE_ACCESS_TOKEN
  * </ul>
  */
 @Log4j2
@@ -89,7 +89,7 @@ public class BillingMetricsTest extends TestBase {
     @SneakyThrows
     public void bootstrap() {
         assertNotNull(Environment.PRIMARY_OFFLINE_TOKEN, "the PRIMARY_OFFLINE_TOKEN env is null");
-        assertNotNull(Environment.PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN, "the PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN env is null");
+        assertNotNull(Environment.AWS_DATA_PLANE_ACCESS_TOKEN, "the AWS_DATA_PLANE_ACCESS_TOKEN env is null");
 
         var apps = ApplicationServicesApi.applicationServicesApi(Environment.PRIMARY_OFFLINE_TOKEN);
 
@@ -106,7 +106,7 @@ public class BillingMetricsTest extends TestBase {
         this.prometheusWebClient = new PrometheusWebClientBuilder()
             .withBaseUrl(Environment.PROMETHEUS_WEB_CLIENT_ROUTE)
             .withUrlResourcePath("/api/v1/query")
-            .addHeaderEntry("Authorization", "Bearer " + Environment.PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN)
+            .addHeaderEntry("Authorization", "Bearer " + Environment.AWS_DATA_PLANE_ACCESS_TOKEN)
             .build();
 
         // Create Kafka Instance

@@ -95,8 +95,7 @@ public class Environment {
     private static final String STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID_ENV = "STRATOSPHERE_SCENARIO_3_AWS_ACCOUNT_ID";
     private static final String STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID_ENV = "STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID";
     private static final String STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID_ENV = "STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID";
-
-    private static final String PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN_ENV = "PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN";
+    private static final String AWS_DATA_PLANE_ACCESS_TOKEN_ENV = "AWS_DATA_PLANE_ACCESS_TOKEN";
     private static final String PROMETHEUS_WEB_CLIENT_ROUTE_ENV = "PROMETHEUS_WEB_CLIENT_ROUTE";
 
     private static final String STAGE_DATA_PLANE_ADMIN_CLIENT_ID_ENV = "STAGE_DATA_PLANE_ADMIN_CLIENT_ID";
@@ -194,7 +193,7 @@ public class Environment {
     public static final String STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID = getOrDefault(STRATOSPHERE_SCENARIO_3_RHM_ACCOUNT_ID_ENV, null);
     public static final String STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID = getOrDefault(STRATOSPHERE_SCENARIO_4_AWS_ACCOUNT_ID_ENV, null);
 
-    public static final String PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN = getOrDefault(PROMETHEUS_WEB_CLIENT_ACCESS_TOKEN_ENV, null);
+    public static final String AWS_DATA_PLANE_ACCESS_TOKEN = getOrDefault(AWS_DATA_PLANE_ACCESS_TOKEN_ENV, null);
     public static final String PROMETHEUS_WEB_CLIENT_ROUTE = getOrDefault(PROMETHEUS_WEB_CLIENT_ROUTE_ENV, "https://obs-prometheus-managed-application-services-observability.apps.mk-stage-0622.bd59.p1.openshiftapps.com");
 
 
