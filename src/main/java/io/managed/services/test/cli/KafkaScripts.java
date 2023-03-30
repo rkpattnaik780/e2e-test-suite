@@ -1,6 +1,8 @@
 package io.managed.services.test.cli;
 
 import io.managed.services.test.Environment;
+import io.managed.services.test.RetryUtils;
+import io.managed.services.test.ThrowingSupplier;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -14,6 +16,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +26,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.time.Duration.ofMinutes;
@@ -85,19 +90,44 @@ public class KafkaScripts {
         }
     }
 
-    public void downloadAndExtractKafkaScripts() throws IOException, InterruptedException {
+    public void downloadAndExtractKafkaScripts() throws Throwable {
 
         String kafkaURLString = String.format("https://dlcdn.apache.org/kafka/%s/%s.tgz", kafkaVersion, kafkaResource);
         LOGGER.info("downloading kafka scripts from url: {}", kafkaURLString);
 
-        // where to store downloaded archive
-        Path source = Paths.get(rootWorkDir.toString(), "kafka.tgz");
         // alternative download for exec("wget", kafkaURLString, "-P", ".", "--quiet")
-        FileUtils.copyURLToFile(
-                new URL(kafkaURLString),
-                source.toFile(),
-                30000,
-                30000);
+
+        // attempt to download kafka scripts
+        Path source = Paths.get(rootWorkDir.toString(), "kafka.tgz");
+        int connectionTimeoutMs = 60_000;
+        int readTimeoutMs = 60_000;
+        // function to attempt download kafka scripts
+        ThrowingSupplier<Void, Throwable> attemptDownloadCli = () -> {
+            LOGGER.info("start attempt to download kafka scripts");
+            FileUtils.copyURLToFile(new URL(kafkaURLString), source.toFile(), connectionTimeoutMs, readTimeoutMs);
+            LOGGER.info("finish attempt to download kafka scripts");
+            return null;
+        };
+
+        // retry condition on downloading kafka scripts
+        Function<Throwable, Boolean> downloadRetryCondition = (Throwable e) -> {
+            // if downloading of kafka scripts fails on some sort of unreliable connection repeat several times.
+            if (e instanceof ConnectException || e instanceof SocketTimeoutException) {
+                LOGGER.warn("connection timeout while downloading kafka scripts: {}", e.toString());
+                return true;
+            }
+
+            LOGGER.warn(e);
+            return  false;
+        };
+
+        // download kafka scripts
+        RetryUtils.retry(
+                1,
+                attemptDownloadCli,
+                downloadRetryCondition,
+                3
+        );
 
         LOGGER.info("extract binaries");
 
@@ -159,7 +189,7 @@ public class KafkaScripts {
     }
 
     // Determine whether the compressed file is damaged , And return to the unzipped directory of the file
-    private  Path zipSlipProtect(ArchiveEntry entry, Path targetDir) throws IOException {
+    private Path zipSlipProtect(ArchiveEntry entry, Path targetDir) throws IOException {
         Path targetDirResolved = targetDir.resolve(entry.getName());
         Path normalizePath = targetDirResolved.normalize();
 
@@ -171,7 +201,7 @@ public class KafkaScripts {
     }
 
     public Path createAndSetUpConfigFile(String content) throws ProcessException, IOException {
-        String propertiesFile =  "app-services.properties";
+        String propertiesFile = "app-services.properties";
 
         Path pathToNewPropertyFile = Paths.get(rootWorkDir.toString(), kafkaResource, "config", propertiesFile);
 
@@ -206,7 +236,7 @@ public class KafkaScripts {
                 "--topic", topicName,
                 "--bootstrap-server", bootstrapServer,
                 "--command-config", propertiesFIle.toString()
-                ).stdoutAsString();
+        ).stdoutAsString();
     }
 
     public String deleteTopic(String topicName, String bootstrapServer, Path propertiesFIle) throws ProcessException {
