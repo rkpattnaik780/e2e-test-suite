@@ -242,6 +242,18 @@ https://github.com/redhat-developer/app-services-operator/tree/main/olm/olm-cata
 
 and update the property `rhoas-model.version` in `pom.xml`.
 
+### start token refresher cotainer to access observatorium
+Class `BillingMetricTest` queries Observatorium. To do so it needs to obtain token which is obtained from local container.
+To start this process locally, you need a container runtime (Docker) and run following scripts with described environment variables: 
+- `OBSERVATORIUM_CLIENT_ID`
+- `OBSERVATORIUM_CLIENT_SECRET`
+- `OBSERVATORIUM_OIDC_ISSUER_URL`
+- `OBSERVATORIUM_URL`
+
+```shell
+./hack/run-token-refresher.sh
+```
+
 ## Maintainers
 
 * David Kornel <kornys@outlook.com>
