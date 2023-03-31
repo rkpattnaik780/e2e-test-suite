@@ -25,6 +25,10 @@ public class RegistryMgmtApi extends BaseApi {
         
         if (e.getCause() != null) {
             log.info(e);
+            if (e.getCause() instanceof  com.openshift.cloud.api.srs.models.Error) {
+                var err = (com.openshift.cloud.api.srs.models.Error) e.getCause();
+                return new ApiGenericException(err.getReason(), err.getCode(), err.responseStatusCode, err.getHref(), err.getId(), err);
+            }
             if (e.getCause() instanceof com.microsoft.kiota.ApiException) {
                 var err = (com.microsoft.kiota.ApiException) e.getCause();
                 return new ApiGenericException(err.getMessage(), "", err.responseStatusCode, "", "", err);
