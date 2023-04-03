@@ -146,9 +146,9 @@ public class RegistryMgmtAPITest extends TestBase {
     public void testDeleteProvisioningRegistry() throws Throwable {
 
         var registryCreateRest = new RegistryCreate();
-        registryCreateRest.setName(SERVICE_REGISTRY_NAME);
+        registryCreateRest.setName(SERVICE_REGISTRY_2_NAME);
 
-        LOGGER.info("create kafka instance: {}", SERVICE_REGISTRY_2_NAME);
+        LOGGER.info("create service registry instance: {}", SERVICE_REGISTRY_2_NAME);
         var registryToDelete = registryMgmtApi.createRegistry(registryCreateRest);
 
         LOGGER.info("delete the registry: {}", registryToDelete.getId());
