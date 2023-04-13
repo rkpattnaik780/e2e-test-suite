@@ -42,7 +42,7 @@ public class SpringBootSteps {
 
     // TODO: consider using github context
     // temporary usage to fetch examples from a different repository
-    @When("you clone the {word} repository from GitHub examples")
+    @When("you clone the {word} repository for spring from GitHub examples")
     public void you_clone_the_app_services_guides_repository_from_git_hub(String repository) throws IOException {
         log.info("download git repository springboot");
 
@@ -62,7 +62,7 @@ public class SpringBootSteps {
         }
     }
 
-    @Then("the {word} example repository is available locally")
+    @Then("the {word} example repository for spring is available locally")
     public void the_app_services_guides_repository_is_available_locally(String repository) {
         log.info("verify existence of repository");
         assertTrue(this.repository.exists(), "repository does not exist");

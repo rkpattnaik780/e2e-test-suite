@@ -96,8 +96,8 @@ Feature: Quick starts for OpenShift Streams for Apache Kafka
     * you have a running Kafka instance in OpenShift Streams for Apache Kafka
 
     # 1. Importing the Springboot sample code
-    When you clone the rhosak_example_codes repository from GitHub examples
-    Then the rhosak_example_codes example repository is available locally
+    When you clone the rhosak_example_codes repository for spring from GitHub examples
+    Then the rhosak_example_codes example repository for spring is available locally
 
     # 2. Configuring the Springboot example application to connect to a Kafka instance
     Given you have the bootstrap server endpoint for your Kafka instance
