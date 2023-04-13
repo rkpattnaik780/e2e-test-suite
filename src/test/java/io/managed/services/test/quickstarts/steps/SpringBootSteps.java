@@ -31,7 +31,7 @@ public class SpringBootSteps {
     private final KafkaInstanceContext kafkaInstanceContext;
     private final ServiceAccountContext serviceAccountContext;
 
-    public static String stdOutput = null;
+    public static Boolean containsMsg = false;
 
     private Map<String, String> envsMap = new HashMap<>();
 
@@ -90,8 +90,9 @@ public class SpringBootSteps {
 
         Process process = builder.start();
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        while ((stdOutput = stdInput.readLine()) != null) {
-            System.out.println(stdOutput);
+
+        while (stdInput.readLine() != null) {
+            System.out.println(stdInput.readLine());
         }
     }
 
@@ -129,15 +130,18 @@ public class SpringBootSteps {
 
         Process process = builder.start();
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String output = "";
-        while ((output = stdInput.readLine()) != null) {
-            stdOutput += output;
+
+        while (stdInput.readLine() != null) {
+            if (stdInput.readLine().contains("Test")) {
+                containsMsg = true;
+                break;
+            }
         }
     }
 
-    @Then("Springboot consumer should print proper message")
+    @Then("Springboot consumer should contain proper message")
     public void springbootConsumerShouldPrintProperMessage() throws Exception {
-        if (!stdOutput.contains("Test")) {
+        if (!containsMsg) {
             throw new IOException("Not able to find the produced message");
         }
     }
