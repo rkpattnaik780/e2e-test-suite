@@ -131,9 +131,12 @@ public class SpringBootSteps {
         Process process = builder.start();
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
+        String s = "";
+
         while (stdInput.readLine() != null) {
-            System.out.println(stdInput.readLine());
-            if (stdInput.readLine().contains("Test")) {
+            s = stdInput.readLine();
+            System.out.println(s);
+            if (s.contains("Test")) {
                 log.debug("Contains produced message");
                 containsMsg = true;
                 break;
@@ -143,6 +146,8 @@ public class SpringBootSteps {
 
     @Then("Springboot consumer should contain proper message")
     public void springbootConsumerShouldPrintProperMessage() throws Exception {
+        log.debug("Checking if log contains message");
+        log.debug(containsMsg);
         if (!containsMsg) {
             throw new IOException("Not able to find the produced message");
         }
