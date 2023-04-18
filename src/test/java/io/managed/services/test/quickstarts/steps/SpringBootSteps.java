@@ -132,7 +132,9 @@ public class SpringBootSteps {
         BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
         while (stdInput.readLine() != null) {
+            System.out.println(stdInput.readLine());
             if (stdInput.readLine().contains("Test")) {
+                log.debug("Contains produced message");
                 containsMsg = true;
                 break;
             }
